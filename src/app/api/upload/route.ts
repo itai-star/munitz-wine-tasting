@@ -25,46 +25,51 @@ function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const formData = await request.formData()
-  const file = formData.get("file") as File | null
+  try {
+    const formData = await request.formData()
+    const file = formData.get("file") as File | null
 
-  if (!file) {
-    return NextResponse.json({ error: "לא נבחר קובץ" }, { status: 400 })
-  }
+    if (!file) {
+      return NextResponse.json({ error: "לא נבחר קובץ" }, { status: 400 })
+    }
 
-  const ext = MIME_TO_EXT[file.type]
-  if (!ext) {
+    const ext = MIME_TO_EXT[file.type]
+    if (!ext) {
+      return NextResponse.json(
+        { error: "סוג קובץ לא נתמך. השתמשו ב-JPG, PNG או WebP" },
+        { status: 400 }
+      )
+    }
+
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: "הקובץ גדול מדי. מקסימום 5MB" },
+        { status: 400 }
+      )
+    }
+
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "תוכן הקובץ לא תואם לסוג שנשלח" },
+        { status: 400 }
+      )
+    }
+
+    const fileName = `${randomUUID()}.${ext}`
+    const uploadDir = join("/tmp", "uploads")
+    await mkdir(uploadDir, { recursive: true })
+    const filePath = join(uploadDir, fileName)
+    await writeFile(filePath, buffer)
+
+    return NextResponse.json({ url: `/uploads/${fileName}` })
+  } catch {
     return NextResponse.json(
-      { error: "סוג קובץ לא נתמך. השתמשו ב-JPG, PNG או WebP" },
-      { status: 400 }
+      { error: "שגיאה בהעלאת הקובץ" },
+      { status: 500 }
     )
   }
-
-  const maxSize = 5 * 1024 * 1024
-  if (file.size > maxSize) {
-    return NextResponse.json(
-      { error: "הקובץ גדול מדי. מקסימום 5MB" },
-      { status: 400 }
-    )
-  }
-
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-
-  if (!validateMagicBytes(buffer, file.type)) {
-    return NextResponse.json(
-      { error: "תוכן הקובץ לא תואם לסוג שנשלח" },
-      { status: 400 }
-    )
-  }
-
-  const fileName = `${randomUUID()}.${ext}`
-
-  const uploadDir = join(process.cwd(), "public", "uploads")
-  await mkdir(uploadDir, { recursive: true })
-
-  const filePath = join(uploadDir, fileName)
-  await writeFile(filePath, buffer)
-
-  return NextResponse.json({ url: `/uploads/${fileName}` })
 }
