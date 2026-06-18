@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
+import { put } from "@vercel/blob"
 import { randomUUID } from "crypto"
 
 const MIME_TO_EXT: Record<string, string> = {
@@ -59,13 +58,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const fileName = `${randomUUID()}.${ext}`
-    const uploadDir = join("/tmp", "uploads")
-    await mkdir(uploadDir, { recursive: true })
-    const filePath = join(uploadDir, fileName)
-    await writeFile(filePath, buffer)
+    const fileName = `wines/${randomUUID()}.${ext}`
 
-    return NextResponse.json({ url: `/uploads/${fileName}` })
+    const blob = await put(fileName, buffer, {
+      access: "public",
+      contentType: file.type,
+    })
+
+    return NextResponse.json({ url: blob.url })
   } catch {
     return NextResponse.json(
       { error: "שגיאה בהעלאת הקובץ" },
