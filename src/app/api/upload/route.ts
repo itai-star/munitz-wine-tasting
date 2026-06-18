@@ -66,9 +66,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     })
 
     return NextResponse.json({ url: blob.url })
-  } catch {
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "שגיאה לא ידועה"
+    console.error("Upload error:", message)
     return NextResponse.json(
-      { error: "שגיאה בהעלאת הקובץ" },
+      { error: `שגיאה בהעלאת הקובץ: ${message}` },
       { status: 500 }
     )
   }
