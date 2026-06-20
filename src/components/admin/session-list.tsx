@@ -90,6 +90,12 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
             </div>
             <div className="flex gap-2 shrink-0">
               <Link
+                href={`/admin/sessions/${session.id}`}
+                className="text-xs px-3 py-1.5 bg-wine text-white rounded-lg hover:bg-wine-dark transition-colors"
+              >
+                תוצאות
+              </Link>
+              <Link
                 href={`/tasting/${session.id}`}
                 className="text-xs px-3 py-1.5 border border-stone-300 text-stone-600 rounded-lg hover:bg-stone-50 transition-colors"
               >
