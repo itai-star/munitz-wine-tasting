@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 
 type WineSummary = {
@@ -34,7 +35,33 @@ function getScoreEmoji(score: number): string {
   return "👎"
 }
 
+function buildSummaryText(summary: Summary): string {
+  const date = new Date(summary.sessionDate).toLocaleDateString("he-IL")
+  const lines: string[] = [
+    `🍷 סיכום טעימה - ${summary.sessionName}`,
+    `📅 ${date} | ${summary.participantName}`,
+    "",
+  ]
+
+  for (const wine of summary.wines) {
+    const year = wine.wineYear ? ` ${wine.wineYear}` : ""
+    const score = wine.myScore ? `${wine.myScore}/10` : "-"
+    lines.push(`${wine.wineName}${year}: ${score}`)
+    if (wine.myNotes) lines.push(`   "${wine.myNotes}"`)
+  }
+
+  if (summary.impression) {
+    lines.push("", `💭 ${summary.impression}`)
+  }
+
+  lines.push("", "יקב מוניץ 🍇 munitz-winery.co.il")
+
+  return lines.join("\n")
+}
+
 export function TastingSummary({ summary }: { summary: Summary }) {
+  const [copied, setCopied] = useState(false)
+
   const avgMyScore =
     summary.wines.filter((w) => w.myScore).length > 0
       ? summary.wines.reduce((sum, w) => sum + (w.myScore ?? 0), 0) /
@@ -44,6 +71,30 @@ export function TastingSummary({ summary }: { summary: Summary }) {
   const topWine = [...summary.wines].sort(
     (a, b) => (b.myScore ?? 0) - (a.myScore ?? 0)
   )[0]
+
+  const summaryText = buildSummaryText(summary)
+
+  async function handleShare() {
+    if (navigator.share) {
+      await navigator.share({
+        title: `סיכום טעימה - ${summary.sessionName}`,
+        text: summaryText,
+      })
+    } else {
+      await handleCopy()
+    }
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(summaryText)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleWhatsApp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(summaryText)}`
+    window.open(url, "_blank")
+  }
 
   return (
     <main className="flex-1 bg-stone-50">
@@ -166,6 +217,32 @@ export function TastingSummary({ summary }: { summary: Summary }) {
             <p className="text-stone-600">{summary.impression}</p>
           </div>
         )}
+
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-5">
+          <h2 className="text-base font-bold text-stone-800 mb-3 text-center">
+            שלח/י את הסיכום לעצמך
+          </h2>
+          <div className="flex gap-2">
+            <button
+              onClick={handleWhatsApp}
+              className="flex-1 bg-[#25D366] text-white py-2.5 rounded-lg hover:bg-[#20BD5A] transition-colors font-medium text-sm"
+            >
+              WhatsApp
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 bg-wine text-white py-2.5 rounded-lg hover:bg-wine-dark transition-colors font-medium text-sm"
+            >
+              שיתוף
+            </button>
+            <button
+              onClick={handleCopy}
+              className="flex-1 border border-stone-300 text-stone-600 py-2.5 rounded-lg hover:bg-stone-50 transition-colors font-medium text-sm"
+            >
+              {copied ? "הועתק!" : "העתק"}
+            </button>
+          </div>
+        </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6 text-center">
           <h2 className="text-lg font-bold text-stone-800 mb-2">
