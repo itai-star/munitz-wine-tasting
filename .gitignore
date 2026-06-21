@@ -13,3 +13,6 @@ outputs/
 rules/
 skilles/
 skills-lock.json
+
+.vercel
+.env*

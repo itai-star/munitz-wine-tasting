@@ -74,17 +74,6 @@ export function TastingSummary({ summary }: { summary: Summary }) {
 
   const summaryText = buildSummaryText(summary)
 
-  async function handleShare() {
-    if (navigator.share) {
-      await navigator.share({
-        title: `סיכום טעימה - ${summary.sessionName}`,
-        text: summaryText,
-      })
-    } else {
-      await handleCopy()
-    }
-  }
-
   async function handleCopy() {
     await navigator.clipboard.writeText(summaryText)
     setCopied(true)
@@ -228,12 +217,6 @@ export function TastingSummary({ summary }: { summary: Summary }) {
               className="flex-1 bg-[#25D366] text-white py-2.5 rounded-lg hover:bg-[#20BD5A] transition-colors font-medium text-sm"
             >
               WhatsApp
-            </button>
-            <button
-              onClick={handleShare}
-              className="flex-1 bg-wine text-white py-2.5 rounded-lg hover:bg-wine-dark transition-colors font-medium text-sm"
-            >
-              שיתוף
             </button>
             <button
               onClick={handleCopy}
