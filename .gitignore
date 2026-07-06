@@ -16,3 +16,4 @@ skills-lock.json
 
 .vercel
 .env*
+ga-service-account.json

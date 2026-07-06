@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "ga:report": "node --env-file=.env.local scripts/ga-report.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.10.0",
@@ -22,6 +23,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@google-analytics/data": "^6.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
