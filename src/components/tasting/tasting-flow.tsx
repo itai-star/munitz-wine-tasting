@@ -12,6 +12,7 @@ type Wine = {
   type: string | null
   description: string | null
   imageUrl: string | null
+  price: number | null
 }
 
 type WineRating = {
@@ -268,6 +269,11 @@ export function TastingFlow({
                     {currentWine.type}
                   </span>
                 )}
+                {currentWine.price != null && (
+                  <span className="bg-gold/10 text-stone-700 px-2 py-0.5 rounded text-xs font-medium">
+                    {currentWine.price} ₪
+                  </span>
+                )}
               </div>
               {currentWine.description && (
                 <p className="text-stone-400 text-sm mt-2">
@@ -281,7 +287,7 @@ export function TastingFlow({
                 דירוג
               </label>
               <div className="flex justify-center gap-2 flex-wrap">
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((score) => (
+                {Array.from({ length: 6 }, (_, i) => i + 5).map((score) => (
                   <button
                     key={score}
                     type="button"
@@ -298,9 +304,7 @@ export function TastingFlow({
               </div>
               {currentRating?.score && (
                 <p className="text-center text-sm text-stone-500 mt-2">
-                  {currentRating.score <= 3
-                    ? "לא אהבתי"
-                    : currentRating.score <= 5
+                  {currentRating.score <= 5
                     ? "בסדר"
                     : currentRating.score <= 7
                     ? "טוב"

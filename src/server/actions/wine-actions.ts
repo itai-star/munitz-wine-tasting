@@ -11,6 +11,7 @@ const CreateWineSchema = z.object({
   type: z.string().nullable(),
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
+  price: z.number().int().min(0).nullable(),
 })
 
 const UpdateWineSchema = CreateWineSchema.extend({
@@ -42,6 +43,7 @@ export async function createWine(input: z.infer<typeof CreateWineSchema>): Promi
         type: parsed.data.type,
         description: parsed.data.description,
         imageUrl: parsed.data.imageUrl,
+        price: parsed.data.price,
       },
     })
     return ok({ id: wine.id })
@@ -65,6 +67,7 @@ export async function updateWine(input: z.infer<typeof UpdateWineSchema>): Promi
         type: parsed.data.type,
         description: parsed.data.description,
         imageUrl: parsed.data.imageUrl,
+        price: parsed.data.price,
       },
     })
     return ok({ id: wine.id })

@@ -326,7 +326,7 @@ function StatCard({
 }
 
 function ScoreBar({ score }: { score: number }) {
-  const percentage = (score / 10) * 100
+  const percentage = ((score - 5) / 5) * 100
   return (
     <div className="w-full bg-stone-100 rounded-full h-2">
       <div

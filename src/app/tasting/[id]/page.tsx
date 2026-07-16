@@ -42,6 +42,7 @@ export default async function TastingPage({ params }: Props) {
     type: sw.wine.type,
     description: sw.wine.description,
     imageUrl: sw.wine.imageUrl,
+    price: sw.wine.price,
   }))
 
   return (

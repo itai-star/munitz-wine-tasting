@@ -9,7 +9,7 @@ const SubmitRatingSchema = z.object({
   sessionWineId: z.string().min(1),
   sessionId: z.string().min(1),
   participantName: z.string().min(1, "שם המשתתף נדרש"),
-  score: z.number().int().min(1).max(10),
+  score: z.number().int().min(5).max(10),
   notes: z.string().nullable(),
 })
 

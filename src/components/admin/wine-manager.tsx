@@ -12,6 +12,7 @@ type Wine = {
   type: string | null
   description: string | null
   imageUrl: string | null
+  price: number | null
 }
 
 const WINE_TYPES = ["אדום", "לבן", "רוזה", "מבעבע", "קינוח", "אחר"]
@@ -24,6 +25,7 @@ export function WineManager({ wines }: { wines: Wine[] }) {
   const [year, setYear] = useState("")
   const [type, setType] = useState("")
   const [description, setDescription] = useState("")
+  const [price, setPrice] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [error, setError] = useState("")
@@ -69,6 +71,7 @@ export function WineManager({ wines }: { wines: Wine[] }) {
         type: type || null,
         description: description || null,
         imageUrl,
+        price: price ? parseInt(price) : null,
       })
 
       if (result.success) {
@@ -76,6 +79,7 @@ export function WineManager({ wines }: { wines: Wine[] }) {
         setYear("")
         setType("")
         setDescription("")
+        setPrice("")
         clearImage()
         setShowForm(false)
         router.refresh()
@@ -174,6 +178,19 @@ export function WineManager({ wines }: { wines: Wine[] }) {
                 placeholder="תיאור קצר של היין"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">
+                מחיר (₪)
+              </label>
+              <input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                min="0"
+                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine/20 focus:border-wine outline-none"
+                placeholder="130"
+              />
+            </div>
           </div>
 
           <div className="mt-4">
@@ -268,6 +285,11 @@ export function WineManager({ wines }: { wines: Wine[] }) {
                     {wine.type && (
                       <span className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded">
                         {wine.type}
+                      </span>
+                    )}
+                    {wine.price != null && (
+                      <span className="text-xs bg-gold/10 text-stone-700 px-2 py-0.5 rounded font-medium">
+                        {wine.price} ₪
                       </span>
                     )}
                     {wine.description && (
