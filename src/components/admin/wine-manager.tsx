@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { createWine, deleteWine } from "@/server/actions/wine-actions"
+import { createWine, updateWine, deleteWine } from "@/server/actions/wine-actions"
 import { useRouter } from "next/navigation"
 
 type Wine = {
@@ -20,6 +20,7 @@ const WINE_TYPES = ["אדום", "לבן", "רוזה", "מבעבע", "קינוח"
 export function WineManager({ wines }: { wines: Wine[] }) {
   const router = useRouter()
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState("")
   const [year, setYear] = useState("")
@@ -28,6 +29,7 @@ export function WineManager({ wines }: { wines: Wine[] }) {
   const [price, setPrice] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null)
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -41,7 +43,33 @@ export function WineManager({ wines }: { wines: Wine[] }) {
   function clearImage() {
     setImageFile(null)
     setImagePreview(null)
+    setExistingImageUrl(null)
     if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  function resetForm() {
+    setEditingId(null)
+    setName("")
+    setYear("")
+    setType("")
+    setDescription("")
+    setPrice("")
+    clearImage()
+    setError("")
+  }
+
+  function handleEditClick(wine: Wine) {
+    setEditingId(wine.id)
+    setName(wine.name)
+    setYear(wine.year?.toString() ?? "")
+    setType(wine.type ?? "")
+    setDescription(wine.description ?? "")
+    setPrice(wine.price?.toString() ?? "")
+    setImageFile(null)
+    setImagePreview(wine.imageUrl)
+    setExistingImageUrl(wine.imageUrl)
+    setError("")
+    setShowForm(true)
   }
 
   async function uploadImage(): Promise<string | null> {
@@ -63,24 +91,24 @@ export function WineManager({ wines }: { wines: Wine[] }) {
     setError("")
 
     try {
-      const imageUrl = await uploadImage()
+      const uploadedUrl = await uploadImage()
+      const imageUrl = imageFile ? uploadedUrl : existingImageUrl
 
-      const result = await createWine({
+      const wineData = {
         name,
         year: year ? parseInt(year) : null,
         type: type || null,
         description: description || null,
         imageUrl,
         price: price ? parseInt(price) : null,
-      })
+      }
+
+      const result = editingId
+        ? await updateWine({ id: editingId, ...wineData })
+        : await createWine(wineData)
 
       if (result.success) {
-        setName("")
-        setYear("")
-        setType("")
-        setDescription("")
-        setPrice("")
-        clearImage()
+        resetForm()
         setShowForm(false)
         router.refresh()
       } else {
@@ -103,7 +131,15 @@ export function WineManager({ wines }: { wines: Wine[] }) {
       <div className="flex justify-between items-center mb-4">
         <p className="text-stone-500 text-sm">{wines.length} יינות</p>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            if (showForm) {
+              resetForm()
+              setShowForm(false)
+            } else {
+              resetForm()
+              setShowForm(true)
+            }
+          }}
           className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
         >
           {showForm ? "ביטול" : "+ יין חדש"}
@@ -115,7 +151,9 @@ export function WineManager({ wines }: { wines: Wine[] }) {
           onSubmit={handleSubmit}
           className="bg-white rounded-xl shadow-sm border border-stone-200 p-5 mb-6"
         >
-          <h3 className="font-semibold text-stone-800 mb-4">הוסף יין חדש</h3>
+          <h3 className="font-semibold text-stone-800 mb-4">
+            {editingId ? "עריכת יין" : "הוסף יין חדש"}
+          </h3>
           {error && (
             <p className="text-red-600 text-sm mb-3 bg-red-50 px-3 py-2 rounded">
               {error}
@@ -238,7 +276,7 @@ export function WineManager({ wines }: { wines: Wine[] }) {
               disabled={loading}
               className="bg-wine text-white px-6 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium disabled:opacity-50"
             >
-              {loading ? "שומר..." : "שמור"}
+              {loading ? "שומר..." : editingId ? "עדכן" : "שמור"}
             </button>
           </div>
         </form>
@@ -300,12 +338,20 @@ export function WineManager({ wines }: { wines: Wine[] }) {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(wine.id)}
-                className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                מחק
-              </button>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => handleEditClick(wine)}
+                  className="text-xs px-3 py-1.5 border border-stone-300 text-stone-600 rounded-lg hover:bg-stone-50 transition-colors"
+                >
+                  ערוך
+                </button>
+                <button
+                  onClick={() => handleDelete(wine.id)}
+                  className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  מחק
+                </button>
+              </div>
             </div>
           ))}
         </div>
