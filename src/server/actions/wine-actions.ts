@@ -1,5 +1,6 @@
 "use server"
 
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result, AppError } from "@/types"
@@ -12,7 +13,18 @@ const CreateWineSchema = z.object({
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   price: z.number().int().min(0).nullable(),
+  quantity: z.number().int().min(0),
+  barcode: z.string().trim().min(1).nullable(),
 })
+
+function isDuplicateBarcodeError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002" &&
+    Array.isArray(error.meta?.target) &&
+    error.meta.target.includes("barcode")
+  )
+}
 
 const UpdateWineSchema = CreateWineSchema.extend({
   id: z.string().min(1),
@@ -44,10 +56,15 @@ export async function createWine(input: z.infer<typeof CreateWineSchema>): Promi
         description: parsed.data.description,
         imageUrl: parsed.data.imageUrl,
         price: parsed.data.price,
+        quantity: parsed.data.quantity,
+        barcode: parsed.data.barcode,
       },
     })
     return ok({ id: wine.id })
-  } catch {
+  } catch (error) {
+    if (isDuplicateBarcodeError(error)) {
+      return err({ code: "DUPLICATE", message: "הברקוד הזה כבר משויך ליין אחר" })
+    }
     return err({ code: "SERVER_ERROR", message: "שגיאה ביצירת היין" })
   }
 }
@@ -68,10 +85,15 @@ export async function updateWine(input: z.infer<typeof UpdateWineSchema>): Promi
         description: parsed.data.description,
         imageUrl: parsed.data.imageUrl,
         price: parsed.data.price,
+        quantity: parsed.data.quantity,
+        barcode: parsed.data.barcode,
       },
     })
     return ok({ id: wine.id })
-  } catch {
+  } catch (error) {
+    if (isDuplicateBarcodeError(error)) {
+      return err({ code: "DUPLICATE", message: "הברקוד הזה כבר משויך ליין אחר" })
+    }
     return err({ code: "NOT_FOUND", message: "היין לא נמצא" })
   }
 }

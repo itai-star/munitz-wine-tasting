@@ -31,6 +31,12 @@ export default function AdminLayout({
               >
                 יינות
               </Link>
+              <Link
+                href="/admin/inventory"
+                className="hover:text-white transition-colors"
+              >
+                מלאי
+              </Link>
             </nav>
           </div>
           <Link

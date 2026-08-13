@@ -15,10 +15,22 @@ model Wine {
   description String?
   imageUrl    String?
   price       Int?
+  quantity    Int      @default(0)
+  barcode     String?  @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   tastingSessions TastingSessionWine[]
+  withdrawals     WineWithdrawal[]
+}
+
+model WineWithdrawal {
+  id        String   @id @default(cuid())
+  wineId    String
+  quantity  Int
+  createdAt DateTime @default(now())
+
+  wine Wine @relation(fields: [wineId], references: [id], onDelete: Cascade)
 }
 
 model TastingSession {

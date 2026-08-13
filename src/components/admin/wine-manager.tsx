@@ -13,7 +13,11 @@ type Wine = {
   description: string | null
   imageUrl: string | null
   price: number | null
+  quantity: number
+  barcode: string | null
 }
+
+const LOW_STOCK_THRESHOLD = 3
 
 const WINE_TYPES = ["אדום", "לבן", "רוזה", "מבעבע", "קינוח", "אחר"]
 
@@ -27,6 +31,8 @@ export function WineManager({ wines }: { wines: Wine[] }) {
   const [type, setType] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
+  const [quantity, setQuantity] = useState("")
+  const [barcode, setBarcode] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null)
@@ -54,6 +60,8 @@ export function WineManager({ wines }: { wines: Wine[] }) {
     setType("")
     setDescription("")
     setPrice("")
+    setQuantity("")
+    setBarcode("")
     clearImage()
     setError("")
   }
@@ -65,6 +73,8 @@ export function WineManager({ wines }: { wines: Wine[] }) {
     setType(wine.type ?? "")
     setDescription(wine.description ?? "")
     setPrice(wine.price?.toString() ?? "")
+    setQuantity(wine.quantity.toString())
+    setBarcode(wine.barcode ?? "")
     setImageFile(null)
     setImagePreview(wine.imageUrl)
     setExistingImageUrl(wine.imageUrl)
@@ -101,6 +111,8 @@ export function WineManager({ wines }: { wines: Wine[] }) {
         description: description || null,
         imageUrl,
         price: price ? parseInt(price) : null,
+        quantity: quantity ? parseInt(quantity) : 0,
+        barcode: barcode.trim() || null,
       }
 
       const result = editingId
@@ -229,6 +241,31 @@ export function WineManager({ wines }: { wines: Wine[] }) {
                 placeholder="130"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">
+                כמות במלאי
+              </label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                min="0"
+                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine/20 focus:border-wine outline-none"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">
+                ברקוד
+              </label>
+              <input
+                type="text"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine/20 focus:border-wine outline-none"
+                placeholder="לדוגמה: 7290012345678"
+              />
+            </div>
           </div>
 
           <div className="mt-4">
@@ -330,6 +367,15 @@ export function WineManager({ wines }: { wines: Wine[] }) {
                         {wine.price} ₪
                       </span>
                     )}
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded font-medium ${
+                        wine.quantity <= LOW_STOCK_THRESHOLD
+                          ? "bg-red-50 text-red-600"
+                          : "bg-stone-100 text-stone-600"
+                      }`}
+                    >
+                      🍾 {wine.quantity} במלאי
+                    </span>
                     {wine.description && (
                       <span className="text-xs text-stone-400">
                         {wine.description}
