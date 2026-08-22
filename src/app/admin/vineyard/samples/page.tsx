@@ -5,15 +5,16 @@ import { SampleBlockFilter } from "@/components/vineyard/sample-block-filter"
 import { SampleForm } from "@/components/vineyard/sample-form"
 import { SampleExcelImport } from "@/components/vineyard/sample-excel-import"
 import { RipenessCharts } from "@/components/vineyard/ripeness-charts"
+import { SampleTable } from "@/components/vineyard/sample-table"
 
 export const dynamic = "force-dynamic"
 
 export default async function SamplesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ vintage?: string; block?: string }>
+  searchParams: Promise<{ vintage?: string; blocks?: string }>
 }) {
-  const { vintage: vintageParam, block: blockParam } = await searchParams
+  const { vintage: vintageParam, blocks: blocksParam } = await searchParams
 
   const vintages = await prisma.vintage.findMany({ orderBy: { year: "desc" } })
 
@@ -33,12 +34,12 @@ export default async function SamplesPage({
     vintages.find((v) => v.year === Number(vintageParam)) ?? vintages[0]
 
   const blocks = await prisma.vineyardBlock.findMany({ orderBy: { name: "asc" } })
-  const selectedBlockId = blockParam ?? ""
+  const selectedBlockIds = blocksParam ? blocksParam.split(",").filter(Boolean) : []
 
   const samples = await prisma.ripenessSample.findMany({
     where: {
       vintageId: selectedVintage.id,
-      ...(selectedBlockId ? { blockId: selectedBlockId } : {}),
+      ...(selectedBlockIds.length > 0 ? { blockId: { in: selectedBlockIds } } : {}),
     },
     include: { block: { select: { name: true } } },
     orderBy: { sampleDate: "asc" },
@@ -48,13 +49,10 @@ export default async function SamplesPage({
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-stone-800">דגימות הבשלה</h1>
-        <div className="flex gap-4 flex-wrap">
-          <VintageSelect
-            vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
-            selectedYear={selectedVintage.year}
-          />
-          <SampleBlockFilter blocks={blocks} selectedBlockId={selectedBlockId} />
-        </div>
+        <VintageSelect
+          vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
+          selectedYear={selectedVintage.year}
+        />
       </div>
 
       {blocks.length === 0 ? (
@@ -68,6 +66,8 @@ export default async function SamplesPage({
             <SampleExcelImport vintageId={selectedVintage.id} />
           </div>
 
+          <SampleBlockFilter blocks={blocks} selectedBlockIds={selectedBlockIds} />
+
           <RipenessCharts
             samples={samples.map((s) => ({
               sampleDate: s.sampleDate,
@@ -78,41 +78,17 @@ export default async function SamplesPage({
             }))}
           />
 
-          <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 text-stone-500 text-right">
-                  <th className="px-4 py-2 font-medium">תאריך</th>
-                  <th className="px-4 py-2 font-medium">כרם</th>
-                  <th className="px-4 py-2 font-medium">בומה</th>
-                  <th className="px-4 py-2 font-medium">PH</th>
-                  <th className="px-4 py-2 font-medium">חמיצות</th>
-                  <th className="px-4 py-2 font-medium">צבע</th>
-                </tr>
-              </thead>
-              <tbody>
-                {samples.map((s) => (
-                  <tr key={s.id} className="border-b border-stone-100 last:border-0">
-                    <td className="px-4 py-2">
-                      {new Date(s.sampleDate).toLocaleDateString("he-IL")}
-                    </td>
-                    <td className="px-4 py-2">{s.block.name}</td>
-                    <td className="px-4 py-2">{s.brix ?? "—"}</td>
-                    <td className="px-4 py-2">{s.ph ?? "—"}</td>
-                    <td className="px-4 py-2">{s.titratableAcidity ?? "—"}</td>
-                    <td className="px-4 py-2">{s.color ?? "—"}</td>
-                  </tr>
-                ))}
-                {samples.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-stone-400">
-                      אין עדיין דגימות לעונה זו
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <SampleTable
+            samples={samples.map((s) => ({
+              id: s.id,
+              sampleDate: s.sampleDate,
+              brix: s.brix,
+              ph: s.ph,
+              titratableAcidity: s.titratableAcidity,
+              color: s.color,
+              blockName: s.block.name,
+            }))}
+          />
         </>
       )}
     </div>

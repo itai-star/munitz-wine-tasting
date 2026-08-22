@@ -47,6 +47,26 @@ export async function listSamples(
   }
 }
 
+const DeleteSamplesSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, "לא נבחרו דגימות למחיקה"),
+})
+
+export async function deleteSamples(ids: string[]): Promise<Result<{ deleted: number }>> {
+  const parsed = DeleteSamplesSchema.safeParse({ ids })
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  try {
+    const result = await prisma.ripenessSample.deleteMany({
+      where: { id: { in: parsed.data.ids } },
+    })
+    return ok({ deleted: result.count })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה במחיקת הדגימות" })
+  }
+}
+
 const EXPECTED_HEADERS = ["תאריך", "כרם", "בומה", "PH", "חמיצות", "צבע"] as const
 
 type ImportRowError = { row: number; message: string }
@@ -71,6 +91,14 @@ export async function importSamplesFromExcel(
     blocks.map((b) => [normalizeHeader(b.name), b.id])
   )
 
+  const existingSamples = await prisma.ripenessSample.findMany({
+    where: { vintageId },
+    select: { blockId: true, sampleDate: true },
+  })
+  const seenKeys = new Set(
+    existingSamples.map((s) => sampleKey(s.blockId, s.sampleDate))
+  )
+
   let workbook: ExcelJS.Workbook
   try {
     const buffer = await file.arrayBuffer()
@@ -88,7 +116,7 @@ export async function importSamplesFromExcel(
   const headerRow = sheet.getRow(1)
   const columnIndexByHeader = new Map<string, number>()
   headerRow.eachCell((cell, colNumber) => {
-    columnIndexByHeader.set(normalizeHeader(String(cell.value ?? "")), colNumber)
+    columnIndexByHeader.set(normalizeHeader(cell.text), colNumber)
   })
 
   const missingHeaders = EXPECTED_HEADERS.filter(
@@ -108,13 +136,12 @@ export async function importSamplesFromExcel(
     const row = sheet.getRow(rowNumber)
     if (row.cellCount === 0) continue
 
-    const getCell = (header: string) => {
+    const getCell = (header: string): ExcelJS.Cell | null => {
       const colIndex = columnIndexByHeader.get(normalizeHeader(header))
-      return colIndex ? row.getCell(colIndex).value : null
+      return colIndex ? row.getCell(colIndex) : null
     }
 
-    const blockNameRaw = getCell("כרם")
-    const blockName = blockNameRaw != null ? String(blockNameRaw).trim() : ""
+    const blockName = cellText(getCell("כרם"))
     if (!blockName) continue
 
     const blockId = blockByName.get(normalizeHeader(blockName))
@@ -123,12 +150,21 @@ export async function importSamplesFromExcel(
       continue
     }
 
-    const dateCell = getCell("תאריך")
-    const sampleDate = parseExcelDate(dateCell)
+    const sampleDate = parseExcelDate(getCell("תאריך"))
     if (!sampleDate) {
       errors.push({ row: rowNumber, message: "תאריך חסר או לא תקין" })
       continue
     }
+
+    const key = sampleKey(blockId, sampleDate)
+    if (seenKeys.has(key)) {
+      errors.push({
+        row: rowNumber,
+        message: `כבר קיימת דגימה לתאריך ולכרם הזה בעונה — דולגה (כפילות)`,
+      })
+      continue
+    }
+    seenKeys.add(key)
 
     const parsed = SampleSchema.safeParse({
       vintageId,
@@ -160,27 +196,42 @@ export async function importSamplesFromExcel(
   }
 }
 
-function normalizeHeader(value: string): string {
-  return value.trim().toLowerCase()
+function sampleKey(blockId: string, sampleDate: Date): string {
+  return `${blockId}|${sampleDate.toISOString().slice(0, 10)}`
 }
 
-function parseNumericCell(value: ExcelJS.CellValue): number | null {
-  if (value === null || value === undefined || value === "") return null
-  const num = typeof value === "number" ? value : Number(String(value).replace(",", "."))
+const INVISIBLE_CHARS = new RegExp("[\\u200B-\\u200F\\u202A-\\u202E\\uFEFF]", "g")
+
+function normalizeHeader(value: string): string {
+  return value.replace(INVISIBLE_CHARS, "").trim().toLowerCase()
+}
+
+function cellText(cell: ExcelJS.Cell | null): string {
+  if (!cell) return ""
+  return String(cell.text ?? "")
+    .replace(INVISIBLE_CHARS, "")
+    .trim()
+}
+
+function parseNumericCell(cell: ExcelJS.Cell | null): number | null {
+  if (!cell) return null
+  if (typeof cell.value === "number") return cell.value
+  const text = cellText(cell)
+  if (text.length === 0) return null
+  const num = Number(text.replace(",", "."))
   return Number.isFinite(num) ? num : null
 }
 
-function parseTextCell(value: ExcelJS.CellValue): string | null {
-  if (value === null || value === undefined) return null
-  const text = String(value).trim()
+function parseTextCell(cell: ExcelJS.Cell | null): string | null {
+  const text = cellText(cell)
   return text.length > 0 ? text : null
 }
 
-function parseExcelDate(value: ExcelJS.CellValue): Date | null {
-  if (value instanceof Date) return value
-  if (typeof value === "string" && value.trim().length > 0) {
-    const parsed = new Date(value)
-    return Number.isNaN(parsed.getTime()) ? null : parsed
-  }
-  return null
+function parseExcelDate(cell: ExcelJS.Cell | null): Date | null {
+  if (!cell) return null
+  if (cell.value instanceof Date) return cell.value
+  const text = cellText(cell)
+  if (text.length === 0) return null
+  const parsed = new Date(text)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
 }
