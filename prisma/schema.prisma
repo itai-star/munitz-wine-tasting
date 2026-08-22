@@ -85,3 +85,103 @@ model Impression {
 
   @@unique([sessionId, participantName])
 }
+
+model Vintage {
+  id        String   @id @default(cuid())
+  year      Int      @unique
+  label     String
+  createdAt DateTime @default(now())
+
+  samples RipenessSample[]
+  batches FermentationBatch[]
+}
+
+model VineyardBlock {
+  id                     String   @id @default(cuid())
+  name                   String
+  location               String?
+  elevationMeters        Int?
+  slopeDirection         String?
+  slopeAngleDegrees      Float?
+  soilType               String?
+  variety                String
+  rootstock              String?
+  plantingYear           Int?
+  plantingDensity        String?
+  rowDirection           String?
+  trellisMethod          String?
+  irrigationType         String?
+  estimatedYieldPerDunam Float?
+  diseaseHistory         String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  samples       RipenessSample[]
+  fermentations FermentationBatchBlock[]
+}
+
+model RipenessSample {
+  id                String   @id @default(cuid())
+  vintageId         String
+  blockId           String
+  sampleDate        DateTime
+  brix              Float?
+  ph                Float?
+  titratableAcidity Float?
+  color             String?
+  createdAt         DateTime @default(now())
+
+  vintage Vintage       @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+  block   VineyardBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@index([vintageId, blockId])
+}
+
+model FermentationBatch {
+  id           String    @id @default(cuid())
+  vintageId    String
+  tankName     String
+  volumeLiters Float?
+  yeastStrain  String?
+  startDate    DateTime
+  endDate      DateTime?
+  status       String    @default("active")
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  vintage  Vintage                  @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+  blocks   FermentationBatchBlock[]
+  readings FermentationReading[]
+}
+
+model FermentationBatchBlock {
+  id      String  @id @default(cuid())
+  batchId String
+  blockId String
+  notes   String?
+
+  batch FermentationBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  block VineyardBlock     @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, blockId])
+}
+
+model FermentationReading {
+  id                 String   @id @default(cuid())
+  batchId            String
+  readingDate        DateTime
+  brix               Float?
+  specificGravity    Float?
+  temperatureCelsius Float?
+  ph                 Float?
+  yeastAdditions     String?
+  cellarWork         String?
+  so2Addition        String?
+  tasteAromaNotes    String?
+  createdAt          DateTime @default(now())
+
+  batch FermentationBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, readingDate])
+}

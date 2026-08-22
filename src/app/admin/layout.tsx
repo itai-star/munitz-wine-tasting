@@ -37,6 +37,18 @@ export default function AdminLayout({
               >
                 מלאי
               </Link>
+              <Link
+                href="/admin/vineyard"
+                className="hover:text-white transition-colors"
+              >
+                כרם
+              </Link>
+              <Link
+                href="/admin/fermentation"
+                className="hover:text-white transition-colors"
+              >
+                תסיסה
+              </Link>
             </nav>
           </div>
           <Link
