@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { addReading } from "@/server/actions/fermentation-actions"
+import type { FermentationReading } from "@prisma/client"
+import { addReading, updateReading } from "@/server/actions/fermentation-actions"
 
 const FormSchema = z.object({
   readingDate: z.string().min(1, "יש לבחור תאריך"),
@@ -43,7 +44,29 @@ const emptyValues: FormValues = {
   tasteAromaNotes: "",
 }
 
-export function ReadingForm({ batchId }: { batchId: string }) {
+function toFormValues(reading: FermentationReading): FormValues {
+  return {
+    readingDate: new Date(reading.readingDate).toISOString().slice(0, 10),
+    brix: reading.brix?.toString() ?? "",
+    specificGravity: reading.specificGravity?.toString() ?? "",
+    temperatureCelsius: reading.temperatureCelsius?.toString() ?? "",
+    ph: reading.ph?.toString() ?? "",
+    yeastAdditions: reading.yeastAdditions ?? "",
+    cellarWork: reading.cellarWork ?? "",
+    so2Addition: reading.so2Addition ?? "",
+    tasteAromaNotes: reading.tasteAromaNotes ?? "",
+  }
+}
+
+export function ReadingForm({
+  batchId,
+  editingReading,
+  onDone,
+}: {
+  batchId: string
+  editingReading?: FermentationReading | null
+  onDone?: () => void
+}) {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
   const {
@@ -56,10 +79,13 @@ export function ReadingForm({ batchId }: { batchId: string }) {
     defaultValues: emptyValues,
   })
 
+  useEffect(() => {
+    reset(editingReading ? toFormValues(editingReading) : emptyValues)
+  }, [editingReading, reset])
+
   async function onSubmit(values: FormValues) {
     setServerError("")
-    const result = await addReading({
-      batchId,
+    const data = {
       readingDate: new Date(values.readingDate),
       brix: toNullableNumber(values.brix),
       specificGravity: toNullableNumber(values.specificGravity),
@@ -69,9 +95,17 @@ export function ReadingForm({ batchId }: { batchId: string }) {
       cellarWork: toNullableText(values.cellarWork),
       so2Addition: toNullableText(values.so2Addition),
       tasteAromaNotes: toNullableText(values.tasteAromaNotes),
-    })
+    }
+    const result = editingReading
+      ? await updateReading({ id: editingReading.id, ...data })
+      : await addReading({ batchId, ...data })
+
     if (result.success) {
-      reset({ ...emptyValues, readingDate: values.readingDate })
+      if (editingReading) {
+        onDone?.()
+      } else {
+        reset({ ...emptyValues, readingDate: values.readingDate })
+      }
       router.refresh()
     } else {
       setServerError(result.error.message)
@@ -87,6 +121,10 @@ export function ReadingForm({ batchId }: { batchId: string }) {
       onSubmit={handleSubmit(onSubmit)}
       className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 space-y-4"
     >
+      <h3 className="font-medium text-stone-800">
+        {editingReading ? "עריכת קריאה" : "קריאה יומית חדשה"}
+      </h3>
+
       {serverError && (
         <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded">{serverError}</p>
       )}
@@ -162,13 +200,28 @@ export function ReadingForm({ batchId }: { batchId: string }) {
         <textarea className={inputClass} rows={2} {...register("tasteAromaNotes")} />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
-      >
-        {isSubmitting ? "שומר..." : "שמור קריאה יומית"}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
+        >
+          {isSubmitting
+            ? "שומר..."
+            : editingReading
+              ? "שמור שינויים"
+              : "שמור קריאה יומית"}
+        </button>
+        {editingReading && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="px-6 py-3 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors font-medium"
+          >
+            ביטול
+          </button>
+        )}
+      </div>
     </form>
   )
 }

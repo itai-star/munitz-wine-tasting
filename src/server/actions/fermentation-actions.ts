@@ -132,6 +132,40 @@ export async function addReading(
   }
 }
 
+const UpdateReadingSchema = z.object({
+  id: z.string().min(1),
+  readingDate: z.coerce.date(),
+  brix: z.number().nullable(),
+  specificGravity: z.number().nullable(),
+  temperatureCelsius: z.number().nullable(),
+  ph: z.number().nullable(),
+  yeastAdditions: z.string().trim().min(1).nullable(),
+  cellarWork: z.string().trim().min(1).nullable(),
+  so2Addition: z.string().trim().min(1).nullable(),
+  tasteAromaNotes: z.string().trim().min(1).nullable(),
+})
+
+export async function updateReading(
+  input: z.infer<typeof UpdateReadingSchema>
+): Promise<Result<{ id: string }>> {
+  const parsed = UpdateReadingSchema.safeParse(input)
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  const { id, ...data } = parsed.data
+
+  try {
+    const reading = await prisma.fermentationReading.update({
+      where: { id },
+      data,
+    })
+    return ok({ id: reading.id })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בעדכון הקריאה" })
+  }
+}
+
 export async function listReadings(
   batchId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.fermentationReading.findMany>>>> {

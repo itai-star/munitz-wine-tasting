@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { AdminNav } from "@/components/admin/admin-nav"
 
 export default function AdminLayout({
   children,
@@ -21,35 +22,7 @@ export default function AdminLayout({
               />
               <span className="text-lg font-bold">ניהול טעימות</span>
             </Link>
-            <nav className="flex gap-4 text-sm text-white/80">
-              <Link href="/admin" className="hover:text-white transition-colors">
-                טעימות
-              </Link>
-              <Link
-                href="/admin/wines"
-                className="hover:text-white transition-colors"
-              >
-                יינות
-              </Link>
-              <Link
-                href="/admin/inventory"
-                className="hover:text-white transition-colors"
-              >
-                מלאי
-              </Link>
-              <Link
-                href="/admin/vineyard"
-                className="hover:text-white transition-colors"
-              >
-                כרם
-              </Link>
-              <Link
-                href="/admin/fermentation"
-                className="hover:text-white transition-colors"
-              >
-                תסיסה
-              </Link>
-            </nav>
+            <AdminNav />
           </div>
           <Link
             href="/"
@@ -59,7 +32,7 @@ export default function AdminLayout({
           </Link>
         </div>
       </header>
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8 pb-24 md:pb-8">
         {children}
       </main>
     </div>

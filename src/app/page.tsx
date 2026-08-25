@@ -32,7 +32,7 @@ export default async function HomePage() {
           <h2 className="text-2xl font-bold text-stone-800">טעימות פעילות</h2>
           <Link
             href="/admin"
-            className="text-sm text-wine hover:text-wine-dark underline"
+            className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
           >
             ניהול
           </Link>

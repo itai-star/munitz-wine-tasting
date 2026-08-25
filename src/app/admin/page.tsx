@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { SessionList } from "@/components/admin/session-list"
+import { AdminDashboardCards } from "@/components/admin/admin-dashboard-cards"
 
 export const dynamic = "force-dynamic"
 
@@ -18,6 +19,8 @@ export default async function AdminPage() {
 
   return (
     <div>
+      <AdminDashboardCards />
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-stone-800">טעימות</h1>
         <Link
