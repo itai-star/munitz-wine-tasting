@@ -57,11 +57,23 @@ export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-x-auto">
       <div className="flex items-center justify-between gap-3 p-3 border-b border-stone-200 flex-wrap">
-        <span className="text-sm text-stone-500">
-          {selected.size > 0
-            ? `${selected.size} נבחרו`
-            : `${intakes.length} קליטות · סה״כ ${totalWeight.toLocaleString("he-IL")} ק״ג · ${totalBins.toLocaleString("he-IL")} משטחים`}
-        </span>
+        <div className="flex items-center gap-3">
+          <label className="sm:hidden flex items-center gap-1.5 text-sm text-stone-500">
+            <input
+              type="checkbox"
+              checked={intakes.length > 0 && selected.size === intakes.length}
+              onChange={toggleAll}
+              aria-label="בחר הכל"
+              className="accent-wine w-4 h-4"
+            />
+            הכל
+          </label>
+          <span className="text-sm text-stone-500">
+            {selected.size > 0
+              ? `${selected.size} נבחרו`
+              : `${intakes.length} קליטות · סה״כ ${totalWeight.toLocaleString("he-IL")} ק״ג · ${totalBins.toLocaleString("he-IL")} משטחים`}
+          </span>
+        </div>
         <button
           type="button"
           onClick={handleDelete}
@@ -74,7 +86,41 @@ export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
 
       {error && <p className="text-red-600 text-sm px-3 py-2">{error}</p>}
 
-      <table className="w-full text-sm">
+      {/* Mobile: stacked cards */}
+      <div className="sm:hidden divide-y divide-stone-100">
+        {intakes.map((i) => (
+          <label key={i.id} className="flex items-start gap-3 p-4 active:bg-stone-50">
+            <input
+              type="checkbox"
+              checked={selected.has(i.id)}
+              onChange={() => toggle(i.id)}
+              aria-label={`בחר קליטה מ-${new Date(i.intakeDate).toLocaleDateString("he-IL")}`}
+              className="accent-wine w-5 h-5 mt-0.5 shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-stone-800">{i.blockName}</span>
+                <span className="text-xs text-stone-500 shrink-0">
+                  {new Date(i.intakeDate).toLocaleDateString("he-IL")}
+                </span>
+              </div>
+              <div className="mt-1 flex gap-4 text-sm text-stone-600">
+                <span>{i.totalWeightKg.toLocaleString("he-IL")} ק&quot;ג</span>
+                <span>{i.binCount} משטחים</span>
+              </div>
+              {i.notes && <p className="mt-1 text-xs text-stone-400">{i.notes}</p>}
+            </div>
+          </label>
+        ))}
+        {intakes.length === 0 && (
+          <p className="px-4 py-6 text-center text-stone-400 text-sm">
+            אין עדיין קליטות ענבים לעונה זו
+          </p>
+        )}
+      </div>
+
+      {/* Desktop / tablet: table */}
+      <table className="w-full text-sm hidden sm:table">
         <thead>
           <tr className="border-b border-stone-200 text-stone-500 text-right">
             <th className="px-4 py-2 font-medium w-8">

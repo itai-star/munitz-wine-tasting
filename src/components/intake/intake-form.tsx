@@ -77,7 +77,7 @@ export function IntakeForm({
         <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded">{serverError}</p>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>תאריך</label>
           <input type="date" className={inputClass} {...register("intakeDate")} />
@@ -96,7 +96,7 @@ export function IntakeForm({
       {errors.blockId && <p className="text-red-600 text-xs">{errors.blockId.message}</p>}
       {errors.intakeDate && <p className="text-red-600 text-xs">{errors.intakeDate.message}</p>}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>משקל כולל (ק&quot;ג)</label>
           <input
