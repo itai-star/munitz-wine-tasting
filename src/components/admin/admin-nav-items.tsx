@@ -3,6 +3,7 @@ import {
   WineIcon,
   InventoryIcon,
   VineyardIcon,
+  IntakeIcon,
   FermentationIcon,
 } from "@/components/admin/nav-icons"
 
@@ -37,6 +38,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "כרם",
     description: "בלוקים ודגימות בשלות",
     icon: VineyardIcon,
+  },
+  {
+    href: "/admin/intake",
+    label: "קליטת ענבים",
+    description: "רישום משקל ומשטחים בקליטה",
+    icon: IntakeIcon,
   },
   {
     href: "/admin/fermentation",

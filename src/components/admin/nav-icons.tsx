@@ -50,6 +50,18 @@ export function VineyardIcon({ className }: IconProps) {
   )
 }
 
+export function IntakeIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M3 8h18l-1.5 12a1.5 1.5 0 0 1-1.5 1.3H6a1.5 1.5 0 0 1-1.5-1.3L3 8Z" />
+      <path d="M7 8V6a5 5 0 0 1 10 0v2" />
+      <path d="M8.5 12v6" />
+      <path d="M12 12v6" />
+      <path d="M15.5 12v6" />
+    </svg>
+  )
+}
+
 export function FermentationIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

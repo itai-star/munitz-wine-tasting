@@ -94,6 +94,7 @@ model Vintage {
 
   samples RipenessSample[]
   batches FermentationBatch[]
+  intakes GrapeIntake[]
 }
 
 model VineyardBlock {
@@ -118,6 +119,7 @@ model VineyardBlock {
 
   samples       RipenessSample[]
   fermentations FermentationBatchBlock[]
+  intakes       GrapeIntake[]
 }
 
 model RipenessSample {
@@ -165,6 +167,22 @@ model FermentationBatchBlock {
   block VineyardBlock     @relation(fields: [blockId], references: [id], onDelete: Cascade)
 
   @@unique([batchId, blockId])
+}
+
+model GrapeIntake {
+  id            String   @id @default(cuid())
+  vintageId     String
+  blockId       String
+  intakeDate    DateTime
+  totalWeightKg Float
+  binCount      Int
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  vintage Vintage       @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+  block   VineyardBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@index([vintageId, blockId])
 }
 
 model FermentationReading {
