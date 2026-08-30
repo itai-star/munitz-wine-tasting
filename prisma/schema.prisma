@@ -140,17 +140,20 @@ model RipenessSample {
 }
 
 model FermentationBatch {
-  id           String    @id @default(cuid())
-  vintageId    String
-  tankName     String
-  volumeLiters Float?
-  yeastStrain  String?
-  startDate    DateTime
-  endDate      DateTime?
-  status       String    @default("active")
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  vintageId            String
+  tankName             String
+  wineType             String?
+  volumeLiters         Float?
+  litersAfterPressing  Float?
+  litersAfterSettling  Float?
+  yeastStrain          String?
+  startDate            DateTime
+  endDate              DateTime?
+  status               String    @default("active")
+  notes                String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   vintage  Vintage                  @relation(fields: [vintageId], references: [id], onDelete: Cascade)
   blocks   FermentationBatchBlock[]

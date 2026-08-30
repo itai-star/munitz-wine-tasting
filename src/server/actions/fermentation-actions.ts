@@ -5,10 +5,15 @@ import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
 
+const WINE_TYPES = ["אדום", "לבן", "רוזה"] as const
+
 const CreateBatchSchema = z.object({
   vintageId: z.string().min(1),
   tankName: z.string().min(1, "שם/מספר המיכל נדרש"),
+  wineType: z.enum(WINE_TYPES).nullable(),
   volumeLiters: z.number().nullable(),
+  litersAfterPressing: z.number().nullable(),
+  litersAfterSettling: z.number().nullable(),
   yeastStrain: z.string().trim().min(1).nullable(),
   startDate: z.coerce.date(),
   notes: z.string().trim().min(1).nullable(),
@@ -37,6 +42,43 @@ export async function createBatch(
     return ok({ id: batch.id })
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה ביצירת המיכל" })
+  }
+}
+
+const UpdateBatchSchema = CreateBatchSchema.extend({
+  id: z.string().min(1),
+})
+
+export async function updateBatch(
+  input: z.infer<typeof UpdateBatchSchema>
+): Promise<Result<{ id: string }>> {
+  const parsed = UpdateBatchSchema.safeParse(input)
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  const { id, blockIds, vintageId: _vintageId, ...batchData } = parsed.data
+
+  try {
+    await prisma.$transaction([
+      prisma.fermentationBatch.update({ where: { id }, data: batchData }),
+      prisma.fermentationBatchBlock.deleteMany({ where: { batchId: id } }),
+      prisma.fermentationBatchBlock.createMany({
+        data: blockIds.map((blockId) => ({ batchId: id, blockId })),
+      }),
+    ])
+    return ok({ id })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בעדכון המיכל" })
+  }
+}
+
+export async function deleteBatch(id: string): Promise<Result<void>> {
+  try {
+    await prisma.fermentationBatch.delete({ where: { id } })
+    return ok(undefined)
+  } catch {
+    return err({ code: "NOT_FOUND", message: "המיכל לא נמצא" })
   }
 }
 
