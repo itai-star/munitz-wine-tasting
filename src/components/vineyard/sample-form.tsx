@@ -86,7 +86,7 @@ export function SampleForm({
         <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded">{serverError}</p>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>תאריך</label>
           <input type="date" className={inputClass} {...register("sampleDate")} />
@@ -105,7 +105,7 @@ export function SampleForm({
       {errors.blockId && <p className="text-red-600 text-xs">{errors.blockId.message}</p>}
       {errors.sampleDate && <p className="text-red-600 text-xs">{errors.sampleDate.message}</p>}
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div>
           <label className={labelClass}>בומה</label>
           <input
