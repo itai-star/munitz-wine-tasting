@@ -101,7 +101,7 @@ export function RipenessCharts({ samples }: { samples: RipenessSamplePoint[] }) 
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <MetricChart title="בומה (Brix) לאורך זמן" samples={samples} metric="brix" />
+      <MetricChart title="בומה לאורך זמן" samples={samples} metric="brix" />
       <MetricChart title="חמיצות (TA) לאורך זמן" samples={samples} metric="titratableAcidity" />
       <MetricChart title="pH לאורך זמן" samples={samples} metric="ph" />
       <MetricChart title="יחס בומה/חמיצות" samples={samples} metric="ratio" />

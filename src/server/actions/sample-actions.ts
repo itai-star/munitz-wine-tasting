@@ -6,13 +6,22 @@ import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
 
+function round2(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+const roundedNumber = z
+  .number()
+  .nullable()
+  .transform((value) => (value == null ? null : round2(value)))
+
 const SampleSchema = z.object({
   vintageId: z.string().min(1),
   blockId: z.string().min(1),
   sampleDate: z.coerce.date(),
-  brix: z.number().nullable(),
-  ph: z.number().nullable(),
-  titratableAcidity: z.number().nullable(),
+  brix: roundedNumber,
+  ph: roundedNumber,
+  titratableAcidity: roundedNumber,
   color: z.string().trim().min(1).nullable(),
 })
 
