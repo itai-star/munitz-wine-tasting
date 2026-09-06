@@ -92,9 +92,10 @@ model Vintage {
   label     String
   createdAt DateTime @default(now())
 
-  samples RipenessSample[]
-  batches FermentationBatch[]
-  intakes GrapeIntake[]
+  samples       RipenessSample[]
+  batches       FermentationBatch[]
+  intakes       GrapeIntake[]
+  finishedWines FinishedWine[]
 }
 
 model VineyardBlock {
@@ -205,4 +206,20 @@ model FermentationReading {
   batch FermentationBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
   @@unique([batchId, readingDate])
+}
+
+model FinishedWine {
+  id                       String   @id @default(cuid())
+  vintageId                String
+  tank                     String
+  harvestedWeightKg        Int
+  litersAfterPressing      Int?
+  litersAfterFirstRacking  Int?
+  litersAfterSecondRacking Int?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  vintage Vintage @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+
+  @@index([vintageId])
 }

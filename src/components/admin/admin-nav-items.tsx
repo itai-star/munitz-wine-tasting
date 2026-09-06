@@ -5,6 +5,7 @@ import {
   VineyardIcon,
   IntakeIcon,
   FermentationIcon,
+  FinishedWineIcon,
 } from "@/components/admin/nav-icons"
 
 export type AdminNavItem = {
@@ -50,6 +51,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "תסיסה",
     description: "מיכלים וקריאות יומיות",
     icon: FermentationIcon,
+  },
+  {
+    href: "/admin/finished-wine",
+    label: "יין מוכן",
+    description: "נצילות לפי מכל ולפי בציר",
+    icon: FinishedWineIcon,
   },
 ]
 

@@ -72,3 +72,16 @@ export function FermentationIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+export function FinishedWineIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M6 21h6" />
+      <path d="M9 15v6" />
+      <path d="M4 4h10l-1.2 8.4a3.8 3.8 0 0 1-3.8 3.6c-2 0-3.6-1.6-3.8-3.6L4 4Z" />
+      <path d="M4 4h10" />
+      <path d="M18 8v9a2 2 0 0 1-2 2" />
+      <path d="M16 4h4l-.8 4.5a1.6 1.6 0 0 1-1.6 1.5 1.6 1.6 0 0 1-1.6-1.5L16 4Z" />
+    </svg>
+  )
+}
