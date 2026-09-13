@@ -223,3 +223,12 @@ model FinishedWine {
 
   @@index([vintageId])
 }
+
+model RemoteMonitorSettings {
+  id        String   @id @default("default")
+  host      String
+  username  String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

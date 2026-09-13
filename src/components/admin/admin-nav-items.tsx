@@ -6,6 +6,7 @@ import {
   IntakeIcon,
   FermentationIcon,
   FinishedWineIcon,
+  RemoteMonitorIcon,
 } from "@/components/admin/nav-icons"
 
 export type AdminNavItem = {
@@ -57,6 +58,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "יין מוכן",
     description: "נצילות לפי מכל ולפי בציר",
     icon: FinishedWineIcon,
+  },
+  {
+    href: "/admin/remote-monitor",
+    label: "בקרה מרחוק",
+    description: "טמפרטורה ולחות מחיישני הבקר",
+    icon: RemoteMonitorIcon,
   },
 ]
 

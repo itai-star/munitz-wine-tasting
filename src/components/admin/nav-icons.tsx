@@ -73,6 +73,18 @@ export function FermentationIcon({ className }: IconProps) {
   )
 }
 
+export function RemoteMonitorIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8" />
+      <path d="M12 16v4" />
+      <path d="M7 9.5c1.5-1.3 3-2 5-2s3.5.7 5 2" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 export function FinishedWineIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
