@@ -12,8 +12,28 @@ import {
 import type { RemoteSensorSamplePoint } from "@/server/actions/remote-monitor-actions"
 import type { Result } from "@/types"
 
-function formatTick(iso: string): string {
-  return new Date(iso).toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit" })
+type AxisTickProps = {
+  x?: number
+  y?: number
+  payload?: { value: string }
+}
+
+function DateTimeTick({ x, y, payload }: AxisTickProps) {
+  if (!payload) return null
+  const date = new Date(payload.value)
+  const dateStr = date.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit" })
+  const timeStr = date.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={12} textAnchor="middle" fontSize={11} fill="#57534e">
+        {dateStr}
+      </text>
+      <text x={0} y={0} dy={26} textAnchor="middle" fontSize={10} fill="#a8a29e">
+        {timeStr}
+      </text>
+    </g>
+  )
 }
 
 function formatTooltipLabel(iso: string): string {
@@ -38,21 +58,32 @@ function HistoryChart({
   unit: string
   color: string
 }) {
+  // Keep roughly 5 evenly-spaced labels regardless of how many samples
+  // there are (up to ~1000 over a week), so labels never overlap.
+  const tickInterval = Math.max(0, Math.ceil(points.length / 5) - 1)
+
   return (
     <div>
       <h3 className="text-sm font-medium text-stone-700 mb-3">{title}</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <LineChart data={points}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-          <XAxis dataKey="recordedAt" tickFormatter={formatTick} tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} unit={unit} domain={["auto", "auto"]} />
-          <Tooltip
-            labelFormatter={(value) => formatTooltipLabel(String(value))}
-            formatter={(value) => [`${Number(value).toFixed(1)}${unit}`, title]}
-          />
-          <Line type="monotone" dataKey={dataKey} stroke={color} dot={false} connectNulls />
-        </LineChart>
-      </ResponsiveContainer>
+      <div className="h-[300px] sm:h-[240px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={points} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+            <XAxis
+              dataKey="recordedAt"
+              tick={<DateTimeTick />}
+              height={40}
+              interval={tickInterval}
+            />
+            <YAxis tick={{ fontSize: 12 }} unit={unit} domain={["auto", "auto"]} width={44} />
+            <Tooltip
+              labelFormatter={(value) => formatTooltipLabel(String(value))}
+              formatter={(value) => [`${Number(value).toFixed(1)}${unit}`, title]}
+            />
+            <Line type="monotone" dataKey={dataKey} stroke={color} dot={false} connectNulls />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }
@@ -72,11 +103,11 @@ export function RemoteMonitorSensorChart({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-lg border border-stone-200 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white sm:rounded-xl shadow-lg border-0 sm:border sm:border-stone-200 p-4 sm:p-6 w-full h-full sm:h-auto sm:max-w-2xl sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
