@@ -4,10 +4,15 @@ import { useState } from "react"
 import {
   fetchRemoteMonitorReadings,
   deleteRemoteMonitorSettings,
+  getRemoteMonitorHistory,
   type RemoteSensorReading,
+  type RemoteSensorSamplePoint,
 } from "@/server/actions/remote-monitor-actions"
 import { RemoteMonitorSettingsForm } from "@/components/remote-monitor/remote-monitor-settings-form"
+import { RemoteMonitorSensorChart } from "@/components/remote-monitor/remote-monitor-sensor-chart"
 import type { Result } from "@/types"
+
+const HISTORY_DAYS = 7
 
 export function RemoteMonitorDashboard({
   host,
@@ -22,12 +27,21 @@ export function RemoteMonitorDashboard({
   const [refreshing, setRefreshing] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [forgetting, setForgetting] = useState(false)
+  const [selectedSensor, setSelectedSensor] = useState<{ key: string; name: string } | null>(null)
+  const [history, setHistory] = useState<Result<RemoteSensorSamplePoint[]> | null>(null)
 
   async function handleRefresh() {
     setRefreshing(true)
     const next = await fetchRemoteMonitorReadings()
     setResult(next)
     setRefreshing(false)
+  }
+
+  async function handleSensorClick(sensor: { key: string; name: string }) {
+    setSelectedSensor(sensor)
+    setHistory(null)
+    const historyResult = await getRemoteMonitorHistory(sensor.key, HISTORY_DAYS)
+    setHistory(historyResult)
   }
 
   async function handleForget() {
@@ -92,9 +106,11 @@ export function RemoteMonitorDashboard({
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {result.data.sensors.map((sensor) => (
-              <div
+              <button
                 key={sensor.key}
-                className="bg-white rounded-xl shadow-sm border border-stone-200 p-4"
+                type="button"
+                onClick={() => handleSensorClick({ key: sensor.key, name: sensor.name })}
+                className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 text-right hover:border-wine/40 transition-colors"
               >
                 <p className="font-medium text-stone-800">{sensor.name}</p>
                 {sensor.temperatureC != null && (
@@ -107,13 +123,21 @@ export function RemoteMonitorDashboard({
                     לחות: {sensor.humidityPercent.toFixed(1)}%
                   </p>
                 )}
-              </div>
+              </button>
             ))}
           </div>
           <p className="text-xs text-stone-400">
             עודכן לאחרונה: {new Date(result.data.fetchedAt).toLocaleTimeString("he-IL")}
           </p>
         </>
+      )}
+
+      {selectedSensor && (
+        <RemoteMonitorSensorChart
+          sensorName={selectedSensor.name}
+          result={history}
+          onClose={() => setSelectedSensor(null)}
+        />
       )}
     </div>
   )

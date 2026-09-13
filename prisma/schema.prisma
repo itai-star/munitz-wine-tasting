@@ -232,3 +232,14 @@ model RemoteMonitorSettings {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model RemoteSensorSample {
+  id              String   @id @default(cuid())
+  sensorKey       String
+  sensorName      String
+  temperatureC    Float?
+  humidityPercent Float?
+  recordedAt      DateTime @default(now())
+
+  @@index([sensorKey, recordedAt])
+}

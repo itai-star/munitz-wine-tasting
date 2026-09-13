@@ -136,3 +136,59 @@ export async function fetchRemoteMonitorReadings(): Promise<
     clearTimeout(timeout)
   }
 }
+
+const SAMPLE_RETENTION_DAYS = 35
+
+export async function recordRemoteMonitorSample(): Promise<Result<{ count: number }>> {
+  const result = await fetchRemoteMonitorReadings()
+  if (!result.success) return result
+
+  const recordedAt = new Date()
+  const cutoff = new Date(recordedAt.getTime() - SAMPLE_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+
+  try {
+    await prisma.$transaction([
+      prisma.remoteSensorSample.createMany({
+        data: result.data.sensors.map((sensor) => ({
+          sensorKey: sensor.key,
+          sensorName: sensor.name,
+          temperatureC: sensor.temperatureC,
+          humidityPercent: sensor.humidityPercent,
+          recordedAt,
+        })),
+      }),
+      prisma.remoteSensorSample.deleteMany({ where: { recordedAt: { lt: cutoff } } }),
+    ])
+    return ok({ count: result.data.sensors.length })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת הדגימה" })
+  }
+}
+
+export type RemoteSensorSamplePoint = {
+  recordedAt: string
+  temperatureC: number | null
+  humidityPercent: number | null
+}
+
+export async function getRemoteMonitorHistory(
+  sensorKey: string,
+  days = 7
+): Promise<Result<RemoteSensorSamplePoint[]>> {
+  try {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    const samples = await prisma.remoteSensorSample.findMany({
+      where: { sensorKey, recordedAt: { gte: since } },
+      orderBy: { recordedAt: "asc" },
+    })
+    return ok(
+      samples.map((sample) => ({
+        recordedAt: sample.recordedAt.toISOString(),
+        temperatureC: sample.temperatureC,
+        humidityPercent: sample.humidityPercent,
+      }))
+    )
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בטעינת היסטוריית החיישן" })
+  }
+}
