@@ -85,6 +85,17 @@ export function RemoteMonitorIcon({ className }: IconProps) {
   )
 }
 
+export function SeasonSummaryIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 20V11" />
+      <path d="M10 20V6" />
+      <path d="M16 20v-8" />
+      <path d="M3 20h18" />
+    </svg>
+  )
+}
+
 export function FinishedWineIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

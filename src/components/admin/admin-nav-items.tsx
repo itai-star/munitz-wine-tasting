@@ -6,6 +6,7 @@ import {
   IntakeIcon,
   FermentationIcon,
   FinishedWineIcon,
+  SeasonSummaryIcon,
   RemoteMonitorIcon,
 } from "@/components/admin/nav-icons"
 
@@ -58,6 +59,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "יין מוכן",
     description: "נצילות לפי מכל ולפי בציר",
     icon: FinishedWineIcon,
+  },
+  {
+    href: "/admin/season-summary",
+    label: "סיכום עונה",
+    description: "קליטות, מיצוי ומשקל לפי זן",
+    icon: SeasonSummaryIcon,
   },
   {
     href: "/admin/remote-monitor",
