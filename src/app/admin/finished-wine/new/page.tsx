@@ -10,7 +10,10 @@ export default async function NewFinishedWinePage({
   searchParams: Promise<{ vintage?: string }>
 }) {
   const { vintage: vintageParam } = await searchParams
-  const vintages = await prisma.vintage.findMany({ orderBy: { year: "desc" } })
+  const [vintages, blocks] = await Promise.all([
+    prisma.vintage.findMany({ orderBy: { year: "desc" } }),
+    prisma.vineyardBlock.findMany({ orderBy: { name: "asc" } }),
+  ])
   if (vintages.length === 0) redirect("/admin/finished-wine")
 
   const selectedVintage =
@@ -24,6 +27,7 @@ export default async function NewFinishedWinePage({
       <FinishedWineForm
         vintageId={selectedVintage.id}
         vintages={vintages.map((v) => ({ id: v.id, label: v.label }))}
+        blocks={blocks.map((b) => ({ id: b.id, name: b.name }))}
       />
     </div>
   )

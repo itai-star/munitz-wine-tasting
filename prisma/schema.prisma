@@ -121,6 +121,7 @@ model VineyardBlock {
   samples       RipenessSample[]
   fermentations FermentationBatchBlock[]
   intakes       GrapeIntake[]
+  finishedWines FinishedWine[]
 }
 
 model RipenessSample {
@@ -211,6 +212,7 @@ model FermentationReading {
 model FinishedWine {
   id                       String   @id @default(cuid())
   vintageId                String
+  blockId                  String?
   tank                     String
   harvestedWeightKg        Int
   litersAfterPressing      Int?
@@ -219,9 +221,11 @@ model FinishedWine {
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
-  vintage Vintage @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+  vintage Vintage        @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+  block   VineyardBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
 
   @@index([vintageId])
+  @@index([blockId])
 }
 
 model RemoteMonitorSettings {

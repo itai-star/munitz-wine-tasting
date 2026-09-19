@@ -7,6 +7,7 @@ import { z } from "zod"
 
 const CreateFinishedWineSchema = z.object({
   vintageId: z.string().min(1),
+  blockId: z.string().min(1).nullable(),
   tank: z.string().min(1, "שם/מספר המכל נדרש"),
   harvestedWeightKg: z.number().int().positive(),
   litersAfterPressing: z.number().int().positive().nullable(),
@@ -72,6 +73,21 @@ export async function listFinishedWines(
     return ok(wines)
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בטעינת רשומות היין המוכן" })
+  }
+}
+
+export async function getIntakeWeightForBlock(
+  vintageId: string,
+  blockId: string
+): Promise<Result<{ totalWeightKg: number }>> {
+  try {
+    const result = await prisma.grapeIntake.aggregate({
+      where: { vintageId, blockId },
+      _sum: { totalWeightKg: true },
+    })
+    return ok({ totalWeightKg: Math.round(result._sum.totalWeightKg ?? 0) })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בטעינת כמות הענבים שנקלטו" })
   }
 }
 

@@ -13,11 +13,14 @@ export default async function FinishedWineDetailPage({
   const { id } = await params
   const wine = await prisma.finishedWine.findUnique({
     where: { id },
-    include: { vintage: true },
+    include: { vintage: true, block: true },
   })
   if (!wine) notFound()
 
-  const vintages = await prisma.vintage.findMany({ orderBy: { year: "desc" } })
+  const [vintages, blocks] = await Promise.all([
+    prisma.vintage.findMany({ orderBy: { year: "desc" } }),
+    prisma.vineyardBlock.findMany({ orderBy: { name: "asc" } }),
+  ])
 
   return (
     <div className="space-y-6">
@@ -25,7 +28,8 @@ export default async function FinishedWineDetailPage({
         <div>
           <h1 className="text-2xl font-bold text-stone-800">{wine.tank}</h1>
           <p className="text-sm text-stone-500 mt-1">
-            {wine.vintage.label} · {wine.harvestedWeightKg} ק&quot;ג נבצרו
+            {wine.vintage.label}
+            {wine.block && ` · כרם ${wine.block.name}`} · {wine.harvestedWeightKg} ק&quot;ג נבצרו
             {wine.litersAfterPressing != null && ` · ${wine.litersAfterPressing} ליטר אחרי פראס`}
             {wine.litersAfterFirstRacking != null &&
               ` · ${wine.litersAfterFirstRacking} ליטר אחרי שפייה ראשונה`}
@@ -37,6 +41,7 @@ export default async function FinishedWineDetailPage({
           wine={{
             id: wine.id,
             vintageId: wine.vintageId,
+            blockId: wine.blockId,
             tank: wine.tank,
             harvestedWeightKg: wine.harvestedWeightKg,
             litersAfterPressing: wine.litersAfterPressing,
@@ -44,6 +49,7 @@ export default async function FinishedWineDetailPage({
             litersAfterSecondRacking: wine.litersAfterSecondRacking,
           }}
           vintages={vintages.map((v) => ({ id: v.id, label: v.label }))}
+          blocks={blocks.map((b) => ({ id: b.id, name: b.name }))}
         />
       </div>
 

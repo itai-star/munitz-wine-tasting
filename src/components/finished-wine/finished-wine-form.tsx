@@ -5,10 +5,15 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { createFinishedWine, updateFinishedWine } from "@/server/actions/finished-wine-actions"
+import {
+  createFinishedWine,
+  updateFinishedWine,
+  getIntakeWeightForBlock,
+} from "@/server/actions/finished-wine-actions"
 
 const FormSchema = z.object({
   vintageId: z.string().min(1, "יש לבחור בציר"),
+  blockId: z.string(),
   tank: z.string().min(1, "יש להזין שם/מספר מכל"),
   harvestedWeightKg: z.string().min(1, "יש להזין כמות שנבצרה"),
   litersAfterPressing: z.string(),
@@ -30,6 +35,7 @@ function toInputNumber(value: number | null): string {
 export type EditableFinishedWine = {
   id: string
   vintageId: string
+  blockId: string | null
   tank: string
   harvestedWeightKg: number
   litersAfterPressing: number | null
@@ -40,23 +46,29 @@ export type EditableFinishedWine = {
 export function FinishedWineForm({
   vintageId,
   vintages,
+  blocks,
   editingWine,
 }: {
   vintageId: string
   vintages: { id: string; label: string }[]
+  blocks: { id: string; name: string }[]
   editingWine?: EditableFinishedWine
 }) {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
+  const [isFetchingIntake, setIsFetchingIntake] = useState(false)
   const {
     register,
     handleSubmit,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: editingWine
       ? {
           vintageId: editingWine.vintageId,
+          blockId: editingWine.blockId ?? "",
           tank: editingWine.tank,
           harvestedWeightKg: toInputNumber(editingWine.harvestedWeightKg),
           litersAfterPressing: toInputNumber(editingWine.litersAfterPressing),
@@ -65,6 +77,7 @@ export function FinishedWineForm({
         }
       : {
           vintageId,
+          blockId: "",
           tank: "",
           harvestedWeightKg: "",
           litersAfterPressing: "",
@@ -73,10 +86,24 @@ export function FinishedWineForm({
         },
   })
 
+  async function handleBlockChange(blockId: string) {
+    setValue("blockId", blockId)
+    if (!blockId) return
+
+    setIsFetchingIntake(true)
+    const result = await getIntakeWeightForBlock(getValues("vintageId"), blockId)
+    setIsFetchingIntake(false)
+
+    if (result.success) {
+      setValue("harvestedWeightKg", String(result.data.totalWeightKg))
+    }
+  }
+
   async function onSubmit(values: FormValues) {
     setServerError("")
     const payload = {
       vintageId: values.vintageId,
+      blockId: values.blockId.length > 0 ? values.blockId : null,
       tank: values.tank,
       harvestedWeightKg: toNullableInt(values.harvestedWeightKg) ?? 0,
       litersAfterPressing: toNullableInt(values.litersAfterPressing),
@@ -121,6 +148,23 @@ export function FinishedWineForm({
           ))}
         </select>
         {errors.vintageId && <p className="text-red-600 text-xs mt-1">{errors.vintageId.message}</p>}
+      </div>
+
+      <div>
+        <label className={labelClass}>כרם</label>
+        <select
+          className={inputClass}
+          defaultValue={editingWine?.blockId ?? ""}
+          onChange={(e) => handleBlockChange(e.target.value)}
+        >
+          <option value="">— ללא —</option>
+          {blocks.map((block) => (
+            <option key={block.id} value={block.id}>
+              {block.name}
+            </option>
+          ))}
+        </select>
+        {isFetchingIntake && <p className="text-stone-400 text-xs mt-1">טוען כמות שנקלטה...</p>}
       </div>
 
       <div>

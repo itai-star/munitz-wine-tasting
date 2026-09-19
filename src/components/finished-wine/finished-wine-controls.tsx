@@ -8,9 +8,11 @@ import { FinishedWineForm, type EditableFinishedWine } from "@/components/finish
 export function FinishedWineControls({
   wine,
   vintages,
+  blocks,
 }: {
   wine: EditableFinishedWine
   vintages: { id: string; label: string }[]
+  blocks: { id: string; name: string }[]
 }) {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
@@ -36,7 +38,12 @@ export function FinishedWineControls({
   if (editing) {
     return (
       <div className="space-y-3">
-        <FinishedWineForm vintageId={wine.vintageId} vintages={vintages} editingWine={wine} />
+        <FinishedWineForm
+          vintageId={wine.vintageId}
+          vintages={vintages}
+          blocks={blocks}
+          editingWine={wine}
+        />
         <button
           type="button"
           onClick={() => setEditing(false)}
