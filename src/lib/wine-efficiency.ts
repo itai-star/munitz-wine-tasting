@@ -19,9 +19,10 @@ function ratioPercent(numerator: number | null, denominator: number | null): num
 export function calculateWineEfficiency(stages: WineEfficiencyStages): WineEfficiencyResult {
   return {
     // Winemaking yield convention: liters extracted per kg of grapes, expressed as a percentage.
+    // Every stage is measured against the same harvested weight, not the previous stage.
     afterPressing: ratioPercent(stages.litersAfterPressing, stages.harvestedWeightKg),
-    afterFirstRacking: ratioPercent(stages.litersAfterFirstRacking, stages.litersAfterPressing),
-    afterSecondRacking: ratioPercent(stages.litersAfterSecondRacking, stages.litersAfterFirstRacking),
+    afterFirstRacking: ratioPercent(stages.litersAfterFirstRacking, stages.harvestedWeightKg),
+    afterSecondRacking: ratioPercent(stages.litersAfterSecondRacking, stages.harvestedWeightKg),
   }
 }
 

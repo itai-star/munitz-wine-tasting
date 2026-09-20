@@ -29,7 +29,8 @@ export default async function FinishedWineDetailPage({
           <h1 className="text-2xl font-bold text-stone-800">{wine.tank}</h1>
           <p className="text-sm text-stone-500 mt-1">
             {wine.vintage.label}
-            {wine.block && ` · כרם ${wine.block.name}`} · {wine.harvestedWeightKg} ק&quot;ג נבצרו
+            {wine.block && ` · כרם ${wine.block.name}`}
+            {` · ${wine.harvestedWeightKg} ק"ג נבצרו`}
             {wine.litersAfterPressing != null && ` · ${wine.litersAfterPressing} ליטר אחרי פראס`}
             {wine.litersAfterFirstRacking != null &&
               ` · ${wine.litersAfterFirstRacking} ליטר אחרי שפייה ראשונה`}

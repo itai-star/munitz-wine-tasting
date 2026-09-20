@@ -92,25 +92,53 @@ function ratioPercent(numerator: number, denominator: number): number | null {
   return (numerator / denominator) * 100
 }
 
+type VarietyStageTotals = {
+  harvestedWeightKg: number
+  afterPressing: number
+  hasAfterPressing: boolean
+  afterFirstRacking: number
+  hasAfterFirstRacking: boolean
+  afterSecondRacking: number
+  hasAfterSecondRacking: boolean
+}
+
+function ratioPercentIfRecorded(
+  numerator: number,
+  hasValue: boolean,
+  denominator: number
+): number | null {
+  if (!hasValue) return null
+  return ratioPercent(numerator, denominator)
+}
+
 export function calculateExtractionByVariety(
   wines: FinishedWineVarietyRecord[]
 ): VarietyExtractionRow[] {
-  const totals = new Map<
-    string,
-    { harvestedWeightKg: number; afterPressing: number; afterFirstRacking: number; afterSecondRacking: number }
-  >()
+  const totals = new Map<string, VarietyStageTotals>()
 
   for (const wine of wines) {
     const entry = totals.get(wine.variety) ?? {
       harvestedWeightKg: 0,
       afterPressing: 0,
+      hasAfterPressing: false,
       afterFirstRacking: 0,
+      hasAfterFirstRacking: false,
       afterSecondRacking: 0,
+      hasAfterSecondRacking: false,
     }
     entry.harvestedWeightKg += wine.harvestedWeightKg
-    entry.afterPressing += wine.litersAfterPressing ?? 0
-    entry.afterFirstRacking += wine.litersAfterFirstRacking ?? 0
-    entry.afterSecondRacking += wine.litersAfterSecondRacking ?? 0
+    if (wine.litersAfterPressing != null) {
+      entry.afterPressing += wine.litersAfterPressing
+      entry.hasAfterPressing = true
+    }
+    if (wine.litersAfterFirstRacking != null) {
+      entry.afterFirstRacking += wine.litersAfterFirstRacking
+      entry.hasAfterFirstRacking = true
+    }
+    if (wine.litersAfterSecondRacking != null) {
+      entry.afterSecondRacking += wine.litersAfterSecondRacking
+      entry.hasAfterSecondRacking = true
+    }
     totals.set(wine.variety, entry)
   }
 
@@ -118,9 +146,21 @@ export function calculateExtractionByVariety(
     .map(([variety, sums]) => ({
       variety,
       harvestedWeightKg: sums.harvestedWeightKg,
-      afterPressingPercent: ratioPercent(sums.afterPressing, sums.harvestedWeightKg),
-      afterFirstRackingPercent: ratioPercent(sums.afterFirstRacking, sums.afterPressing),
-      afterSecondRackingPercent: ratioPercent(sums.afterSecondRacking, sums.afterFirstRacking),
+      afterPressingPercent: ratioPercentIfRecorded(
+        sums.afterPressing,
+        sums.hasAfterPressing,
+        sums.harvestedWeightKg
+      ),
+      afterFirstRackingPercent: ratioPercentIfRecorded(
+        sums.afterFirstRacking,
+        sums.hasAfterFirstRacking,
+        sums.harvestedWeightKg
+      ),
+      afterSecondRackingPercent: ratioPercentIfRecorded(
+        sums.afterSecondRacking,
+        sums.hasAfterSecondRacking,
+        sums.harvestedWeightKg
+      ),
     }))
     .sort((a, b) => b.harvestedWeightKg - a.harvestedWeightKg)
 }
