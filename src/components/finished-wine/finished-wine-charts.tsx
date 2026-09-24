@@ -53,12 +53,12 @@ function EfficiencyBarChart({ title, rows }: { title: string; rows: ChartRow[] }
           <Bar dataKey="value" fill="#7c2d3f" radius={[4, 4, 0, 0]}>
             <LabelList
               dataKey="value"
-              position="top"
+              position="center"
               formatter={(value) => {
                 const num = typeof value === "number" ? value : Number(value)
                 return Number.isFinite(num) ? `${num.toFixed(1)}%` : ""
               }}
-              style={{ fill: "#57534e", fontSize: 12 }}
+              style={{ fill: "#ffffff", fontSize: 13, fontWeight: 700 }}
             />
           </Bar>
         </BarChart>
