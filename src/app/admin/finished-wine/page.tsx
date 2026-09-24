@@ -78,8 +78,8 @@ export default async function FinishedWinePage({
               >
                 <p className="font-medium text-stone-800">{wine.tank}</p>
                 <p className="text-sm text-stone-500 mt-1">
-                  {wine.block && `כרם ${wine.block.name} · `}
-                  {wine.harvestedWeightKg} ק&quot;ג נבצרו
+                  {wine.block && `כרם ${wine.block.name} `}
+                  נבצרו {wine.harvestedWeightKg} ק&quot;ג
                 </p>
                 {stages.length > 0 && (
                   <p className="text-xs text-stone-400 mt-2">
