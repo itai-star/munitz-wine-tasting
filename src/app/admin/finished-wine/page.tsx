@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
 import { VintageSelect } from "@/components/vineyard/vintage-select"
 import { FinishedWineAverageChart } from "@/components/finished-wine/finished-wine-charts"
+import { calculateWineEfficiency } from "@/lib/wine-efficiency"
 
 export const dynamic = "force-dynamic"
 
@@ -31,6 +32,7 @@ export default async function FinishedWinePage({
 
   const wines = await prisma.finishedWine.findMany({
     where: { vintageId: selectedVintage.id },
+    include: { block: true },
     orderBy: { createdAt: "desc" },
   })
 
@@ -60,21 +62,33 @@ export default async function FinishedWinePage({
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {wines.map((wine) => (
-            <Link
-              key={wine.id}
-              href={`/admin/finished-wine/${wine.id}`}
-              className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 hover:border-wine/40 transition-colors"
-            >
-              <p className="font-medium text-stone-800">{wine.tank}</p>
-              <p className="text-sm text-stone-500 mt-1">{wine.harvestedWeightKg} ק&quot;ג נבצרו</p>
-              {wine.litersAfterSecondRacking != null && (
-                <p className="text-xs text-stone-400 mt-2">
-                  {wine.litersAfterSecondRacking} ליטר אחרי שפייה שנייה
+          {wines.map((wine) => {
+            const efficiency = calculateWineEfficiency(wine)
+            const stages = [
+              { label: "פראס", value: efficiency.afterPressing },
+              { label: "שפייה 1", value: efficiency.afterFirstRacking },
+              { label: "שפייה 2", value: efficiency.afterSecondRacking },
+            ].filter((s) => s.value != null)
+
+            return (
+              <Link
+                key={wine.id}
+                href={`/admin/finished-wine/${wine.id}`}
+                className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 hover:border-wine/40 transition-colors"
+              >
+                <p className="font-medium text-stone-800">{wine.tank}</p>
+                <p className="text-sm text-stone-500 mt-1">
+                  {wine.block && `כרם ${wine.block.name} · `}
+                  {wine.harvestedWeightKg} ק&quot;ג נבצרו
                 </p>
-              )}
-            </Link>
-          ))}
+                {stages.length > 0 && (
+                  <p className="text-xs text-stone-400 mt-2">
+                    {stages.map((s) => `${s.label} ${s.value!.toFixed(1)}%`).join(" · ")}
+                  </p>
+                )}
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>

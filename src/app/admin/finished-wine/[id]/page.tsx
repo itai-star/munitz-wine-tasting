@@ -2,6 +2,9 @@ import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { FinishedWineControls } from "@/components/finished-wine/finished-wine-controls"
 import { FinishedWineStageChart } from "@/components/finished-wine/finished-wine-charts"
+import { LabTestForm } from "@/components/lab-test/lab-test-form"
+import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
+import { LabTestTable } from "@/components/lab-test/lab-test-table"
 
 export const dynamic = "force-dynamic"
 
@@ -17,9 +20,10 @@ export default async function FinishedWineDetailPage({
   })
   if (!wine) notFound()
 
-  const [vintages, blocks] = await Promise.all([
+  const [vintages, blocks, labTests] = await Promise.all([
     prisma.vintage.findMany({ orderBy: { year: "desc" } }),
     prisma.vineyardBlock.findMany({ orderBy: { name: "asc" } }),
+    prisma.labTest.findMany({ where: { finishedWineId: id }, orderBy: { testDate: "asc" } }),
   ])
 
   return (
@@ -62,6 +66,30 @@ export default async function FinishedWineDetailPage({
           litersAfterSecondRacking: wine.litersAfterSecondRacking,
         }}
       />
+
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold text-stone-800">בדיקות מעבדה</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LabTestForm finishedWineId={wine.id} />
+          <LabTestExcelImport finishedWineId={wine.id} />
+        </div>
+        <LabTestTable
+          tests={labTests.map((t) => ({
+            id: t.id,
+            testDate: t.testDate,
+            lab: t.lab,
+            density: t.density,
+            ethanol: t.ethanol,
+            ph: t.ph,
+            totalAcid: t.totalAcid,
+            volatile: t.volatile,
+            rsBx: t.rsBx,
+            co2: t.co2,
+            malicAcid: t.malicAcid,
+            notes: t.notes,
+          }))}
+        />
+      </div>
     </div>
   )
 }

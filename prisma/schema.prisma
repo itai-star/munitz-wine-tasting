@@ -223,9 +223,31 @@ model FinishedWine {
 
   vintage Vintage        @relation(fields: [vintageId], references: [id], onDelete: Cascade)
   block   VineyardBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  labTests LabTest[]
 
   @@index([vintageId])
   @@index([blockId])
+}
+
+model LabTest {
+  id             String   @id @default(cuid())
+  finishedWineId String
+  testDate       DateTime
+  lab            String?
+  density        Float?
+  ethanol        Float?
+  ph             Float?
+  totalAcid      Float?
+  volatile       Float?
+  rsBx           Float?
+  co2            Float?
+  malicAcid      Float?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  finishedWine FinishedWine @relation(fields: [finishedWineId], references: [id], onDelete: Cascade)
+
+  @@index([finishedWineId])
 }
 
 model RemoteMonitorSettings {

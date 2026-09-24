@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -49,7 +50,14 @@ function EfficiencyBarChart({ title, rows }: { title: string; rows: ChartRow[] }
           <Tooltip
             formatter={(value) => [`${Number(value).toFixed(1)}%`, "נצילות"]}
           />
-          <Bar dataKey="value" fill="#7c2d3f" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="value" fill="#7c2d3f" radius={[4, 4, 0, 0]}>
+            <LabelList
+              dataKey="value"
+              position="top"
+              formatter={(value: number | null) => (value == null ? "" : `${value.toFixed(1)}%`)}
+              style={{ fill: "#57534e", fontSize: 12 }}
+            />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
