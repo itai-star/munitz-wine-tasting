@@ -6,7 +6,7 @@ import { importLabTestsFromExcel } from "@/server/actions/lab-test-actions"
 
 type ImportSummary = { imported: number; errors: { row: number; message: string }[] }
 
-export function LabTestExcelImport({ finishedWineId }: { finishedWineId: string }) {
+export function LabTestExcelImport({ vintageId }: { vintageId: string }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -24,7 +24,7 @@ export function LabTestExcelImport({ finishedWineId }: { finishedWineId: string 
     const formData = new FormData()
     formData.set("file", file)
 
-    const result = await importLabTestsFromExcel(finishedWineId, formData)
+    const result = await importLabTestsFromExcel(vintageId, formData)
 
     setSubmitting(false)
     if (fileInputRef.current) fileInputRef.current.value = ""
@@ -41,10 +41,10 @@ export function LabTestExcelImport({ finishedWineId }: { finishedWineId: string 
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-sm font-medium text-stone-700">ייבוא מאקסל</p>
+          <p className="text-sm font-medium text-stone-700">ייבוא מאקסל לכל מכלי הבציר</p>
           <p className="text-xs text-stone-500">
-            עמודות מצופות: תאריך, מעבדה, Density, Ethanol, pH, Total Acid, Volatile, RS/Bx, CO2, Malic
-            Acid, הערות
+            עמודות מצופות: מכל, תאריך, מעבדה, Density, Ethanol, pH, Total Acid, Volatile, RS/Bx, CO2,
+            Malic Acid, הערות
           </p>
         </div>
         <label className="bg-stone-100 hover:bg-stone-200 transition-colors text-stone-700 text-sm font-medium px-4 py-2 rounded-lg cursor-pointer">

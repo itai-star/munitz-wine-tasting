@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma"
 import { FinishedWineControls } from "@/components/finished-wine/finished-wine-controls"
 import { FinishedWineStageChart } from "@/components/finished-wine/finished-wine-charts"
 import { LabTestForm } from "@/components/lab-test/lab-test-form"
-import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
 import { LabTestTable } from "@/components/lab-test/lab-test-table"
 
 export const dynamic = "force-dynamic"
@@ -69,10 +68,7 @@ export default async function FinishedWineDetailPage({
 
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-stone-800">בדיקות מעבדה</h2>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <LabTestForm finishedWineId={wine.id} />
-          <LabTestExcelImport finishedWineId={wine.id} />
-        </div>
+        <LabTestForm finishedWineId={wine.id} />
         <LabTestTable
           tests={labTests.map((t) => ({
             id: t.id,

@@ -70,6 +70,7 @@ export async function deleteLabTest(id: string): Promise<Result<void>> {
 }
 
 const EXPECTED_HEADERS = [
+  "מכל",
   "תאריך",
   "מעבדה",
   "Density",
@@ -85,8 +86,12 @@ const EXPECTED_HEADERS = [
 
 type ImportRowError = { row: number; message: string }
 
+function normalizeTank(value: string): string {
+  return value.replace(INVISIBLE_CHARS, "").trim().toLowerCase()
+}
+
 export async function importLabTestsFromExcel(
-  finishedWineId: string,
+  vintageId: string,
   formData: FormData
 ): Promise<Result<{ imported: number; errors: ImportRowError[] }>> {
   const file = formData.get("file")
@@ -94,11 +99,23 @@ export async function importLabTestsFromExcel(
     return err({ code: "VALIDATION", message: "לא נבחר קובץ" })
   }
 
-  const existing = await prisma.labTest.findMany({
-    where: { finishedWineId },
-    select: { testDate: true },
+  const wines = await prisma.finishedWine.findMany({
+    where: { vintageId },
+    select: { id: true, tank: true },
   })
-  const seenDates = new Set(existing.map((t) => t.testDate.toISOString().slice(0, 10)))
+  const finishedWineIdByTank = new Map(wines.map((w) => [normalizeTank(w.tank), w.id]))
+
+  const existing = await prisma.labTest.findMany({
+    where: { finishedWineId: { in: wines.map((w) => w.id) } },
+    select: { finishedWineId: true, testDate: true },
+  })
+  const seenDatesByWine = new Map<string, Set<string>>()
+  for (const t of existing) {
+    const key = t.testDate.toISOString().slice(0, 10)
+    const set = seenDatesByWine.get(t.finishedWineId)
+    if (set) set.add(key)
+    else seenDatesByWine.set(t.finishedWineId, new Set([key]))
+  }
 
   let workbook: ExcelJS.Workbook
   try {
@@ -142,19 +159,32 @@ export async function importLabTestsFromExcel(
       return colIndex ? row.getCell(colIndex) : null
     }
 
+    const tankText = cellText(getCell("מכל"))
+    if (tankText.length === 0) {
+      if (!hasAnyValue(row)) continue
+      errors.push({ row: rowNumber, message: "מכל חסר" })
+      continue
+    }
+    const finishedWineId = finishedWineIdByTank.get(normalizeTank(tankText))
+    if (!finishedWineId) {
+      errors.push({ row: rowNumber, message: `מכל "${tankText}" לא נמצא בבציר זה` })
+      continue
+    }
+
     const testDate = parseExcelDate(getCell("תאריך"))
     if (!testDate) {
-      if (cellText(getCell("תאריך")).length === 0 && !hasAnyValue(row)) continue
       errors.push({ row: rowNumber, message: "תאריך חסר או לא תקין" })
       continue
     }
 
     const dateKey = testDate.toISOString().slice(0, 10)
+    const seenDates = seenDatesByWine.get(finishedWineId) ?? new Set<string>()
     if (seenDates.has(dateKey)) {
-      errors.push({ row: rowNumber, message: "כבר קיימת בדיקה לתאריך הזה — דולגה (כפילות)" })
+      errors.push({ row: rowNumber, message: "כבר קיימת בדיקה לתאריך הזה במכל זה — דולגה (כפילות)" })
       continue
     }
     seenDates.add(dateKey)
+    seenDatesByWine.set(finishedWineId, seenDates)
 
     const parsed = LabTestSchema.safeParse({
       finishedWineId,

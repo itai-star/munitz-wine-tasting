@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
 import { VintageSelect } from "@/components/vineyard/vintage-select"
 import { FinishedWineAverageChart } from "@/components/finished-wine/finished-wine-charts"
+import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
 import { calculateWineEfficiency } from "@/lib/wine-efficiency"
 
 export const dynamic = "force-dynamic"
@@ -55,6 +56,8 @@ export default async function FinishedWinePage({
       </div>
 
       <FinishedWineAverageChart records={wines} />
+
+      <LabTestExcelImport vintageId={selectedVintage.id} />
 
       {wines.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-stone-200">
