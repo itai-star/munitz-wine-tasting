@@ -46,6 +46,28 @@ export async function createLabTest(
   }
 }
 
+const UpdateLabTestSchema = LabTestSchema.omit({ finishedWineId: true }).extend({
+  id: z.string().min(1),
+})
+
+export async function updateLabTest(
+  input: z.infer<typeof UpdateLabTestSchema>
+): Promise<Result<{ id: string }>> {
+  const parsed = UpdateLabTestSchema.safeParse(input)
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  const { id, ...data } = parsed.data
+
+  try {
+    await prisma.labTest.update({ where: { id }, data })
+    return ok({ id })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בעדכון בדיקת המעבדה" })
+  }
+}
+
 export async function listLabTests(
   finishedWineId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.labTest.findMany>>>> {

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { createLabTest } from "@/server/actions/lab-test-actions"
+import { createLabTest, updateLabTest } from "@/server/actions/lab-test-actions"
 
 const FormSchema = z.object({
   testDate: z.string().min(1, "יש לבחור תאריך"),
@@ -47,7 +47,50 @@ const emptyValues: FormValues = {
   notes: "",
 }
 
-export function LabTestForm({ finishedWineId }: { finishedWineId: string }) {
+export type EditableLabTest = {
+  id: string
+  testDate: string | Date
+  lab: string | null
+  density: number | null
+  ethanol: number | null
+  ph: number | null
+  totalAcid: number | null
+  volatile: number | null
+  rsBx: number | null
+  co2: number | null
+  malicAcid: number | null
+  notes: string | null
+}
+
+function numberToText(value: number | null): string {
+  return value == null ? "" : String(value)
+}
+
+function toFormValues(test: EditableLabTest): FormValues {
+  return {
+    testDate: new Date(test.testDate).toISOString().slice(0, 10),
+    lab: test.lab ?? "",
+    density: numberToText(test.density),
+    ethanol: numberToText(test.ethanol),
+    ph: numberToText(test.ph),
+    totalAcid: numberToText(test.totalAcid),
+    volatile: numberToText(test.volatile),
+    rsBx: numberToText(test.rsBx),
+    co2: numberToText(test.co2),
+    malicAcid: numberToText(test.malicAcid),
+    notes: test.notes ?? "",
+  }
+}
+
+export function LabTestForm({
+  finishedWineId,
+  editingTest,
+  onDone,
+}: {
+  finishedWineId: string
+  editingTest?: EditableLabTest
+  onDone?: () => void
+}) {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
   const {
@@ -57,13 +100,12 @@ export function LabTestForm({ finishedWineId }: { finishedWineId: string }) {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: emptyValues,
+    defaultValues: editingTest ? toFormValues(editingTest) : emptyValues,
   })
 
   async function onSubmit(values: FormValues) {
     setServerError("")
-    const result = await createLabTest({
-      finishedWineId,
+    const fields = {
       testDate: new Date(values.testDate),
       lab: toNullableText(values.lab),
       density: toNullableNumber(values.density),
@@ -75,9 +117,16 @@ export function LabTestForm({ finishedWineId }: { finishedWineId: string }) {
       co2: toNullableNumber(values.co2),
       malicAcid: toNullableNumber(values.malicAcid),
       notes: toNullableText(values.notes),
-    })
+    }
+    const result = editingTest
+      ? await updateLabTest({ id: editingTest.id, ...fields })
+      : await createLabTest({ finishedWineId, ...fields })
     if (result.success) {
-      reset({ ...emptyValues, testDate: values.testDate })
+      if (editingTest) {
+        onDone?.()
+      } else {
+        reset({ ...emptyValues, testDate: values.testDate })
+      }
       router.refresh()
     } else {
       setServerError(result.error.message)
@@ -149,13 +198,24 @@ export function LabTestForm({ finishedWineId }: { finishedWineId: string }) {
         <textarea className={inputClass} rows={2} {...register("notes")} />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
-      >
-        {isSubmitting ? "שומר..." : "שמור בדיקת מעבדה"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
+        >
+          {isSubmitting ? "שומר..." : editingTest ? "שמור שינויים" : "שמור בדיקת מעבדה"}
+        </button>
+        {editingTest && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="px-6 py-3 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors font-medium"
+          >
+            ביטול
+          </button>
+        )}
+      </div>
     </form>
   )
 }

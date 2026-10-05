@@ -3,21 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { deleteLabTest } from "@/server/actions/lab-test-actions"
+import { LabTestForm, type EditableLabTest } from "@/components/lab-test/lab-test-form"
 
-export type LabTestRow = {
-  id: string
-  testDate: string | Date
-  lab: string | null
-  density: number | null
-  ethanol: number | null
-  ph: number | null
-  totalAcid: number | null
-  volatile: number | null
-  rsBx: number | null
-  co2: number | null
-  malicAcid: number | null
-  notes: string | null
-}
+export type LabTestRow = EditableLabTest
+
+const editButtonClass =
+  "inline-flex items-center gap-1 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors px-2 py-1 text-xs font-medium"
 
 const deleteButtonClass =
   "inline-flex items-center gap-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors px-2 py-1 text-xs font-medium disabled:opacity-40"
@@ -38,8 +29,16 @@ const trashIcon = (
   </svg>
 )
 
-export function LabTestTable({ tests }: { tests: LabTestRow[] }) {
+export function LabTestTable({
+  tests,
+  finishedWineId,
+}: {
+  tests: LabTestRow[]
+  finishedWineId: string
+}) {
   const router = useRouter()
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editingTest = tests.find((t) => t.id === editingId)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState("")
 
@@ -66,6 +65,18 @@ export function LabTestTable({ tests }: { tests: LabTestRow[] }) {
 
       {error && <p className="text-red-600 text-sm px-3 py-2">{error}</p>}
 
+      {editingTest && (
+        <div className="p-3 border-b border-stone-200 bg-stone-50">
+          <p className="text-sm font-medium text-stone-700 mb-2">עריכת בדיקת מעבדה</p>
+          <LabTestForm
+            key={editingTest.id}
+            finishedWineId={finishedWineId}
+            editingTest={editingTest}
+            onDone={() => setEditingId(null)}
+          />
+        </div>
+      )}
+
       {/* Mobile: stacked cards */}
       <div className="sm:hidden divide-y divide-stone-100">
         {tests.map((t) => (
@@ -87,15 +98,20 @@ export function LabTestTable({ tests }: { tests: LabTestRow[] }) {
               <span>Malic Acid: {t.malicAcid ?? "—"}</span>
             </div>
             {t.notes && <p className="mt-1 text-xs text-stone-400">{t.notes}</p>}
-            <button
-              type="button"
-              onClick={() => handleDelete(t.id)}
-              disabled={deletingId === t.id}
-              className={`${deleteButtonClass} mt-2`}
-            >
-              {trashIcon}
-              מחק בדיקה
-            </button>
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={() => setEditingId(t.id)} className={editButtonClass}>
+                ערוך בדיקה
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(t.id)}
+                disabled={deletingId === t.id}
+                className={deleteButtonClass}
+              >
+                {trashIcon}
+                מחק בדיקה
+              </button>
+            </div>
           </div>
         ))}
         {tests.length === 0 && (
@@ -127,15 +143,20 @@ export function LabTestTable({ tests }: { tests: LabTestRow[] }) {
           {tests.map((t) => (
             <tr key={t.id} className="border-b border-stone-100 last:border-0">
               <td className="px-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => handleDelete(t.id)}
-                  disabled={deletingId === t.id}
-                  className={deleteButtonClass}
-                >
-                  {trashIcon}
-                  מחק
-                </button>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setEditingId(t.id)} className={editButtonClass}>
+                    ערוך
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(t.id)}
+                    disabled={deletingId === t.id}
+                    className={deleteButtonClass}
+                  >
+                    {trashIcon}
+                    מחק
+                  </button>
+                </div>
               </td>
               <td className="px-3 py-2">{new Date(t.testDate).toLocaleDateString("he-IL")}</td>
               <td className="px-3 py-2">{t.lab ?? "—"}</td>

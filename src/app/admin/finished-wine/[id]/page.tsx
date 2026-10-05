@@ -70,6 +70,7 @@ export default async function FinishedWineDetailPage({
         <h2 className="text-lg font-bold text-stone-800">בדיקות מעבדה</h2>
         <LabTestForm finishedWineId={wine.id} />
         <LabTestTable
+          finishedWineId={wine.id}
           tests={labTests.map((t) => ({
             id: t.id,
             testDate: t.testDate,
