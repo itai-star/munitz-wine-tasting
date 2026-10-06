@@ -16,8 +16,11 @@ export type RipenessSamplePoint = {
   brix: number | null
   ph: number | null
   titratableAcidity: number | null
+  clusterWeight: number | null
   blockName: string
 }
+
+type Metric = "brix" | "ph" | "titratableAcidity" | "clusterWeight" | "ratio"
 
 const LINE_COLORS = ["#7c2d3f", "#a16207", "#166534", "#1d4ed8", "#7e22ce", "#b91c1c"]
 
@@ -25,7 +28,7 @@ type PivotRow = { date: string; [seriesKey: string]: string | number | null }
 
 function buildPivot(
   samples: RipenessSamplePoint[],
-  metric: "brix" | "ph" | "titratableAcidity" | "ratio"
+  metric: Metric
 ): { rows: PivotRow[]; blockNames: string[] } {
   const blockNames = Array.from(new Set(samples.map((s) => s.blockName))).sort()
   const byDate = new Map<string, PivotRow>()
@@ -58,11 +61,21 @@ function MetricChart({
 }: {
   title: string
   samples: RipenessSamplePoint[]
-  metric: "brix" | "ph" | "titratableAcidity" | "ratio"
+  metric: Metric
 }) {
   const { rows, blockNames } = buildPivot(samples, metric)
 
   if (rows.length === 0) return null
+
+  const hasData = rows.some((row) => blockNames.some((name) => row[name] != null))
+  if (!hasData) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
+        <h3 className="text-sm font-medium text-stone-700 mb-3">{title}</h3>
+        <p className="text-stone-400 text-sm text-center py-8">אין עדיין נתונים להצגה</p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
@@ -105,6 +118,7 @@ export function RipenessCharts({ samples }: { samples: RipenessSamplePoint[] }) 
       <MetricChart title="חמיצות (TA) לאורך זמן" samples={samples} metric="titratableAcidity" />
       <MetricChart title="pH לאורך זמן" samples={samples} metric="ph" />
       <MetricChart title="יחס בומה/חמיצות" samples={samples} metric="ratio" />
+      <MetricChart title="משקל אשכול (גרם) לאורך זמן" samples={samples} metric="clusterWeight" />
     </div>
   )
 }

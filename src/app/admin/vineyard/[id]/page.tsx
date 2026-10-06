@@ -34,6 +34,7 @@ export default async function BlockDetailPage({
             brix: s.brix,
             ph: s.ph,
             titratableAcidity: s.titratableAcidity,
+            clusterWeight: s.clusterWeight,
             blockName: block.name,
           }))}
         />
