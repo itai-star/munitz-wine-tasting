@@ -3,20 +3,25 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { deleteSamples } from "@/server/actions/sample-actions"
+import { SampleForm, type EditableSample } from "@/components/vineyard/sample-form"
 
-export type SampleRow = {
-  id: string
-  sampleDate: string | Date
-  brix: number | null
-  ph: number | null
-  titratableAcidity: number | null
-  clusterWeight: number | null
-  color: string | null
-  blockName: string
-}
+export type SampleRow = EditableSample & { blockName: string }
 
-export function SampleTable({ samples }: { samples: SampleRow[] }) {
+const editButtonClass =
+  "inline-flex items-center gap-1 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors px-2 py-1 text-xs font-medium"
+
+export function SampleTable({
+  samples,
+  vintageId,
+  blocks,
+}: {
+  samples: SampleRow[]
+  vintageId: string
+  blocks: { id: string; name: string }[]
+}) {
   const router = useRouter()
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editingSample = samples.find((s) => s.id === editingId)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
@@ -114,6 +119,19 @@ export function SampleTable({ samples }: { samples: SampleRow[] }) {
 
       {error && <p className="text-red-600 text-sm px-3 py-2">{error}</p>}
 
+      {editingSample && (
+        <div className="p-3 border-b border-stone-200 bg-stone-50">
+          <p className="text-sm font-medium text-stone-700 mb-2">עריכת דגימה</p>
+          <SampleForm
+            key={editingSample.id}
+            vintageId={vintageId}
+            blocks={blocks}
+            editingSample={editingSample}
+            onDone={() => setEditingId(null)}
+          />
+        </div>
+      )}
+
       {/* Mobile: stacked cards */}
       <div className="sm:hidden divide-y divide-stone-100">
         {samples.map((s) => (
@@ -139,15 +157,20 @@ export function SampleTable({ samples }: { samples: SampleRow[] }) {
                 <span>משקל אשכול: {s.clusterWeight ?? "—"}</span>
                 <span>צבע: {s.color ?? "—"}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => handleDeleteOne(s.id)}
-                disabled={deleting}
-                className={`${deleteButtonClass} mt-2`}
-              >
-                {trashIcon}
-                מחק דגימה
-              </button>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => setEditingId(s.id)} className={editButtonClass}>
+                  ערוך דגימה
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteOne(s.id)}
+                  disabled={deleting}
+                  className={deleteButtonClass}
+                >
+                  {trashIcon}
+                  מחק דגימה
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -194,15 +217,20 @@ export function SampleTable({ samples }: { samples: SampleRow[] }) {
                 />
               </td>
               <td className="px-4 py-2">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteOne(s.id)}
-                  disabled={deleting}
-                  className={deleteButtonClass}
-                >
-                  {trashIcon}
-                  מחק
-                </button>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setEditingId(s.id)} className={editButtonClass}>
+                    ערוך
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOne(s.id)}
+                    disabled={deleting}
+                    className={deleteButtonClass}
+                  >
+                    {trashIcon}
+                    מחק
+                  </button>
+                </div>
               </td>
               <td className="px-4 py-2">{new Date(s.sampleDate).toLocaleDateString("he-IL")}</td>
               <td className="px-4 py-2">{s.blockName}</td>

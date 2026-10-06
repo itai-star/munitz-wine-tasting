@@ -42,6 +42,28 @@ export async function createSample(
   }
 }
 
+const UpdateSampleSchema = SampleSchema.omit({ vintageId: true }).extend({
+  id: z.string().min(1),
+})
+
+export async function updateSample(
+  input: z.infer<typeof UpdateSampleSchema>
+): Promise<Result<{ id: string }>> {
+  const parsed = UpdateSampleSchema.safeParse(input)
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  const { id, ...data } = parsed.data
+
+  try {
+    await prisma.ripenessSample.update({ where: { id }, data })
+    return ok({ id })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בעדכון הדגימה" })
+  }
+}
+
 export async function listSamples(
   vintageId: string,
   blockId?: string

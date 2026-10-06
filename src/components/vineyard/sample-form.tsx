@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { createSample } from "@/server/actions/sample-actions"
+import { createSample, updateSample } from "@/server/actions/sample-actions"
 
 const FormSchema = z.object({
   blockId: z.string().min(1, "יש לבחור כרם"),
@@ -29,12 +29,31 @@ function toNullableText(value: string): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
+export type EditableSample = {
+  id: string
+  blockId: string
+  sampleDate: string | Date
+  brix: number | null
+  ph: number | null
+  titratableAcidity: number | null
+  clusterWeight: number | null
+  color: string | null
+}
+
+function numberToText(value: number | null): string {
+  return value == null ? "" : String(value)
+}
+
 export function SampleForm({
   vintageId,
   blocks,
+  editingSample,
+  onDone,
 }: {
   vintageId: string
   blocks: { id: string; name: string }[]
+  editingSample?: EditableSample
+  onDone?: () => void
 }) {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
@@ -45,21 +64,30 @@ export function SampleForm({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      blockId: blocks[0]?.id ?? "",
-      sampleDate: new Date().toISOString().slice(0, 10),
-      brix: "",
-      ph: "",
-      titratableAcidity: "",
-      clusterWeight: "",
-      color: "",
-    },
+    defaultValues: editingSample
+      ? {
+          blockId: editingSample.blockId,
+          sampleDate: new Date(editingSample.sampleDate).toISOString().slice(0, 10),
+          brix: numberToText(editingSample.brix),
+          ph: numberToText(editingSample.ph),
+          titratableAcidity: numberToText(editingSample.titratableAcidity),
+          clusterWeight: numberToText(editingSample.clusterWeight),
+          color: editingSample.color ?? "",
+        }
+      : {
+          blockId: blocks[0]?.id ?? "",
+          sampleDate: new Date().toISOString().slice(0, 10),
+          brix: "",
+          ph: "",
+          titratableAcidity: "",
+          clusterWeight: "",
+          color: "",
+        },
   })
 
   async function onSubmit(values: FormValues) {
     setServerError("")
-    const result = await createSample({
-      vintageId,
+    const fields = {
       blockId: values.blockId,
       sampleDate: new Date(values.sampleDate),
       brix: toNullableNumber(values.brix),
@@ -67,9 +95,16 @@ export function SampleForm({
       titratableAcidity: toNullableNumber(values.titratableAcidity),
       clusterWeight: toNullableNumber(values.clusterWeight),
       color: toNullableText(values.color),
-    })
+    }
+    const result = editingSample
+      ? await updateSample({ id: editingSample.id, ...fields })
+      : await createSample({ vintageId, ...fields })
     if (result.success) {
-      reset({ ...values, brix: "", ph: "", titratableAcidity: "", clusterWeight: "", color: "" })
+      if (editingSample) {
+        onDone?.()
+      } else {
+        reset({ ...values, brix: "", ph: "", titratableAcidity: "", clusterWeight: "", color: "" })
+      }
       router.refresh()
     } else {
       setServerError(result.error.message)
@@ -158,13 +193,24 @@ export function SampleForm({
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting || blocks.length === 0}
-        className="w-full bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
-      >
-        {isSubmitting ? "שומר..." : "שמור דגימה"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={isSubmitting || blocks.length === 0}
+          className="flex-1 bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
+        >
+          {isSubmitting ? "שומר..." : editingSample ? "שמור שינויים" : "שמור דגימה"}
+        </button>
+        {editingSample && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="px-6 py-3 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors font-medium"
+          >
+            ביטול
+          </button>
+        )}
+      </div>
     </form>
   )
 }

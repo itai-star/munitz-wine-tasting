@@ -79,8 +79,11 @@ export default async function SamplesPage({
           />
 
           <SampleTable
+            vintageId={selectedVintage.id}
+            blocks={blocks.map((b) => ({ id: b.id, name: b.name }))}
             samples={samples.map((s) => ({
               id: s.id,
+              blockId: s.blockId,
               sampleDate: s.sampleDate,
               brix: s.brix,
               ph: s.ph,
