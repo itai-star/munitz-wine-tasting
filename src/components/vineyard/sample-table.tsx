@@ -10,6 +10,7 @@ export type SampleRow = {
   brix: number | null
   ph: number | null
   titratableAcidity: number | null
+  clusterWeight: number | null
   color: string | null
   blockName: string
 }
@@ -135,6 +136,7 @@ export function SampleTable({ samples }: { samples: SampleRow[] }) {
                 <span>בומה: {s.brix ?? "—"}</span>
                 <span>PH: {s.ph ?? "—"}</span>
                 <span>חמיצות: {s.titratableAcidity ?? "—"}</span>
+                <span>משקל אשכול: {s.clusterWeight ?? "—"}</span>
                 <span>צבע: {s.color ?? "—"}</span>
               </div>
               <button
@@ -175,6 +177,7 @@ export function SampleTable({ samples }: { samples: SampleRow[] }) {
             <th className="px-4 py-2 font-medium">בומה</th>
             <th className="px-4 py-2 font-medium">PH</th>
             <th className="px-4 py-2 font-medium">חמיצות</th>
+            <th className="px-4 py-2 font-medium">משקל אשכול (גרם)</th>
             <th className="px-4 py-2 font-medium">צבע</th>
           </tr>
         </thead>
@@ -206,12 +209,13 @@ export function SampleTable({ samples }: { samples: SampleRow[] }) {
               <td className="px-4 py-2">{s.brix ?? "—"}</td>
               <td className="px-4 py-2">{s.ph ?? "—"}</td>
               <td className="px-4 py-2">{s.titratableAcidity ?? "—"}</td>
+              <td className="px-4 py-2">{s.clusterWeight ?? "—"}</td>
               <td className="px-4 py-2">{s.color ?? "—"}</td>
             </tr>
           ))}
           {samples.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-4 py-6 text-center text-stone-400">
+              <td colSpan={9} className="px-4 py-6 text-center text-stone-400">
                 אין עדיין דגימות לעונה זו
               </td>
             </tr>

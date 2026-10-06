@@ -43,7 +43,7 @@ export function SampleExcelImport({ vintageId }: { vintageId: string }) {
         <div>
           <p className="text-sm font-medium text-stone-700">ייבוא מאקסל</p>
           <p className="text-xs text-stone-500">
-            עמודות מצופות: תאריך, כרם, בומה, PH, חמיצות, צבע
+            עמודות מצופות: תאריך, כרם, בומה, PH, חמיצות, צבע (אופציונלי: משקל אשכול בגרמים)
           </p>
         </div>
         <label className="bg-stone-100 hover:bg-stone-200 transition-colors text-stone-700 text-sm font-medium px-4 py-2 rounded-lg cursor-pointer">

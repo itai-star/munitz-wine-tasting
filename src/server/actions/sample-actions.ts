@@ -22,6 +22,7 @@ const SampleSchema = z.object({
   brix: roundedNumber,
   ph: roundedNumber,
   titratableAcidity: roundedNumber,
+  clusterWeight: z.number().int("משקל אשכול חייב להיות מספר שלם").nullable(),
   color: z.string().trim().min(1).nullable(),
 })
 
@@ -182,6 +183,7 @@ export async function importSamplesFromExcel(
       brix: parseNumericCell(getCell("בומה")),
       ph: parseNumericCell(getCell("PH")),
       titratableAcidity: parseNumericCell(getCell("חמיצות")),
+      clusterWeight: parseNumericCell(getCell("משקל אשכול")),
       color: parseTextCell(getCell("צבע")),
     })
 

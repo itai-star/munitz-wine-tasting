@@ -132,6 +132,7 @@ model RipenessSample {
   brix              Float?
   ph                Float?
   titratableAcidity Float?
+  clusterWeight     Int?
   color             String?
   createdAt         DateTime @default(now())
 

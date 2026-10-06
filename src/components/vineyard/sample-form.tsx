@@ -13,6 +13,7 @@ const FormSchema = z.object({
   brix: z.string(),
   ph: z.string(),
   titratableAcidity: z.string(),
+  clusterWeight: z.string(),
   color: z.string(),
 })
 type FormValues = z.infer<typeof FormSchema>
@@ -50,6 +51,7 @@ export function SampleForm({
       brix: "",
       ph: "",
       titratableAcidity: "",
+      clusterWeight: "",
       color: "",
     },
   })
@@ -63,10 +65,11 @@ export function SampleForm({
       brix: toNullableNumber(values.brix),
       ph: toNullableNumber(values.ph),
       titratableAcidity: toNullableNumber(values.titratableAcidity),
+      clusterWeight: toNullableNumber(values.clusterWeight),
       color: toNullableText(values.color),
     })
     if (result.success) {
-      reset({ ...values, brix: "", ph: "", titratableAcidity: "", color: "" })
+      reset({ ...values, brix: "", ph: "", titratableAcidity: "", clusterWeight: "", color: "" })
       router.refresh()
     } else {
       setServerError(result.error.message)
@@ -138,9 +141,21 @@ export function SampleForm({
         </div>
       </div>
 
-      <div>
-        <label className={labelClass}>צבע</label>
-        <input className={inputClass} {...register("color")} />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>משקל אשכול (גרם)</label>
+          <input
+            type="number"
+            step="1"
+            inputMode="numeric"
+            className={inputClass}
+            {...register("clusterWeight")}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>צבע</label>
+          <input className={inputClass} {...register("color")} />
+        </div>
       </div>
 
       <button

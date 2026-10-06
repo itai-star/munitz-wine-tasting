@@ -85,6 +85,7 @@ export default async function SamplesPage({
               brix: s.brix,
               ph: s.ph,
               titratableAcidity: s.titratableAcidity,
+              clusterWeight: s.clusterWeight,
               color: s.color,
               blockName: s.block.name,
             }))}
