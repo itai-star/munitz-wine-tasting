@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getRecentWithdrawals } from "@/server/actions/inventory-actions"
 import { InventoryScanner } from "@/components/admin/inventory-scanner"
+import { StockAdjuster } from "@/components/admin/stock-adjuster"
 
 export const dynamic = "force-dynamic"
 
@@ -15,7 +16,10 @@ export default async function InventoryPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-stone-800 mb-6">ניהול מלאי</h1>
-      <InventoryScanner wines={wines} recentWithdrawals={recentWithdrawals} />
+      <div className="grid gap-6">
+        <StockAdjuster wines={wines} />
+        <InventoryScanner wines={wines} recentWithdrawals={recentWithdrawals} />
+      </div>
     </div>
   )
 }

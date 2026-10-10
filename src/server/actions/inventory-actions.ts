@@ -59,6 +59,41 @@ export async function withdrawWine(
   }
 }
 
+const AdjustStockSchema = z.discriminatedUnion("mode", [
+  z.object({
+    wineId: z.string().min(1),
+    mode: z.literal("add"),
+    quantity: z.number().int().min(1, "יש להוסיף לפחות בקבוק אחד"),
+  }),
+  z.object({
+    wineId: z.string().min(1),
+    mode: z.literal("set"),
+    quantity: z.number().int().min(0, "הכמות לא יכולה להיות שלילית"),
+  }),
+])
+
+export async function adjustWineStock(
+  input: z.infer<typeof AdjustStockSchema>
+): Promise<Result<{ wineName: string; newQuantity: number }>> {
+  const parsed = AdjustStockSchema.safeParse(input)
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  const { wineId, mode, quantity } = parsed.data
+
+  try {
+    const updated = await prisma.wine.update({
+      where: { id: wineId },
+      data: { quantity: mode === "add" ? { increment: quantity } : quantity },
+      select: { name: true, quantity: true },
+    })
+    return ok({ wineName: updated.name, newQuantity: updated.quantity })
+  } catch {
+    return err({ code: "NOT_FOUND", message: "היין לא נמצא או שהעדכון נכשל" })
+  }
+}
+
 export async function getRecentWithdrawals(limit = 20): Promise<
   Result<Array<{ id: string; wineName: string; quantity: number; createdAt: Date }>>
 > {
