@@ -102,8 +102,11 @@ export default async function FinishedWinePage({
                   </div>
                   <div>
                     <dt className="text-stone-400">Malic Acid</dt>
-                    <dd className="text-stone-700 mt-0.5">
-                      <bdi>{latestTest?.malicAcid ?? "—"}</bdi>
+                    <dd
+                      className="text-stone-700 mt-0.5 line-clamp-2 break-words"
+                      title={latestTest?.malicAcid == null ? (latestTest?.notes ?? undefined) : undefined}
+                    >
+                      <bdi>{latestTest?.malicAcid ?? latestTest?.notes ?? "—"}</bdi>
                     </dd>
                   </div>
                 </dl>
