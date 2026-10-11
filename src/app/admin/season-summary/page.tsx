@@ -75,8 +75,8 @@ export default async function SeasonSummaryPage({
         />
       </div>
 
-      <IntakeByWeekTable weeks={weeks} varieties={varieties} />
       <VarietyWeightChart rows={varietyTotals} />
+      <IntakeByWeekTable weeks={weeks} varieties={varieties} />
       <VarietyExtractionTable rows={extractionRows} />
     </div>
   )
