@@ -145,7 +145,8 @@ export function WineStockByVintageChart({ wines }: { wines: StockWine[] }) {
                 dataKey={`rank${rank}`}
                 content={(props) => {
                   const { x, y, width, height, index } = props
-                  const row = typeof index === "number" ? rows[index] : undefined
+                  const rowsWithRank = rows.filter((r) => r.segments.length > rank)
+                  const row = typeof index === "number" ? rowsWithRank[index] : undefined
                   const segment = row?.segments[rank]
                   if (!row || !segment) return null
                   const centerX = Number(x) + Number(width) / 2
