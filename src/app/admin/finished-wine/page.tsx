@@ -33,7 +33,10 @@ export default async function FinishedWinePage({
 
   const wines = await prisma.finishedWine.findMany({
     where: { vintageId: selectedVintage.id },
-    include: { block: true },
+    include: {
+      block: true,
+      labTests: { orderBy: { testDate: "desc" }, take: 1 },
+    },
     orderBy: { createdAt: "desc" },
   })
 
@@ -72,6 +75,7 @@ export default async function FinishedWinePage({
               { label: "שפייה 1", value: efficiency.afterFirstRacking },
               { label: "שפייה 2", value: efficiency.afterSecondRacking },
             ].filter((s) => s.value != null)
+            const latestTest = wine.labTests[0]
 
             return (
               <Link
@@ -89,6 +93,20 @@ export default async function FinishedWinePage({
                     {stages.map((s) => `${s.label} ${s.value!.toFixed(1)}%`).join(" · ")}
                   </p>
                 )}
+                <dl className="mt-3 pt-3 border-t border-stone-100 grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <dt className="text-stone-400">תאריך בדיקה אחרונה</dt>
+                    <dd className="text-stone-700 mt-0.5">
+                      <bdi>{latestTest ? latestTest.testDate.toLocaleDateString("he-IL") : "—"}</bdi>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-stone-400">Malic Acid</dt>
+                    <dd className="text-stone-700 mt-0.5">
+                      <bdi>{latestTest?.malicAcid ?? "—"}</bdi>
+                    </dd>
+                  </div>
+                </dl>
               </Link>
             )
           })}
