@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import { formatWineName } from "@/lib/wine-label"
 import { ok, err } from "@/types"
 import type { Result, AppError } from "@/types"
 import { z } from "zod"
@@ -47,7 +48,11 @@ export async function withdrawWine(
         data: { wineId: wine.id, quantity: parsed.data.quantity },
       })
 
-      return { wineId: wine.id, wineName: wine.name, newQuantity: updated.quantity }
+      return {
+        wineId: wine.id,
+        wineName: formatWineName(wine.name, wine.year),
+        newQuantity: updated.quantity,
+      }
     })
 
     return ok(result)
@@ -86,9 +91,12 @@ export async function adjustWineStock(
     const updated = await prisma.wine.update({
       where: { id: wineId },
       data: { quantity: mode === "add" ? { increment: quantity } : quantity },
-      select: { name: true, quantity: true },
+      select: { name: true, year: true, quantity: true },
     })
-    return ok({ wineName: updated.name, newQuantity: updated.quantity })
+    return ok({
+      wineName: formatWineName(updated.name, updated.year),
+      newQuantity: updated.quantity,
+    })
   } catch {
     return err({ code: "NOT_FOUND", message: "היין לא נמצא או שהעדכון נכשל" })
   }
@@ -101,12 +109,12 @@ export async function getRecentWithdrawals(limit = 20): Promise<
     const withdrawals = await prisma.wineWithdrawal.findMany({
       take: limit,
       orderBy: { createdAt: "desc" },
-      include: { wine: { select: { name: true } } },
+      include: { wine: { select: { name: true, year: true } } },
     })
     return ok(
       withdrawals.map((w) => ({
         id: w.id,
-        wineName: w.wine.name,
+        wineName: formatWineName(w.wine.name, w.wine.year),
         quantity: w.quantity,
         createdAt: w.createdAt,
       }))

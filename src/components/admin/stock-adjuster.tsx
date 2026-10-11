@@ -3,8 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { adjustWineStock } from "@/server/actions/inventory-actions"
+import { formatWineName } from "@/lib/wine-label"
 
-type StockWine = { id: string; name: string; quantity: number }
+type StockWine = { id: string; name: string; year: number | null; quantity: number }
 
 type Mode = "add" | "set"
 
@@ -87,7 +88,7 @@ export function StockAdjuster({ wines }: { wines: StockWine[] }) {
             <option value="">בחר יין</option>
             {wines.map((w) => (
               <option key={w.id} value={w.id}>
-                {w.name} — {w.quantity} במלאי
+                {formatWineName(w.name, w.year)} — {w.quantity} במלאי
               </option>
             ))}
           </select>

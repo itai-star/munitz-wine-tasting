@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 
 export default async function InventoryPage() {
   const wines = await prisma.wine.findMany({
-    select: { id: true, name: true, barcode: true, quantity: true },
+    select: { id: true, name: true, year: true, barcode: true, quantity: true },
     orderBy: { name: "asc" },
   })
   const withdrawalsResult = await getRecentWithdrawals()

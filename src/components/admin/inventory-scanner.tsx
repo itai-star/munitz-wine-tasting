@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser"
 import { withdrawWine } from "@/server/actions/inventory-actions"
+import { formatWineName } from "@/lib/wine-label"
 import { WithdrawForm } from "./withdraw-form"
 
 type InventoryWine = {
   id: string
   name: string
+  year: number | null
   barcode: string | null
   quantity: number
 }
@@ -184,7 +186,7 @@ export function InventoryScanner({
             )}
             {matchedWine && (
               <div className="mt-4 border border-stone-200 rounded-lg p-4">
-                <h3 className="font-medium text-stone-800 mb-1">{matchedWine.name}</h3>
+                <h3 className="font-medium text-stone-800 mb-1">{formatWineName(matchedWine.name, matchedWine.year)}</h3>
                 <p className="text-sm text-stone-500 mb-3">{matchedWine.quantity} בקבוקים במלאי כרגע</p>
                 <WithdrawForm
                   quantity={withdrawQuantity}
@@ -207,7 +209,7 @@ export function InventoryScanner({
               <option value="">בחר יין</option>
               {wines.map((w) => (
                 <option key={w.id} value={w.id}>
-                  {w.name} — {w.quantity} במלאי
+                  {formatWineName(w.name, w.year)} — {w.quantity} במלאי
                 </option>
               ))}
             </select>
