@@ -5,22 +5,15 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { saveVineyardMonitorSettings } from "@/server/actions/vineyard-monitor-actions"
+import { saveVineyardMonitorKeys } from "@/server/actions/vineyard-monitor-actions"
 
 const FormSchema = z.object({
   applicationKey: z.string().trim().min(1, "יש להזין Application Key"),
   apiKey: z.string().trim().min(1, "יש להזין API Key"),
-  mac: z.string().trim().min(1, "יש להזין כתובת MAC של המכשיר"),
 })
 type FormValues = z.infer<typeof FormSchema>
 
-export function VineyardMonitorSettingsForm({
-  defaultMac,
-  onSaved,
-}: {
-  defaultMac?: string
-  onSaved?: () => void
-}) {
+export function VineyardMonitorSettingsForm({ onSaved }: { onSaved?: () => void }) {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
   const {
@@ -29,12 +22,12 @@ export function VineyardMonitorSettingsForm({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { applicationKey: "", apiKey: "", mac: defaultMac ?? "" },
+    defaultValues: { applicationKey: "", apiKey: "" },
   })
 
   async function onSubmit(values: FormValues) {
     setServerError("")
-    const result = await saveVineyardMonitorSettings(values)
+    const result = await saveVineyardMonitorKeys(values)
     if (result.success) {
       onSaved?.()
       router.refresh()
@@ -84,20 +77,8 @@ export function VineyardMonitorSettingsForm({
         {errors.apiKey && <p className="text-red-600 text-xs mt-1">{errors.apiKey.message}</p>}
       </div>
 
-      <div className="sm:col-span-2">
-        <label className={labelClass}>כתובת MAC של המכשיר *</label>
-        <input
-          className={inputClass}
-          placeholder="AA:BB:CC:DD:EE:FF"
-          autoComplete="off"
-          dir="ltr"
-          {...register("mac")}
-        />
-        {errors.mac && <p className="text-red-600 text-xs mt-1">{errors.mac.message}</p>}
-      </div>
-
       <p className="sm:col-span-2 text-xs text-stone-400">
-        המפתחות נוצרים באתר ecowitt.net בעמוד הפרופיל, תחת API. הם נשמרים מוצפנים במסד הנתונים
+        המפתחות נוצרים באתר ecowitt.net בעמוד הפרופיל, תחת API, והם משותפים לכל התחנות. הם נשמרים מוצפנים במסד הנתונים
         ולא נחשפים בקוד או בממשק.
       </p>
 

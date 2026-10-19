@@ -13,6 +13,8 @@ export type EcowittReading = {
   observedAt: string | null
 }
 
+export type SensorTile = EcowittReading & { stationId: string; label: string }
+
 const API_URL = "https://api.ecowitt.net/api/v3/device/real_time"
 const CELSIUS_UNIT_ID = "1"
 const RAINFALL_MM_UNIT_ID = "12"

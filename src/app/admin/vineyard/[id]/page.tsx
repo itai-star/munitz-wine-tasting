@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { BlockForm } from "@/components/vineyard/block-form"
 import { RipenessCharts } from "@/components/vineyard/ripeness-charts"
 import { VineyardSensorGrid } from "@/components/vineyard-monitor/vineyard-sensor-grid"
-import { getLatestSensorTilesForBlock } from "@/server/actions/vineyard-monitor-actions"
+import { getSensorTilesForBlock } from "@/server/actions/vineyard-monitor-data-actions"
 
 export const dynamic = "force-dynamic"
 
@@ -21,7 +21,7 @@ export default async function BlockDetailPage({
     orderBy: { sampleDate: "asc" },
   })
 
-  const sensorsResult = await getLatestSensorTilesForBlock(id)
+  const sensorsResult = await getSensorTilesForBlock(id)
   const sensors = sensorsResult.success ? sensorsResult.data : []
 
   return (

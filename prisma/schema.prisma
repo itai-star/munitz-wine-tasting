@@ -122,7 +122,7 @@ model VineyardBlock {
   fermentations FermentationBatchBlock[]
   intakes       GrapeIntake[]
   finishedWines FinishedWine[]
-  sensors       EcowittSensorAssignment[]
+  stations      EcowittStation[]
 }
 
 model RipenessSample {
@@ -276,30 +276,44 @@ model EcowittSettings {
   id             String   @id @default("default")
   applicationKey String
   apiKey         String
-  mac            String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
 
-model EcowittSensorAssignment {
-  sensorKey String         @id
-  label     String?
+model EcowittStation {
+  id        String         @id @default(cuid())
+  name      String
+  mac       String         @unique
   blockId   String?
   block     VineyardBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime       @default(now())
+
+  sensorLabels EcowittSensorLabel[]
+  samples      EcowittSample[]
 
   @@index([blockId])
 }
 
+model EcowittSensorLabel {
+  stationId String
+  sensorKey String
+  label     String
+  station   EcowittStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@id([stationId, sensorKey])
+}
+
 model EcowittSample {
-  id                  String   @id @default(cuid())
+  id                  String         @id @default(cuid())
+  stationId           String
   sensorKey           String
   temperatureC        Float?
   humidityPercent     Float?
   soilMoisturePercent Float?
   leafWetnessPercent  Float?
   rainDailyMm         Float?
-  recordedAt          DateTime @default(now())
+  recordedAt          DateTime       @default(now())
+  station             EcowittStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
 
-  @@index([sensorKey, recordedAt])
+  @@index([stationId, sensorKey, recordedAt])
 }

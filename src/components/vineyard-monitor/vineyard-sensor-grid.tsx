@@ -4,12 +4,10 @@ import { useState } from "react"
 import {
   getVineyardSensorHistory,
   type VineyardSamplePoint,
-  type VineyardSensorTile,
-} from "@/server/actions/vineyard-monitor-actions"
+} from "@/server/actions/vineyard-monitor-data-actions"
+import type { SensorTile as SensorTileData } from "@/lib/ecowitt"
 import { VineyardSensorChart } from "@/components/vineyard-monitor/vineyard-sensor-chart"
 import type { Result } from "@/types"
-
-export type SensorTileData = Omit<VineyardSensorTile, "blockId">
 
 const HISTORY_RANGES = [
   { days: 1, label: "יום" },
@@ -154,22 +152,22 @@ export function VineyardSensorGrid({ sensors }: { sensors: SensorTileData[] }) {
   const [days, setDays] = useState(DEFAULT_HISTORY_DAYS)
   const [history, setHistory] = useState<Result<VineyardSamplePoint[]> | null>(null)
 
-  async function loadHistory(sensorKey: string, rangeDays: number) {
+  async function loadHistory(sensor: SensorTileData, rangeDays: number) {
     setDays(rangeDays)
     setHistory(null)
-    setHistory(await getVineyardSensorHistory(sensorKey, rangeDays))
+    setHistory(await getVineyardSensorHistory(sensor.stationId, sensor.key, rangeDays))
   }
 
   function openSensor(sensor: SensorTileData) {
     setSelected(sensor)
-    void loadHistory(sensor.key, DEFAULT_HISTORY_DAYS)
+    void loadHistory(sensor, DEFAULT_HISTORY_DAYS)
   }
 
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {sensors.map((sensor) => (
-          <SensorTile key={sensor.key} sensor={sensor} onOpen={() => openSensor(sensor)} />
+          <SensorTile key={`${sensor.stationId}:${sensor.key}`} sensor={sensor} onOpen={() => openSensor(sensor)} />
         ))}
       </div>
 
@@ -178,7 +176,7 @@ export function VineyardSensorGrid({ sensors }: { sensors: SensorTileData[] }) {
           sensor={selected}
           days={days}
           history={history}
-          onSelectDays={(next) => loadHistory(selected.key, next)}
+          onSelectDays={(next) => loadHistory(selected, next)}
           onClose={() => setSelected(null)}
         />
       )}

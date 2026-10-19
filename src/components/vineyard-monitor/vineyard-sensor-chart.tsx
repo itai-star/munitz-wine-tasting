@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import type { VineyardSamplePoint } from "@/server/actions/vineyard-monitor-actions"
+import type { VineyardSamplePoint } from "@/server/actions/vineyard-monitor-data-actions"
 
 type MetricKey =
   | "temperatureC"

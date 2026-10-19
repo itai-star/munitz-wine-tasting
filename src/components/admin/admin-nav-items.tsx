@@ -83,5 +83,5 @@ export const adminNavItems: AdminNavItem[] = [
 
 export function isAdminNavItemActive(pathname: string, href: string): boolean {
   if (href === "/admin") return pathname === "/admin"
-  return pathname.startsWith(href)
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
