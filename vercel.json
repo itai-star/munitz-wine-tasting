@@ -3,6 +3,10 @@
     {
       "path": "/api/remote-monitor/poll",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/vineyard-monitor/poll",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

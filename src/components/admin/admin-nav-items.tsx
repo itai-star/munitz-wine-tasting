@@ -8,6 +8,7 @@ import {
   FinishedWineIcon,
   SeasonSummaryIcon,
   RemoteMonitorIcon,
+  VineyardMonitorIcon,
 } from "@/components/admin/nav-icons"
 
 export type AdminNavItem = {
@@ -71,6 +72,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "בקרה מרחוק",
     description: "טמפרטורה ולחות מחיישני הבקר",
     icon: RemoteMonitorIcon,
+  },
+  {
+    href: "/admin/vineyard-monitor",
+    label: "ניטור כרמים",
+    description: "לחות קרקע, טמפרטורה וגשם לפי כרם",
+    icon: VineyardMonitorIcon,
   },
 ]
 

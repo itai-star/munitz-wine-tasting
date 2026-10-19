@@ -85,6 +85,18 @@ export function RemoteMonitorIcon({ className }: IconProps) {
   )
 }
 
+export function VineyardMonitorIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M12 21v-9" />
+      <path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5Z" />
+      <path d="M12 15c0-2.5-1.8-4.5-4.5-4.5 0 2.5 1.8 4.5 4.5 4.5Z" />
+      <path d="M6 21h12" />
+      <path d="M7 5.5c1.4-1.2 3-1.8 5-1.8s3.6.6 5 1.8" />
+    </svg>
+  )
+}
+
 export function SeasonSummaryIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
