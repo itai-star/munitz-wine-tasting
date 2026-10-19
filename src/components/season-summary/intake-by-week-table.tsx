@@ -26,23 +26,23 @@ export function IntakeByWeekTable({
   const grandTotal = weeks.reduce((sum, week) => sum + week.total, 0)
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 overflow-x-auto">
+    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 overflow-x-auto print:overflow-visible print:break-inside-avoid">
       <h3 className="text-sm font-medium text-stone-700 mb-3">
         קליטת ענבים לפי זן ולפי שבוע (ק&quot;ג)
       </h3>
-      <table className="w-full text-sm border-collapse min-w-max">
+      <table className="w-full text-sm border-collapse min-w-max print:min-w-0 print:text-[9px]">
         <thead>
           <tr>
-            <th className="px-3 py-2 border-b border-stone-200 text-start whitespace-nowrap">שבוע</th>
+            <th className="px-3 py-2 print:px-1 print:py-1 border-b border-stone-200 text-start whitespace-nowrap">שבוע</th>
             {varieties.map((variety) => (
               <th
                 key={variety}
-                className="px-3 py-2 border-b border-stone-200 text-center whitespace-nowrap"
+                className="px-3 py-2 print:px-1 print:py-1 border-b border-stone-200 text-center whitespace-nowrap"
               >
                 {variety}
               </th>
             ))}
-            <th className="px-3 py-2 border-b border-stone-200 text-center whitespace-nowrap font-semibold">
+            <th className="px-3 py-2 print:px-1 print:py-1 border-b border-stone-200 text-center whitespace-nowrap font-semibold">
               סה&quot;כ
             </th>
           </tr>
@@ -50,25 +50,25 @@ export function IntakeByWeekTable({
         <tbody>
           {weeks.map((week) => (
             <tr key={week.label} className="border-b border-stone-100">
-              <td className="px-3 py-2 font-medium whitespace-nowrap">משבוע {week.label}</td>
+              <td className="px-3 py-2 print:px-1 print:py-1 font-medium whitespace-nowrap">משבוע {week.label}</td>
               {varieties.map((variety) => (
-                <td key={variety} className="px-3 py-2 text-center text-stone-600">
+                <td key={variety} className="px-3 py-2 print:px-1 print:py-1 text-center text-stone-600">
                   {week.byVariety[variety] ? formatKg(week.byVariety[variety]) : "—"}
                 </td>
               ))}
-              <td className="px-3 py-2 text-center font-semibold">{formatKg(week.total)}</td>
+              <td className="px-3 py-2 print:px-1 print:py-1 text-center font-semibold">{formatKg(week.total)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td className="px-3 py-2 font-semibold whitespace-nowrap">סה&quot;כ</td>
+            <td className="px-3 py-2 print:px-1 print:py-1 font-semibold whitespace-nowrap">סה&quot;כ</td>
             {varietyTotals.map((total, i) => (
-              <td key={varieties[i]} className="px-3 py-2 text-center font-semibold">
+              <td key={varieties[i]} className="px-3 py-2 print:px-1 print:py-1 text-center font-semibold">
                 {formatKg(total)}
               </td>
             ))}
-            <td className="px-3 py-2 text-center font-semibold">{formatKg(grandTotal)}</td>
+            <td className="px-3 py-2 print:px-1 print:py-1 text-center font-semibold">{formatKg(grandTotal)}</td>
           </tr>
         </tfoot>
       </table>

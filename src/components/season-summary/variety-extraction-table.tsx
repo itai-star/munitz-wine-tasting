@@ -17,7 +17,7 @@ export function VarietyExtractionTable({ rows }: { rows: VarietyExtractionRow[] 
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 overflow-x-auto">
+    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 overflow-x-auto print:overflow-visible print:break-inside-avoid">
       <h3 className="text-sm font-medium text-stone-700 mb-3">אחוזי מיצוי לפי זן</h3>
       <table className="w-full text-sm border-collapse min-w-max">
         <thead>

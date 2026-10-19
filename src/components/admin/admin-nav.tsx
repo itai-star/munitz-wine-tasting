@@ -9,7 +9,7 @@ export function AdminNav() {
 
   return (
     <>
-      <nav className="hidden md:flex items-center gap-1">
+      <nav className="hidden md:flex items-center gap-1 print:hidden">
         {adminNavItems.map((item) => {
           const active = isAdminNavItemActive(pathname, item.href)
           const Icon = item.icon
@@ -30,7 +30,7 @@ export function AdminNav() {
         })}
       </nav>
 
-      <nav className="md:hidden fixed inset-x-0 bottom-0 z-40 flex bg-wine border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden print:hidden fixed inset-x-0 bottom-0 z-40 flex bg-wine border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
         {adminNavItems.map((item) => {
           const active = isAdminNavItemActive(pathname, item.href)
           const Icon = item.icon

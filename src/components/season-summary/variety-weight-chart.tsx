@@ -17,10 +17,10 @@ export function VarietyWeightChart({ rows }: { rows: VarietyWeightRow[] }) {
     )
   }
 
-  const height = Math.max(200, rows.length * 36)
+  const height = Math.max(200, rows.length * 30)
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
+    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 print:break-inside-avoid">
       <h3 className="text-sm font-medium text-stone-700 mb-3">סה&quot;כ ענבים שנקלטו לפי זן (ק&quot;ג)</h3>
       <div dir="ltr">
         <ResponsiveContainer width="100%" height={height}>
@@ -29,7 +29,7 @@ export function VarietyWeightChart({ rows }: { rows: VarietyWeightRow[] }) {
             <XAxis type="number" tick={{ fontSize: 12 }} />
             <YAxis type="category" dataKey="variety" tick={{ fontSize: 12 }} width={110} />
             <Tooltip formatter={(value) => [`${formatKg(Number(value))} ק"ג`, "כמות שנקלטה"]} />
-            <Bar dataKey="totalWeightKg" fill="#722F37" radius={[0, 4, 4, 0]}>
+            <Bar dataKey="totalWeightKg" fill="#722F37" radius={[0, 4, 4, 0]} isAnimationActive={false}>
               <LabelList
                 dataKey="totalWeightKg"
                 position="right"
