@@ -4,7 +4,7 @@ import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { importLabTestsFromExcel } from "@/server/actions/lab-test-actions"
 
-type ImportSummary = { imported: number; errors: { row: number; message: string }[] }
+type ImportSummary = { imported: number; updated: number; errors: { row: number; message: string }[] }
 
 export function LabTestExcelImport({ vintageId }: { vintageId: string }) {
   const router = useRouter()
@@ -46,6 +46,9 @@ export function LabTestExcelImport({ vintageId }: { vintageId: string }) {
             עמודות מצופות: מכל, תאריך, מעבדה, Density, Ethanol, pH, Total Acid, Volatile, RS/Bx, CO2,
             Malic Acid, הערות
           </p>
+          <p className="text-xs text-stone-500">
+            בדיקה שכבר קיימת באותו מכל ובאותו תאריך תתעדכן בנתוני הקובץ, וההערה הידנית תישמר.
+          </p>
         </div>
         <label className="bg-stone-100 hover:bg-stone-200 transition-colors text-stone-700 text-sm font-medium px-4 py-2 rounded-lg cursor-pointer">
           {submitting ? "מייבא..." : "בחר קובץ xlsx"}
@@ -64,7 +67,9 @@ export function LabTestExcelImport({ vintageId }: { vintageId: string }) {
 
       {summary && (
         <div className="mt-3 text-sm">
-          <p className="text-green-700">יובאו {summary.imported} בדיקות.</p>
+          <p className="text-green-700">
+            יובאו {summary.imported} בדיקות חדשות, ועודכנו {summary.updated} בדיקות קיימות.
+          </p>
           {summary.errors.length > 0 && (
             <div className="mt-2 text-red-600">
               <p>{summary.errors.length} שורות נדחו:</p>

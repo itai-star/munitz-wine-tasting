@@ -115,7 +115,7 @@ function normalizeTank(value: string): string {
 export async function importLabTestsFromExcel(
   vintageId: string,
   formData: FormData
-): Promise<Result<{ imported: number; errors: ImportRowError[] }>> {
+): Promise<Result<{ imported: number; updated: number; errors: ImportRowError[] }>> {
   const file = formData.get("file")
   if (!(file instanceof File)) {
     return err({ code: "VALIDATION", message: "לא נבחר קובץ" })
@@ -129,15 +129,13 @@ export async function importLabTestsFromExcel(
 
   const existing = await prisma.labTest.findMany({
     where: { finishedWineId: { in: wines.map((w) => w.id) } },
-    select: { finishedWineId: true, testDate: true },
   })
-  const seenDatesByWine = new Map<string, Set<string>>()
+  const existingByWineAndDate = new Map<string, ExistingLabTest>()
   for (const t of existing) {
-    const key = t.testDate.toISOString().slice(0, 10)
-    const set = seenDatesByWine.get(t.finishedWineId)
-    if (set) set.add(key)
-    else seenDatesByWine.set(t.finishedWineId, new Set([key]))
+    const key = wineDateKey(t.finishedWineId, t.testDate)
+    if (!existingByWineAndDate.has(key)) existingByWineAndDate.set(key, t)
   }
+  const seenInFile = new Set<string>()
 
   let workbook: ExcelJS.Workbook
   try {
@@ -170,6 +168,7 @@ export async function importLabTestsFromExcel(
   }
 
   const rowsToInsert: z.infer<typeof LabTestSchema>[] = []
+  const rowsToUpdate: { id: string; data: Partial<z.infer<typeof LabTestSchema>> }[] = []
   const errors: ImportRowError[] = []
 
   for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
@@ -199,14 +198,12 @@ export async function importLabTestsFromExcel(
       continue
     }
 
-    const dateKey = testDate.toISOString().slice(0, 10)
-    const seenDates = seenDatesByWine.get(finishedWineId) ?? new Set<string>()
-    if (seenDates.has(dateKey)) {
-      errors.push({ row: rowNumber, message: "כבר קיימת בדיקה לתאריך הזה במכל זה — דולגה (כפילות)" })
+    const key = wineDateKey(finishedWineId, testDate)
+    if (seenInFile.has(key)) {
+      errors.push({ row: rowNumber, message: "תאריך כפול לאותו מכל בקובץ — דולגה" })
       continue
     }
-    seenDates.add(dateKey)
-    seenDatesByWine.set(finishedWineId, seenDates)
+    seenInFile.add(key)
 
     const parsed = LabTestSchema.safeParse({
       finishedWineId,
@@ -228,19 +225,64 @@ export async function importLabTestsFromExcel(
       continue
     }
 
-    rowsToInsert.push(parsed.data)
+    const match = existingByWineAndDate.get(key)
+    if (match) {
+      rowsToUpdate.push({ id: match.id, data: mergeImportedTest(match, parsed.data) })
+    } else {
+      rowsToInsert.push(parsed.data)
+    }
   }
 
-  if (rowsToInsert.length === 0) {
-    return ok({ imported: 0, errors })
+  if (rowsToInsert.length === 0 && rowsToUpdate.length === 0) {
+    return ok({ imported: 0, updated: 0, errors })
   }
 
   try {
-    await prisma.labTest.createMany({ data: rowsToInsert })
-    return ok({ imported: rowsToInsert.length, errors })
+    await prisma.$transaction([
+      prisma.labTest.createMany({ data: rowsToInsert }),
+      ...rowsToUpdate.map(({ id, data }) => prisma.labTest.update({ where: { id }, data })),
+    ])
+    return ok({ imported: rowsToInsert.length, updated: rowsToUpdate.length, errors })
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת הבדיקות שיובאו" })
   }
+}
+
+type ExistingLabTest = Awaited<ReturnType<typeof prisma.labTest.findMany>>[number]
+
+function wineDateKey(finishedWineId: string, testDate: Date): string {
+  return `${finishedWineId}|${testDate.toISOString().slice(0, 10)}`
+}
+
+const MERGEABLE_FIELDS = [
+  "lab",
+  "density",
+  "ethanol",
+  "ph",
+  "totalAcid",
+  "volatile",
+  "rsBx",
+  "co2",
+  "malicAcid",
+] as const
+
+// Imported values fill in or replace existing ones, but an empty cell never erases
+// data and the manual note is kept (an imported note is appended below it).
+function mergeImportedTest(
+  existing: ExistingLabTest,
+  imported: z.infer<typeof LabTestSchema>
+): Partial<z.infer<typeof LabTestSchema>> {
+  const data: Partial<z.infer<typeof LabTestSchema>> = {}
+  for (const field of MERGEABLE_FIELDS) {
+    if (imported[field] != null) Object.assign(data, { [field]: imported[field] })
+  }
+  if (imported.notes != null) {
+    if (existing.notes == null) data.notes = imported.notes
+    else if (!existing.notes.includes(imported.notes)) {
+      data.notes = [existing.notes, imported.notes].join("\n")
+    }
+  }
+  return data
 }
 
 function hasAnyValue(row: ExcelJS.Row): boolean {
