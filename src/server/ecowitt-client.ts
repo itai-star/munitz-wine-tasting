@@ -54,7 +54,8 @@ export async function fetchStationReadings(
     }
     const parsed = parseRealTimeResponse(await response.json())
     if (!parsed.ok) {
-      return err({ code: "SERVER_ERROR", message: PARSE_FAILURE_MESSAGES[parsed.reason] })
+      const detail = parsed.detail ? ` (${parsed.detail})` : ""
+      return err({ code: "SERVER_ERROR", message: `${PARSE_FAILURE_MESSAGES[parsed.reason]}${detail}` })
     }
     return ok(parsed.readings)
   } catch {

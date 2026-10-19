@@ -50,14 +50,18 @@ const MetricSchema = z.object({
 })
 
 const ResponseSchema = z.object({
-  code: z.number(),
+  code: z.coerce.number(),
   msg: z.string().optional(),
   data: z.unknown().optional(),
 })
 
 export type EcowittParseResult =
   | { ok: true; readings: EcowittReading[] }
-  | { ok: false; reason: "INVALID_CREDENTIALS" | "INVALID_DEVICE" | "API_ERROR" | "BAD_RESPONSE" }
+  | {
+      ok: false
+      reason: "INVALID_CREDENTIALS" | "INVALID_DEVICE" | "API_ERROR" | "BAD_RESPONSE"
+      detail?: string
+    }
 
 const CREDENTIAL_ERROR_CODES = new Set([40010, 40011])
 const DEVICE_ERROR_CODES = new Set([40012])
@@ -128,13 +132,15 @@ function hasAnyValue(reading: EcowittReading): boolean {
 
 export function parseRealTimeResponse(payload: unknown): EcowittParseResult {
   const parsed = ResponseSchema.safeParse(payload)
-  if (!parsed.success) return { ok: false, reason: "BAD_RESPONSE" }
+  if (!parsed.success) return { ok: false, reason: "BAD_RESPONSE", detail: "מבנה תשובה לא מוכר" }
 
-  const { code, data } = parsed.data
+  const { code, msg, data } = parsed.data
   if (CREDENTIAL_ERROR_CODES.has(code)) return { ok: false, reason: "INVALID_CREDENTIALS" }
   if (DEVICE_ERROR_CODES.has(code)) return { ok: false, reason: "INVALID_DEVICE" }
-  if (code !== 0) return { ok: false, reason: "API_ERROR" }
-  if (!isRecord(data)) return { ok: false, reason: "BAD_RESPONSE" }
+  if (code !== 0) return { ok: false, reason: "API_ERROR", detail: `קוד ${code}${msg ? `: ${msg}` : ""}` }
+  // A valid device that has not uploaded in the last two hours comes back with an empty list.
+  if (Array.isArray(data) && data.length === 0) return { ok: true, readings: [] }
+  if (!isRecord(data)) return { ok: false, reason: "BAD_RESPONSE", detail: `סוג נתונים: ${Array.isArray(data) ? "רשימה" : typeof data}` }
 
   const readings: EcowittReading[] = []
   for (const [key, group] of Object.entries(data)) {
