@@ -1,0 +1,49 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><style>
+@font-face{font-family:DL;font-weight:400;src:url(../assets/fonts/DavidLibre-Regular.ttf)}
+@font-face{font-family:DL;font-weight:500;src:url(../assets/fonts/DavidLibre-Medium.ttf)}
+@font-face{font-family:DL;font-weight:700;src:url(../assets/fonts/DavidLibre-Bold.ttf)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;background:#FBE3CB}
+body{font-family:DL,"David Libre",serif;color:#000;direction:rtl;overflow:hidden}
+.slide{position:relative;width:1080px;height:1350px;overflow:hidden;
+  background:radial-gradient(ellipse 90% 70% at 50% 10%,#FFF5DC 0%,#FDE7CE 48%,#F8CDB2 100%)}
+.slide::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'300'%20height%3D'300'%3E%3Cfilter%20id%3D'n'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.85'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20values%3D'0%200%200%200%20.45%20%200%200%200%200%20.25%20%200%200%200%200%20.15%20%200%200%200%20.55%200'%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23n)'%2F%3E%3C%2Fsvg%3E")}
+.logo{position:absolute;top:46px;left:50%;transform:translateX(-50%);height:176px}
+.leaf{display:block;object-fit:contain;mix-blend-mode:multiply;filter:url(#ink)}
+.disc{border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+  background:radial-gradient(circle at 50% 42%,#FFFBF1 0%,#FFF1DA 100%);box-shadow:0 12px 26px rgba(160,70,40,.16),inset 0 0 0 2px rgba(255,255,255,.7)}
+.frule{position:absolute;left:80px;right:80px;bottom:124px;height:2px;background:rgba(196,20,63,.4)}
+.footer{position:absolute;left:0;right:0;bottom:50px;text-align:center;font-size:36px;font-weight:500;letter-spacing:.01em}
+.red{color:#C4143F}
+.title{position:absolute;top:252px;right:80px;left:80px;font-size:78px;font-weight:700;line-height:1.05;text-align:right}
+.sub{position:absolute;top:348px;right:80px;left:80px;font-size:34px;color:#6b3f35}
+.it{display:flex;flex-direction:column;align-items:center;text-align:center}
+.it .n{font-weight:700;line-height:1.05;margin-top:12px}
+.it .k{color:#C4143F;font-weight:500;margin-top:2px}
+
+.kicker{position:absolute;top:250px;left:0;right:0;text-align:center;font-size:36px;color:#6b3f35}
+.big{position:absolute;top:298px;left:0;right:0;text-align:center;font-size:232px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.rule{position:absolute;top:560px;left:50%;width:120px;height:6px;margin-left:-60px;background:#C4143F;border-radius:3px}
+.stats{position:absolute;top:606px;left:80px;right:80px;display:flex;justify-content:space-between;text-align:center}
+.stat b{display:block;font-size:88px;font-weight:700;line-height:1}
+.stat span{display:block;margin-top:8px;font-size:32px;color:#6b3f35}
+.pt{position:absolute;top:782px;width:330px;text-align:center}
+.pt.first{right:96px}.pt.last{left:96px}
+.pt .lbl{font-size:28px;color:#6b3f35;margin-bottom:12px}
+.pt .disc{margin:0 auto}
+.pt .nm{font-size:52px;font-weight:700;margin-top:14px;line-height:1}
+.pt .dt{font-size:32px;color:#C4143F;font-weight:500;margin-top:4px}
+.bridge{position:absolute;top:935px;left:430px;right:430px;text-align:center;font-size:30px;color:#6b3f35}
+.bridge i{display:block;border-top:3px dashed #C4143F;margin-bottom:12px}
+</style></head><body><svg width="0" height="0" style="position:absolute"><filter id="ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0"/><feComponentTransfer><feFuncR type="table" tableValues="0 0.02 0.05 0.10 0.17 0.27 0.40 0.57 0.78 1 1"/><feFuncG type="table" tableValues="0 0.02 0.05 0.10 0.17 0.27 0.40 0.57 0.78 1 1"/><feFuncB type="table" tableValues="0 0.02 0.05 0.10 0.17 0.27 0.40 0.57 0.78 1 1"/></feComponentTransfer></filter></svg><div class="slide"><img class="logo" src="../assets/logo.png" alt="MUNITZ boutique winery">
+  <div class="kicker">סיכום העונה בכרמים, נכון ל-19.10</div>
+  <div class="big">בציר 2026</div>
+  <div class="rule"></div>
+  <div class="stats">
+    <div class="stat"><b>24.6</b><span>טון ענבים</span></div>
+    <div class="stat"><b>17</b><span>זנים</span></div>
+    <div class="stat"><b>25</b><span>משלוחים מהכרמים</span></div>
+  </div>
+  <div class="pt first"><div class="lbl">הזן הראשון</div><div class="disc" style="width:250px;height:250px"><img class="leaf" src="../assets/leaves/leaf_03.png" alt="מרלו" style="width:225px;height:225px"></div><div class="nm">מרלו</div><div class="dt">19.8</div></div>
+  <div class="bridge"><i></i>שמונה שבועות</div>
+  <div class="pt last"><div class="lbl">הזן האחרון עד עכשיו</div><div class="disc" style="width:250px;height:250px"><img class="leaf" src="../assets/leaves/leaf_15.png" alt="טנט" style="width:225px;height:225px"></div><div class="nm">טנט</div><div class="dt">14.10</div></div><div class="frule"></div><div class="footer">יקב מוניץ - יקב בוטיק משפחתי</div></div></body></html>

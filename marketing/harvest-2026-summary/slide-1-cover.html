@@ -1,0 +1,47 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><style>
+@font-face{font-family:DL;font-weight:400;src:url(assets/fonts/DavidLibre-Regular.ttf)}
+@font-face{font-family:DL;font-weight:500;src:url(assets/fonts/DavidLibre-Medium.ttf)}
+@font-face{font-family:DL;font-weight:700;src:url(assets/fonts/DavidLibre-Bold.ttf)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;background:#fff}
+body{font-family:DL,"David Libre",serif;color:#000;direction:rtl;overflow:hidden}
+.slide{position:relative;width:1080px;height:1350px;background:#fff;overflow:hidden}
+.logo{position:absolute;top:58px;left:50%;transform:translateX(-50%);height:104px}
+.leaf{display:block;object-fit:contain;mix-blend-mode:multiply;filter:url(#ink)}
+.footer{position:absolute;left:0;right:0;bottom:0;height:118px;border-top:2px solid #000;display:flex;align-items:center;justify-content:center;gap:22px;font-size:34px;font-weight:500;letter-spacing:.01em}
+.drop{width:15px;height:21px;fill:#C4143F}
+.red{color:#C4143F}
+.title{position:absolute;top:196px;right:80px;left:80px;font-size:86px;font-weight:700;line-height:1.05;text-align:right}
+.sub{position:absolute;right:80px;left:80px;font-size:34px;font-weight:400;color:#333}
+
+.kicker{position:absolute;top:214px;left:0;right:0;text-align:center;font-size:36px;color:#333}
+.big{position:absolute;top:262px;left:0;right:0;text-align:center;font-size:250px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.rule{position:absolute;top:556px;left:50%;width:120px;height:6px;margin-left:-60px;background:#C4143F}
+.stats{position:absolute;top:610px;left:80px;right:80px;display:flex;justify-content:space-between;text-align:center}
+.stat b{display:block;font-size:92px;font-weight:700;line-height:1}
+.stat span{display:block;margin-top:10px;font-size:32px;color:#333}
+.first,.last{position:absolute;top:790px;width:330px;text-align:center}
+.first{right:96px}.last{left:96px}
+.first .leaf,.last .leaf{margin:0 auto}
+.nm{font-size:50px;font-weight:700;margin-top:6px}
+.dt{font-size:32px;color:#C4143F;font-weight:500}
+.lbl{font-size:28px;color:#333;margin-bottom:10px}
+.bridge{position:absolute;top:960px;left:430px;right:430px;text-align:center;font-size:30px;color:#333}
+.bridge i{display:block;border-top:3px dashed #C4143F;margin-bottom:12px}
+</style></head><body><svg width="0" height="0" style="position:absolute"><filter id="ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0"/><feComponentTransfer><feFuncR type="table" tableValues="0 0.02 0.05 0.10 0.17 0.27 0.40 0.57 0.78 1 1"/><feFuncG type="table" tableValues="0 0.02 0.05 0.10 0.17 0.27 0.40 0.57 0.78 1 1"/><feFuncB type="table" tableValues="0 0.02 0.05 0.10 0.17 0.27 0.40 0.57 0.78 1 1"/></feComponentTransfer></filter></svg><div class="slide"><img class="logo" src="assets/logo.png" alt="MUNITZ boutique winery">
+  <div class="kicker">סיכום העונה בכרמים, נכון ל-19.10</div>
+  <div class="big">בציר 2026</div>
+  <div class="rule"></div>
+  <div class="stats">
+    <div class="stat"><b>24.6</b><span>טון ענבים</span></div>
+    <div class="stat"><b>17</b><span>זנים</span></div>
+    <div class="stat"><b>25</b><span>משלוחים מהכרמים</span></div>
+  </div>
+  <div class="first"><div class="lbl">הזן הראשון</div><img class="leaf" src="assets/leaves/leaf_03.png" alt="מרלו" style="width:280px;height:280px;"><div class="nm">מרלו</div><div class="dt">19.8</div></div>
+  <div class="bridge"><i></i>שמונה שבועות</div>
+  <div class="last"><div class="lbl">הזן האחרון עד עכשיו</div><img class="leaf" src="assets/leaves/leaf_15.png" alt="טנט" style="width:280px;height:280px;"><div class="nm">טנט</div><div class="dt">14.10</div></div>
+  <div class="footer">
+    <svg class="drop" viewBox="0 0 14 20"><path d="M7 0C7 0 0 9 0 13a7 7 0 0 0 14 0C14 9 7 0 7 0Z"/></svg>
+    <span>יקב מוניץ - יקב בוטיק משפחתי</span>
+    <svg class="drop" viewBox="0 0 14 20"><path d="M7 0C7 0 0 9 0 13a7 7 0 0 0 14 0C14 9 7 0 7 0Z"/></svg>
+  </div></div></body></html>
