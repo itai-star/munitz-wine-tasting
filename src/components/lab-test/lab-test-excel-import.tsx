@@ -44,7 +44,7 @@ export function LabTestExcelImport({ vintageId }: { vintageId: string }) {
           <p className="text-sm font-medium text-stone-700">ייבוא מאקסל לכל מכלי הבציר</p>
           <p className="text-xs text-stone-500">
             עמודות מצופות: מכל, תאריך, מעבדה, Density, Ethanol, pH, Total Acid, Volatile, RS/Bx, CO2,
-            Malic Acid, הערות
+            Malic Acid, הערות. עמודה אופציונלית: פעולות לביצוע
           </p>
           <p className="text-xs text-stone-500">
             בדיקה שכבר קיימת באותו מכל ובאותו תאריך תתעדכן בנתוני הקובץ, וההערה הידנית תישמר.

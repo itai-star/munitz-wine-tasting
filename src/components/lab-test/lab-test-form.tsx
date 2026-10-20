@@ -19,6 +19,7 @@ const FormSchema = z.object({
   co2: z.string(),
   malicAcid: z.string(),
   notes: z.string(),
+  actionItems: z.string(),
 })
 type FormValues = z.infer<typeof FormSchema>
 
@@ -45,6 +46,7 @@ const emptyValues: FormValues = {
   co2: "",
   malicAcid: "",
   notes: "",
+  actionItems: "",
 }
 
 export type EditableLabTest = {
@@ -60,6 +62,7 @@ export type EditableLabTest = {
   co2: number | null
   malicAcid: number | null
   notes: string | null
+  actionItems: string | null
 }
 
 function numberToText(value: number | null): string {
@@ -79,6 +82,7 @@ function toFormValues(test: EditableLabTest): FormValues {
     co2: numberToText(test.co2),
     malicAcid: numberToText(test.malicAcid),
     notes: test.notes ?? "",
+    actionItems: test.actionItems ?? "",
   }
 }
 
@@ -117,6 +121,7 @@ export function LabTestForm({
       co2: toNullableNumber(values.co2),
       malicAcid: toNullableNumber(values.malicAcid),
       notes: toNullableText(values.notes),
+      actionItems: toNullableText(values.actionItems),
     }
     const result = editingTest
       ? await updateLabTest({ id: editingTest.id, ...fields })
@@ -196,6 +201,11 @@ export function LabTestForm({
       <div>
         <label className={labelClass}>הערות</label>
         <textarea className={inputClass} rows={2} {...register("notes")} />
+      </div>
+
+      <div>
+        <label className={labelClass}>פעולות לביצוע</label>
+        <textarea className={inputClass} rows={2} {...register("actionItems")} />
       </div>
 
       <div className="flex gap-2">

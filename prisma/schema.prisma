@@ -245,6 +245,7 @@ model LabTest {
   co2            Float?
   malicAcid      Float?
   notes          String?
+  actionItems    String?
   createdAt      DateTime @default(now())
 
   finishedWine FinishedWine @relation(fields: [finishedWineId], references: [id], onDelete: Cascade)
