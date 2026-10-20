@@ -97,7 +97,12 @@ export function LabTestTable({
               <span>CO2: {t.co2 ?? "—"}</span>
               <span>Malic Acid: {t.malicAcid ?? "—"}</span>
             </div>
-            {t.notes && <p className="mt-1 text-xs text-stone-400">{t.notes}</p>}
+            {t.notes && <p className="mt-1 text-xs text-stone-400 whitespace-pre-line">{t.notes}</p>}
+            {t.actionItems && (
+              <p className="mt-1 text-xs text-stone-600 whitespace-pre-line">
+                <span className="font-medium">פעולות לביצוע:</span> {t.actionItems}
+              </p>
+            )}
             <div className="mt-2 flex gap-2">
               <button type="button" onClick={() => setEditingId(t.id)} className={editButtonClass}>
                 ערוך בדיקה
@@ -137,6 +142,7 @@ export function LabTestTable({
             <th className="px-3 py-2 font-medium">CO2</th>
             <th className="px-3 py-2 font-medium">Malic Acid</th>
             <th className="px-3 py-2 font-medium">הערות</th>
+            <th className="px-3 py-2 font-medium">פעולות לביצוע</th>
           </tr>
         </thead>
         <tbody>
@@ -168,12 +174,13 @@ export function LabTestTable({
               <td className="px-3 py-2">{t.rsBx ?? "—"}</td>
               <td className="px-3 py-2">{t.co2 ?? "—"}</td>
               <td className="px-3 py-2">{t.malicAcid ?? "—"}</td>
-              <td className="px-3 py-2 text-stone-500">{t.notes ?? "—"}</td>
+              <td className="px-3 py-2 text-stone-500 whitespace-pre-line">{t.notes ?? "—"}</td>
+              <td className="px-3 py-2 text-stone-500 whitespace-pre-line">{t.actionItems ?? "—"}</td>
             </tr>
           ))}
           {tests.length === 0 && (
             <tr>
-              <td colSpan={12} className="px-3 py-6 text-center text-stone-400">
+              <td colSpan={13} className="px-3 py-6 text-center text-stone-400">
                 אין עדיין בדיקות מעבדה לרשומה זו
               </td>
             </tr>

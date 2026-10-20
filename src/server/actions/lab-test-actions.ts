@@ -28,6 +28,7 @@ const LabTestSchema = z.object({
   co2: roundedNumber,
   malicAcid: roundedNumber,
   notes: z.string().trim().min(1).nullable(),
+  actionItems: z.string().trim().min(1).nullable(),
 })
 
 export async function createLabTest(
@@ -218,6 +219,7 @@ export async function importLabTestsFromExcel(
       co2: parseNumericCell(getCell("CO2")),
       malicAcid: parseNumericCell(getCell("Malic Acid")),
       notes: parseTextCell(getCell("הערות")),
+      actionItems: parseTextCell(getCell("פעולות לביצוע")),
     })
 
     if (!parsed.success) {
@@ -267,7 +269,13 @@ const MERGEABLE_FIELDS = [
 ] as const
 
 // Imported values fill in or replace existing ones, but an empty cell never erases
-// data and the manual note is kept (an imported note is appended below it).
+// data and manual text is kept (an imported note or action item is appended below it).
+function appendIfNew(existing: string | null, imported: string | null): string | undefined {
+  if (imported == null) return undefined
+  if (existing == null) return imported
+  return existing.includes(imported) ? undefined : [existing, imported].join("\n")
+}
+
 function mergeImportedTest(
   existing: ExistingLabTest,
   imported: z.infer<typeof LabTestSchema>
@@ -276,12 +284,10 @@ function mergeImportedTest(
   for (const field of MERGEABLE_FIELDS) {
     if (imported[field] != null) Object.assign(data, { [field]: imported[field] })
   }
-  if (imported.notes != null) {
-    if (existing.notes == null) data.notes = imported.notes
-    else if (!existing.notes.includes(imported.notes)) {
-      data.notes = [existing.notes, imported.notes].join("\n")
-    }
-  }
+  const notes = appendIfNew(existing.notes, imported.notes)
+  if (notes !== undefined) data.notes = notes
+  const actionItems = appendIfNew(existing.actionItems, imported.actionItems)
+  if (actionItems !== undefined) data.actionItems = actionItems
   return data
 }
 

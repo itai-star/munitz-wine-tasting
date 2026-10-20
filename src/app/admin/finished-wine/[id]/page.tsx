@@ -84,6 +84,7 @@ export default async function FinishedWineDetailPage({
             co2: t.co2,
             malicAcid: t.malicAcid,
             notes: t.notes,
+            actionItems: t.actionItems,
           }))}
         />
       </div>
