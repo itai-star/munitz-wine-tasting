@@ -97,6 +97,16 @@ export function VineyardMonitorIcon({ className }: IconProps) {
   )
 }
 
+export function CreditIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M7 15h4" />
+    </svg>
+  )
+}
+
 export function SeasonSummaryIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

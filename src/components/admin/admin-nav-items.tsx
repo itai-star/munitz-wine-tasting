@@ -9,6 +9,7 @@ import {
   SeasonSummaryIcon,
   RemoteMonitorIcon,
   VineyardMonitorIcon,
+  CreditIcon,
 } from "@/components/admin/nav-icons"
 
 export type AdminNavItem = {
@@ -78,6 +79,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "ניטור כרמים",
     description: "לחות קרקע, טמפרטורה וגשם לפי כרם",
     icon: VineyardMonitorIcon,
+  },
+  {
+    href: "/admin/credit",
+    label: "אשראי",
+    description: "חיובי כרטיסי אשראי לפי חודש וכרטיס",
+    icon: CreditIcon,
   },
 ]
 

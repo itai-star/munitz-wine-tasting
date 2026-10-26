@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["puppeteer-core"],
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",

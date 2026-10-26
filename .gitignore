@@ -17,3 +17,7 @@ skills-lock.json
 .vercel
 .env*
 ga-service-account.json
+
+# Local bank-integration data (sensitive, never commit)
+.bank-discovery/
+.bank-profile/
