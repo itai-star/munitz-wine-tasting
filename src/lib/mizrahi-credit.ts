@@ -31,6 +31,7 @@ const DetailsSchema = z.object({
     bankCCMonthlyDetailsList: z.array(
       z.object({
         isFuture: z.boolean(),
+        creditCardIndex: z.number(),
         chargeDate: z.string(),
         transactionDate: z.string(),
         businessName: z.string(),
@@ -95,13 +96,16 @@ function parseInstallments(
   return { number: currentNumber, total: totalNumber }
 }
 
-// Charges that have not been billed yet (isFuture) are skipped: the tracker shows what
+export type BankMonthTransaction = { cardIndex: number; transaction: CreditTransactionInput }
+
+// One response holds the charges of every card for that month; each row says which card it
+// belongs to. Charges that have not been billed yet (isFuture) are skipped: the tracker shows what
 // was actually charged. They appear again, unchanged, once the bank bills them.
-export function parseBankMonthDetails(payload: unknown): CreditTransactionInput[] | null {
+export function parseBankMonthDetails(payload: unknown): BankMonthTransaction[] | null {
   const parsed = DetailsSchema.safeParse(payload)
   if (!parsed.success) return null
 
-  const transactions: CreditTransactionInput[] = []
+  const transactions: BankMonthTransaction[] = []
   for (const row of parsed.data.body.bankCCMonthlyDetailsList) {
     if (row.isFuture) continue
     const transactionDate = dateOnly(row.transactionDate)
@@ -115,12 +119,15 @@ export function parseBankMonthDetails(payload: unknown): CreditTransactionInput[
       continuous?.continuousChargeDetails_totalPaymentNum
     )
     transactions.push({
-      transactionDate,
-      chargeDate,
-      description: row.businessName.trim(),
-      amountAgorot,
-      installmentNumber: installments?.number ?? null,
-      installmentsTotal: installments?.total ?? null,
+      cardIndex: row.creditCardIndex,
+      transaction: {
+        transactionDate,
+        chargeDate,
+        description: row.businessName.trim(),
+        amountAgorot,
+        installmentNumber: installments?.number ?? null,
+        installmentsTotal: installments?.total ?? null,
+      },
     })
   }
   return transactions

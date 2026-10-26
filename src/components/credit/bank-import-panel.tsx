@@ -27,10 +27,11 @@ export function BankImportPanel() {
     const result = await importCreditFromBank(credentials)
     setRunning(false)
     if (result.success) {
-      const { added, skipped, cards, months } = result.data
+      const { added, skipped, cards, months, byCard } = result.data
+      const perCard = byCard.map((card) => `${card.name}: ${card.added}`).join(" | ")
       setMessage({
         type: "success",
-        text: `נשלפו ${cards} כרטיסים ב-${months} חודשי חיוב: נוספו ${added} עסקאות חדשות, ${skipped} כבר היו שמורות.`,
+        text: `נשלפו ${cards} כרטיסים ב-${months} חודשי חיוב: נוספו ${added} עסקאות חדשות, ${skipped} כבר היו שמורות. לפי כרטיס: ${perCard}`,
       })
       router.refresh()
     } else {

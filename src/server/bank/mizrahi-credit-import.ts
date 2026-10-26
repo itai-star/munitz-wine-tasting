@@ -15,6 +15,7 @@ export type BankImportSummary = {
   months: number
   added: number
   skipped: number
+  byCard: { name: string; added: number }[]
 }
 
 function sleep(ms: number): Promise<void> {
@@ -51,31 +52,45 @@ export async function importFromSession(session: BankSession): Promise<BankImpor
 
   const cardIds = await resolveCardIds(bankCards)
   const billedMonths = months.filter((entry) => !entry.isFuture)
+  const addedByCard = new Map<number, number>()
   const summary: BankImportSummary = {
     cards: bankCards.length,
     months: billedMonths.length,
     added: 0,
     skipped: 0,
+    byCard: [],
   }
 
-  for (const card of bankCards) {
-    const cardId = cardIds.get(card.index)
-    if (!cardId) continue
-    for (const entry of billedMonths) {
-      await sleep(REQUEST_SPACING_MS)
-      const transactions = parseBankMonthDetails(
-        await session.postJson("CC/getBankCCMonthlyDetails", {
-          ccIndex: card.index,
-          month: entry.month,
-        })
+  // A single request per month returns every card's charges, each tagged with its card.
+  const requestCardIndex = bankCards[0]?.index ?? 0
+  for (const entry of billedMonths) {
+    await sleep(REQUEST_SPACING_MS)
+    const rows = parseBankMonthDetails(
+      await session.postJson("CC/getBankCCMonthlyDetails", {
+        ccIndex: requestCardIndex,
+        month: entry.month,
+      })
+    )
+    if (!rows) throw new UnexpectedBankResponse()
+
+    for (const card of bankCards) {
+      const cardId = cardIds.get(card.index)
+      const cardRows = rows.filter((row) => row.cardIndex === card.index)
+      if (!cardId || cardRows.length === 0) continue
+      const saved = await saveCreditTransactions(
+        cardId,
+        cardRows.map((row) => row.transaction)
       )
-      if (!transactions) throw new UnexpectedBankResponse()
-      if (transactions.length === 0) continue
-      const saved = await saveCreditTransactions(cardId, transactions)
       summary.added += saved.added
       summary.skipped += saved.skipped
+      addedByCard.set(card.index, (addedByCard.get(card.index) ?? 0) + saved.added)
     }
   }
+
+  summary.byCard = bankCards.map((card) => ({
+    name: card.last4 ? `${card.name} ····${card.last4}` : card.name,
+    added: addedByCard.get(card.index) ?? 0,
+  }))
   return summary
 }
 
