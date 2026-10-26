@@ -5,6 +5,8 @@ export type CreditTransactionInput = {
   amountAgorot: number
   installmentNumber?: number | null
   installmentsTotal?: number | null
+  category?: string | null
+  categoryCode?: string | null
 }
 
 const MONTH_KEY_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/

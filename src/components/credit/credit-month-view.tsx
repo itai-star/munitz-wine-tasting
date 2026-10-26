@@ -2,7 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { formatShekels, hebrewMonthName, parseMonthKey } from "@/lib/credit"
-import type { CreditCardInfo, CreditTransactionRow } from "@/server/credit-data"
+import { CreditCategoryBreakdown } from "@/components/credit/credit-category-breakdown"
+import type {
+  CategoryBreakdownRow,
+  CreditCardInfo,
+  CreditTransactionRow,
+} from "@/server/credit-data"
 
 function monthLabel(key: string): string {
   const parsed = parseMonthKey(key)
@@ -19,6 +24,7 @@ export function CreditMonthView({
   selectedMonth,
   selectedCardId,
   transactions,
+  categories,
   totalAgorot,
 }: {
   cards: CreditCardInfo[]
@@ -26,6 +32,7 @@ export function CreditMonthView({
   selectedMonth: string | null
   selectedCardId: string | null
   transactions: CreditTransactionRow[]
+  categories: CategoryBreakdownRow[]
   totalAgorot: number
 }) {
   const router = useRouter()
@@ -89,6 +96,8 @@ export function CreditMonthView({
         </div>
       </div>
 
+      <CreditCategoryBreakdown categories={categories} totalAgorot={totalAgorot} />
+
       {transactions.length === 0 ? (
         <p className="text-stone-400 text-sm text-center py-8">אין עסקאות להצגה בבחירה הזו</p>
       ) : (
@@ -98,6 +107,7 @@ export function CreditMonthView({
               <tr className="border-b border-stone-200 text-stone-500 text-right">
                 <th className="px-3 py-2 font-medium">תאריך עסקה</th>
                 <th className="px-3 py-2 font-medium">בית עסק</th>
+                <th className="px-3 py-2 font-medium">קטגוריה</th>
                 <th className="px-3 py-2 font-medium">כרטיס</th>
                 <th className="px-3 py-2 font-medium">תשלומים</th>
                 <th className="px-3 py-2 font-medium text-left">סכום</th>
@@ -112,6 +122,7 @@ export function CreditMonthView({
                       <bdi>{formatDate(txn.transactionDate)}</bdi>
                     </td>
                     <td className="px-3 py-2">{txn.description}</td>
+                    <td className="px-3 py-2 text-stone-500 whitespace-nowrap">{txn.categoryLabel}</td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span
                         className="inline-block w-2.5 h-2.5 rounded-sm ml-1.5 align-middle"

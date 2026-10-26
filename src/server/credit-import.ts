@@ -37,9 +37,25 @@ export async function saveCreditTransactions(
       amountAgorot: txn.amountAgorot,
       installmentNumber: txn.installmentNumber ?? null,
       installmentsTotal: txn.installmentsTotal ?? null,
+      category: txn.category ?? null,
+      categoryCode: txn.categoryCode ?? null,
       dedupeKey: keys[index],
     })),
     skipDuplicates: true,
   })
+
+  // Rows saved before categories were captured get their category filled in on the next pull.
+  const backfills = transactions.flatMap((txn, index) =>
+    txn.category || txn.categoryCode
+      ? [
+          prisma.creditTransaction.updateMany({
+            where: { cardId, dedupeKey: keys[index], category: null, categoryCode: null },
+            data: { category: txn.category ?? null, categoryCode: txn.categoryCode ?? null },
+          }),
+        ]
+      : []
+  )
+  if (backfills.length > 0) await prisma.$transaction(backfills)
+
   return { added: result.count, skipped: transactions.length - result.count }
 }

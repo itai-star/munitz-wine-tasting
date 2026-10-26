@@ -346,6 +346,8 @@ model CreditTransaction {
   amountAgorot      Int
   installmentNumber Int?
   installmentsTotal Int?
+  category          String?
+  categoryCode      String?
   dedupeKey         String
   importedAt        DateTime @default(now())
 

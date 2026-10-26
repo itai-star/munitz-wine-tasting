@@ -46,6 +46,7 @@ async function CreditContent({ searchParams }: { searchParams: SearchParams }) {
             selectedMonth={overview.selectedMonth}
             selectedCardId={overview.selectedCardId}
             transactions={overview.transactions}
+            categories={overview.categories}
             totalAgorot={overview.monthTotalAgorot}
           />
         </>

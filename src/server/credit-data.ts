@@ -14,7 +14,10 @@ export type CreditTransactionRow = {
   amountAgorot: number
   installmentNumber: number | null
   installmentsTotal: number | null
+  categoryLabel: string
 }
+
+export type CategoryBreakdownRow = { label: string; totalAgorot: number; count: number }
 
 export type YearlyMonthRow = {
   month: number
@@ -31,11 +34,30 @@ export type CreditOverview = {
   selectedMonth: string | null
   selectedCardId: string | null
   transactions: CreditTransactionRow[]
+  categories: CategoryBreakdownRow[]
   monthTotalAgorot: number
   yearly: YearlyMonthRow[]
 }
 
 type Selection = { month?: string; card?: string; year?: string }
+
+const NO_CATEGORY_LABEL = "ללא קטגוריה"
+
+function categoryLabelOf(row: { category: string | null; categoryCode: string | null }): string {
+  if (row.category) return row.category
+  return row.categoryCode ? `קטגוריה ${row.categoryCode}` : NO_CATEGORY_LABEL
+}
+
+function buildBreakdown(rows: { label: string; amountAgorot: number }[]): CategoryBreakdownRow[] {
+  const totals = new Map<string, CategoryBreakdownRow>()
+  for (const row of rows) {
+    const entry = totals.get(row.label) ?? { label: row.label, totalAgorot: 0, count: 0 }
+    entry.totalAgorot += row.amountAgorot
+    entry.count += 1
+    totals.set(row.label, entry)
+  }
+  return [...totals.values()].sort((a, b) => b.totalAgorot - a.totalAgorot)
+}
 
 function monthRange(year: number, month: number): { gte: Date; lt: Date } {
   return { gte: new Date(Date.UTC(year, month - 1, 1)), lt: new Date(Date.UTC(year, month, 1)) }
@@ -113,6 +135,18 @@ export async function loadCreditOverview(selection: Selection): Promise<CreditOv
       })
     : []
 
+  const transactions = monthRows.map((row) => ({
+    id: row.id,
+    cardId: row.cardId,
+    transactionDate: row.transactionDate.toISOString(),
+    chargeDate: row.chargeDate.toISOString(),
+    description: row.description,
+    amountAgorot: row.amountAgorot,
+    installmentNumber: row.installmentNumber,
+    installmentsTotal: row.installmentsTotal,
+    categoryLabel: categoryLabelOf(row),
+  }))
+
   return {
     cards,
     availableMonths,
@@ -120,16 +154,10 @@ export async function loadCreditOverview(selection: Selection): Promise<CreditOv
     year,
     selectedMonth,
     selectedCardId,
-    transactions: monthRows.map((row) => ({
-      id: row.id,
-      cardId: row.cardId,
-      transactionDate: row.transactionDate.toISOString(),
-      chargeDate: row.chargeDate.toISOString(),
-      description: row.description,
-      amountAgorot: row.amountAgorot,
-      installmentNumber: row.installmentNumber,
-      installmentsTotal: row.installmentsTotal,
-    })),
+    transactions,
+    categories: buildBreakdown(
+      transactions.map((txn) => ({ label: txn.categoryLabel, amountAgorot: txn.amountAgorot }))
+    ),
     monthTotalAgorot: monthRows.reduce((sum, row) => sum + row.amountAgorot, 0),
     yearly: await loadYearly(year, cards),
   }

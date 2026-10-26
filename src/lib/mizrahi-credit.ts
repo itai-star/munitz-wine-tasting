@@ -35,9 +35,11 @@ const DetailsSchema = z.object({
         chargeDate: z.string(),
         transactionDate: z.string(),
         businessName: z.string(),
+        CategoryNumber: z.string().nullish(),
         chargeAmount: z.string(),
         bankCCMonthlyDetailsMoreDetails: z
           .object({
+            chargeDetails_category: z.string().nullish(),
             myContinuousChargeDetails: z
               .object({
                 continuousChargeDetails_currentPaymentNum: z.string().nullish(),
@@ -127,6 +129,8 @@ export function parseBankMonthDetails(payload: unknown): BankMonthTransaction[] 
         amountAgorot,
         installmentNumber: installments?.number ?? null,
         installmentsTotal: installments?.total ?? null,
+        category: row.bankCCMonthlyDetailsMoreDetails?.chargeDetails_category?.trim() || null,
+        categoryCode: row.CategoryNumber?.trim() || null,
       },
     })
   }
