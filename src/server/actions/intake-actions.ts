@@ -30,6 +30,25 @@ export async function createIntake(
   }
 }
 
+const UpdateIntakeSchema = IntakeSchema.omit({ vintageId: true }).extend({ id: z.string().min(1) })
+
+export async function updateIntake(
+  input: z.infer<typeof UpdateIntakeSchema>
+): Promise<Result<{ id: string }>> {
+  const parsed = UpdateIntakeSchema.safeParse(input)
+  if (!parsed.success) {
+    return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
+  }
+
+  const { id, ...data } = parsed.data
+  try {
+    await prisma.grapeIntake.update({ where: { id }, data })
+    return ok({ id })
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בעדכון קליטת הענבים" })
+  }
+}
+
 export async function listIntakes(
   vintageId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.grapeIntake.findMany>>>> {

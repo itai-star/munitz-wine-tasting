@@ -54,8 +54,11 @@ export default async function IntakePage({
           </div>
 
           <IntakeTable
+            vintageId={selectedVintage.id}
+            blocks={blocks.map((b) => ({ id: b.id, name: b.name }))}
             intakes={intakes.map((i) => ({
               id: i.id,
+              blockId: i.blockId,
               intakeDate: i.intakeDate,
               totalWeightKg: i.totalWeightKg,
               binCount: i.binCount,

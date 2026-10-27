@@ -1,20 +1,33 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { deleteIntakes } from "@/server/actions/intake-actions"
+import { IntakeForm, type EditableIntake } from "@/components/intake/intake-form"
 
-export type IntakeRow = {
-  id: string
-  intakeDate: string | Date
-  totalWeightKg: number
-  binCount: number
-  notes: string | null
-  blockName: string
-}
+export type IntakeRow = EditableIntake & { blockName: string }
 
-export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
+const editButtonClass =
+  "inline-flex items-center rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors px-3 py-1.5 text-xs font-medium"
+
+export function IntakeTable({
+  intakes,
+  vintageId,
+  blocks,
+}: {
+  intakes: IntakeRow[]
+  vintageId: string
+  blocks: { id: string; name: string }[]
+}) {
   const router = useRouter()
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editingIntake = intakes.find((i) => i.id === editingId)
+  const editPanel = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (editingId) editPanel.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [editingId])
+
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
@@ -86,10 +99,23 @@ export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
 
       {error && <p className="text-red-600 text-sm px-3 py-2">{error}</p>}
 
+      {editingIntake && (
+        <div ref={editPanel} className="p-3 bg-stone-50 border-b border-stone-200 scroll-mt-36">
+          <h4 className="text-sm font-semibold text-stone-700 mb-2">עריכת קליטה</h4>
+          <IntakeForm
+            key={editingIntake.id}
+            vintageId={vintageId}
+            blocks={blocks}
+            editingIntake={editingIntake}
+            onDone={() => setEditingId(null)}
+          />
+        </div>
+      )}
+
       {/* Mobile: stacked cards */}
       <div className="sm:hidden divide-y divide-stone-100">
         {intakes.map((i) => (
-          <label key={i.id} className="flex items-start gap-3 p-4 active:bg-stone-50">
+          <div key={i.id} className="flex items-start gap-3 p-4">
             <input
               type="checkbox"
               checked={selected.has(i.id)}
@@ -109,8 +135,11 @@ export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
                 <span>{i.binCount} משטחים</span>
               </div>
               {i.notes && <p className="mt-1 text-xs text-stone-400">{i.notes}</p>}
+              <button type="button" onClick={() => setEditingId(i.id)} className={`${editButtonClass} mt-2`}>
+                ערוך
+              </button>
             </div>
-          </label>
+          </div>
         ))}
         {intakes.length === 0 && (
           <p className="px-4 py-6 text-center text-stone-400 text-sm">
@@ -137,6 +166,7 @@ export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
             <th className="px-4 py-2 font-medium">משקל (ק&quot;ג)</th>
             <th className="px-4 py-2 font-medium">משטחים</th>
             <th className="px-4 py-2 font-medium">הערות</th>
+            <th className="px-4 py-2 font-medium"></th>
           </tr>
         </thead>
         <tbody>
@@ -156,11 +186,16 @@ export function IntakeTable({ intakes }: { intakes: IntakeRow[] }) {
               <td className="px-4 py-2">{i.totalWeightKg.toLocaleString("he-IL")}</td>
               <td className="px-4 py-2">{i.binCount}</td>
               <td className="px-4 py-2 text-stone-500">{i.notes ?? "—"}</td>
+              <td className="px-4 py-2">
+                <button type="button" onClick={() => setEditingId(i.id)} className={editButtonClass}>
+                  ערוך
+                </button>
+              </td>
             </tr>
           ))}
           {intakes.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-4 py-6 text-center text-stone-400">
+              <td colSpan={7} className="px-4 py-6 text-center text-stone-400">
                 אין עדיין קליטות ענבים לעונה זו
               </td>
             </tr>

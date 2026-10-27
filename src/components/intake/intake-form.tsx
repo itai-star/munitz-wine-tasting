@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { createIntake } from "@/server/actions/intake-actions"
+import { createIntake, updateIntake } from "@/server/actions/intake-actions"
 
 const FormSchema = z.object({
   blockId: z.string().min(1, "יש לבחור כרם"),
@@ -21,12 +21,35 @@ function toNullableText(value: string): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
+export type EditableIntake = {
+  id: string
+  blockId: string
+  intakeDate: string | Date
+  totalWeightKg: number
+  binCount: number
+  notes: string | null
+}
+
+function toFormValues(intake: EditableIntake): FormValues {
+  return {
+    blockId: intake.blockId,
+    intakeDate: new Date(intake.intakeDate).toISOString().slice(0, 10),
+    totalWeightKg: String(intake.totalWeightKg),
+    binCount: String(intake.binCount),
+    notes: intake.notes ?? "",
+  }
+}
+
 export function IntakeForm({
   vintageId,
   blocks,
+  editingIntake,
+  onDone,
 }: {
   vintageId: string
   blocks: { id: string; name: string }[]
+  editingIntake?: EditableIntake
+  onDone?: () => void
 }) {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
@@ -37,27 +60,35 @@ export function IntakeForm({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      blockId: blocks[0]?.id ?? "",
-      intakeDate: new Date().toISOString().slice(0, 10),
-      totalWeightKg: "",
-      binCount: "",
-      notes: "",
-    },
+    defaultValues: editingIntake
+      ? toFormValues(editingIntake)
+      : {
+          blockId: blocks[0]?.id ?? "",
+          intakeDate: new Date().toISOString().slice(0, 10),
+          totalWeightKg: "",
+          binCount: "",
+          notes: "",
+        },
   })
 
   async function onSubmit(values: FormValues) {
     setServerError("")
-    const result = await createIntake({
-      vintageId,
+    const fields = {
       blockId: values.blockId,
       intakeDate: new Date(values.intakeDate),
       totalWeightKg: Number(values.totalWeightKg),
       binCount: parseInt(values.binCount),
       notes: toNullableText(values.notes),
-    })
+    }
+    const result = editingIntake
+      ? await updateIntake({ id: editingIntake.id, ...fields })
+      : await createIntake({ vintageId, ...fields })
     if (result.success) {
-      reset({ ...values, totalWeightKg: "", binCount: "", notes: "" })
+      if (editingIntake) {
+        onDone?.()
+      } else {
+        reset({ ...values, totalWeightKg: "", binCount: "", notes: "" })
+      }
       router.refresh()
     } else {
       setServerError(result.error.message)
@@ -132,13 +163,24 @@ export function IntakeForm({
         <textarea className={inputClass} rows={2} {...register("notes")} />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting || blocks.length === 0}
-        className="w-full bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
-      >
-        {isSubmitting ? "שומר..." : "שמור קליטה"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={isSubmitting || blocks.length === 0}
+          className="flex-1 bg-wine text-white px-6 py-3 rounded-lg hover:bg-wine-dark transition-colors font-medium disabled:opacity-50"
+        >
+          {isSubmitting ? "שומר..." : editingIntake ? "שמור שינויים" : "שמור קליטה"}
+        </button>
+        {editingIntake && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="px-6 py-3 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors font-medium"
+          >
+            ביטול
+          </button>
+        )}
+      </div>
     </form>
   )
 }

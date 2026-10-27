@@ -7,19 +7,52 @@ import { primaryActionFor } from "@/components/admin/admin-actions"
 import { PlusIcon } from "@/components/admin/nav-icons"
 import { withVintage } from "@/components/admin/admin-areas"
 
-const FAB_CLASS =
-  "md:hidden print:hidden fixed z-30 end-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] inline-flex items-center gap-2 h-12 ps-4 pe-5 rounded-full bg-wine text-white text-sm font-semibold shadow-lg shadow-black/25 active:bg-wine-dark transition-colors"
+const FAB_BASE_CLASS =
+  "md:hidden print:hidden fixed z-30 end-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] inline-flex items-center gap-2 h-12 ps-4 pe-5 rounded-full bg-wine text-white text-sm font-semibold shadow-lg shadow-black/25 active:bg-wine-dark transition-all duration-200"
+const SCROLL_THRESHOLD_PX = 8
+const ALWAYS_VISIBLE_BELOW_PX = 120
+
+function isFormField(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+}
 
 // Phone-only floating button with the main "create" action of the current screen.
 export function AdminQuickAdd() {
   const pathname = usePathname()
   const vintageParam = useSearchParams().get("vintage")
   const [open, setOpen] = useState(false)
+  const [tucked, setTucked] = useState(false)
   const action = primaryActionFor(pathname)
 
   useEffect(() => {
     setOpen(false)
   }, [pathname])
+
+  // The button steps out of the way while scrolling down or typing, so it never covers
+  // the form buttons or the text being read.
+  useEffect(() => {
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y < ALWAYS_VISIBLE_BELOW_PX || y < lastY - SCROLL_THRESHOLD_PX) setTucked(false)
+      else if (y > lastY + SCROLL_THRESHOLD_PX) setTucked(true)
+      lastY = y
+    }
+    const onFocusIn = (event: FocusEvent) => {
+      if (isFormField(event.target)) setTucked(true)
+    }
+    const onFocusOut = (event: FocusEvent) => {
+      if (isFormField(event.target)) setTucked(false)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    document.addEventListener("focusin", onFocusIn)
+    document.addEventListener("focusout", onFocusOut)
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      document.removeEventListener("focusin", onFocusIn)
+      document.removeEventListener("focusout", onFocusOut)
+    }
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -32,9 +65,11 @@ export function AdminQuickAdd() {
 
   if (!action) return null
 
+  const fabClass = `${FAB_BASE_CLASS} ${tucked ? "translate-y-24 opacity-0 pointer-events-none" : ""}`
+
   if (action.kind === "link") {
     return (
-      <Link href={action.href} className={FAB_CLASS}>
+      <Link href={action.href} className={fabClass}>
         <PlusIcon className="w-5 h-5" />
         {action.label}
       </Link>
@@ -47,7 +82,7 @@ export function AdminQuickAdd() {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className={FAB_CLASS}
+        className={fabClass}
       >
         <PlusIcon className="w-5 h-5" />
         {action.label}
