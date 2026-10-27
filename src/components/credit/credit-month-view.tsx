@@ -46,13 +46,13 @@ export function CreditMonthView({
     router.push(`?${params.toString()}`)
   }
 
-  const selectClass = "border border-stone-300 rounded-lg px-3 py-2 text-sm bg-white"
+  const selectClass = "w-full border border-stone-300 rounded-lg px-3 py-2 text-sm bg-white"
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
       <div className="flex items-end justify-between flex-wrap gap-3 mb-4">
-        <div className="flex gap-3 flex-wrap">
-          <div>
+        <div className="flex gap-3 flex-wrap w-full sm:w-auto">
+          <div className="flex-1 min-w-[9rem]">
             <label className="block text-xs text-stone-500 mb-1">חודש חיוב</label>
             <select
               className={selectClass}
@@ -68,7 +68,7 @@ export function CreditMonthView({
               ))}
             </select>
           </div>
-          <div>
+          <div className="flex-1 min-w-[9rem]">
             <label className="block text-xs text-stone-500 mb-1">כרטיס</label>
             <select
               className={selectClass}
@@ -85,7 +85,7 @@ export function CreditMonthView({
             </select>
           </div>
         </div>
-        <div className="text-left">
+        <div className="w-full sm:w-auto sm:text-left">
           <p className="text-xs text-stone-500">סה״כ חיוב בחודש</p>
           <p className="text-2xl font-bold text-wine">
             <bdi>{formatShekels(totalAgorot)}</bdi>
@@ -101,7 +101,44 @@ export function CreditMonthView({
       {transactions.length === 0 ? (
         <p className="text-stone-400 text-sm text-center py-8">אין עסקאות להצגה בבחירה הזו</p>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <ul className="sm:hidden divide-y divide-stone-100">
+          {transactions.map((txn) => {
+            const card = cardById.get(txn.cardId)
+            return (
+              <li key={txn.id} className="py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-medium text-stone-800 break-words min-w-0">{txn.description}</span>
+                  <span className="font-semibold text-stone-800 whitespace-nowrap">
+                    <bdi>{formatShekels(txn.amountAgorot)}</bdi>
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-stone-500">
+                  <bdi>{formatDate(txn.transactionDate)}</bdi>
+                  <span>{txn.categoryLabel}</span>
+                  <span>
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-sm ml-1 align-middle"
+                      style={{ backgroundColor: card?.color ?? "#a8a29e" }}
+                      aria-hidden="true"
+                    />
+                    {card?.name ?? "—"}
+                  </span>
+                  {txn.installmentsTotal && (
+                    <span>
+                      תשלום{" "}
+                      <bdi>
+                        {txn.installmentNumber ?? "?"}/{txn.installmentsTotal}
+                      </bdi>
+                    </span>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-stone-200 text-stone-500 text-right">
@@ -149,6 +186,7 @@ export function CreditMonthView({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )

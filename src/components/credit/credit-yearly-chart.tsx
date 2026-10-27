@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts"
 import { formatShekels } from "@/lib/credit"
+import { CreditYearlyBars } from "@/components/credit/credit-yearly-bars"
 import type { CreditCardInfo, YearlyMonthRow } from "@/server/credit-data"
 
 type TickProps = {
@@ -84,52 +85,58 @@ export function CreditYearlyChart({
         )}
       </div>
 
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={chartRows} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
-          <XAxis dataKey="label" tick={<MonthTick />} interval={0} height={44} />
-          <YAxis
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value: number) => value.toLocaleString("he-IL")}
-            width={56}
-          />
-          <Tooltip
-            cursor={{ fill: "#f5f5f4" }}
-            content={({ active, payload, label }) => {
-              if (!active || !payload || payload.length === 0) return null
-              const row = rows.find((r) => r.label === label)
-              return (
-                <div className="bg-white border border-stone-200 rounded-lg shadow-sm px-3 py-2 text-xs space-y-0.5">
-                  <p className="font-medium text-stone-800">{label}</p>
-                  {cards.map((card) => (
-                    <p key={card.id} className="text-stone-600">
-                      <span
-                        className="inline-block w-2.5 h-2.5 rounded-sm ml-1.5 align-middle"
-                        style={{ backgroundColor: card.color }}
-                      />
-                      {card.name}: <bdi>{formatShekels(row?.byCard[card.id] ?? 0)}</bdi>
-                    </p>
-                  ))}
-                  <p className="font-medium text-stone-800 pt-0.5">
-                    סה״כ: <bdi>{formatShekels(row?.total ?? 0)}</bdi>
-                  </p>
-                </div>
-              )
-            }}
-          />
-          {cards.map((card) => (
-            <Bar
-              key={card.id}
-              dataKey={card.id}
-              stackId="charges"
-              fill={card.color}
-              stroke="#ffffff"
-              strokeWidth={1}
-              isAnimationActive={false}
+      <div className="sm:hidden">
+        <CreditYearlyBars cards={cards} rows={rows} />
+      </div>
+
+      <div className="hidden sm:block">
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={chartRows} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
+            <XAxis dataKey="label" tick={<MonthTick />} interval={0} height={44} />
+            <YAxis
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value: number) => value.toLocaleString("he-IL")}
+              width={56}
             />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
+            <Tooltip
+              cursor={{ fill: "#f5f5f4" }}
+              content={({ active, payload, label }) => {
+                if (!active || !payload || payload.length === 0) return null
+                const row = rows.find((r) => r.label === label)
+                return (
+                  <div className="bg-white border border-stone-200 rounded-lg shadow-sm px-3 py-2 text-xs space-y-0.5">
+                    <p className="font-medium text-stone-800">{label}</p>
+                    {cards.map((card) => (
+                      <p key={card.id} className="text-stone-600">
+                        <span
+                          className="inline-block w-2.5 h-2.5 rounded-sm ml-1.5 align-middle"
+                          style={{ backgroundColor: card.color }}
+                        />
+                        {card.name}: <bdi>{formatShekels(row?.byCard[card.id] ?? 0)}</bdi>
+                      </p>
+                    ))}
+                    <p className="font-medium text-stone-800 pt-0.5">
+                      סה״כ: <bdi>{formatShekels(row?.total ?? 0)}</bdi>
+                    </p>
+                  </div>
+                )
+              }}
+            />
+            {cards.map((card) => (
+              <Bar
+                key={card.id}
+                dataKey={card.id}
+                stackId="charges"
+                fill={card.color}
+                stroke="#ffffff"
+                strokeWidth={1}
+                isAnimationActive={false}
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
 
       <ul className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
         {cards.map((card) => (

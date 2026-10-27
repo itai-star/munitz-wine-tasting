@@ -1,11 +1,17 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { adminNavItems, isAdminNavItemActive } from "@/components/admin/admin-nav-items"
 
 export function AdminNav() {
   const pathname = usePathname()
+  const activeMobileItem = useRef<HTMLAnchorElement | null>(null)
+
+  useEffect(() => {
+    activeMobileItem.current?.scrollIntoView({ inline: "center", block: "nearest" })
+  }, [pathname])
 
   return (
     <>
@@ -30,7 +36,7 @@ export function AdminNav() {
         })}
       </nav>
 
-      <nav className="md:hidden print:hidden fixed inset-x-0 bottom-0 z-40 flex bg-wine border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden print:hidden fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto bg-wine border-t border-white/10 pb-[env(safe-area-inset-bottom)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {adminNavItems.map((item) => {
           const active = isAdminNavItemActive(pathname, item.href)
           const Icon = item.icon
@@ -38,7 +44,8 @@ export function AdminNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-xs transition-colors ${
+              ref={active ? activeMobileItem : undefined}
+              className={`shrink-0 w-[4.75rem] flex flex-col items-center gap-1 py-2.5 text-[11px] leading-tight text-center transition-colors ${
                 active ? "text-white" : "text-white/60"
               }`}
             >
