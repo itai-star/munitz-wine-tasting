@@ -49,7 +49,7 @@ export function NewSessionForm({ wines }: { wines: Wine[] }) {
     const result = await createSession({ name, wineIds: selectedWines })
 
     if (result.success) {
-      router.push("/admin")
+      router.push("/admin/tastings")
     } else {
       setError(result.error.message)
       setLoading(false)

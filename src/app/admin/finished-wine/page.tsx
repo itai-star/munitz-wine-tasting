@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
-import { VintageSelect } from "@/components/vineyard/vintage-select"
 import { FinishedWineAverageChart } from "@/components/finished-wine/finished-wine-charts"
 import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
 import { calculateWineEfficiency } from "@/lib/wine-efficiency"
@@ -45,10 +44,6 @@ export default async function FinishedWinePage({
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-stone-800">יין מוכן — {selectedVintage.label}</h1>
         <div className="flex gap-4 items-center flex-wrap">
-          <VintageSelect
-            vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
-            selectedYear={selectedVintage.year}
-          />
           <Link
             href="/admin/finished-wine/new"
             className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"

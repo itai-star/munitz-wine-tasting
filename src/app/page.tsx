@@ -43,7 +43,7 @@ export default async function HomePage() {
             <p className="text-stone-500 text-lg mb-2">אין טעימות פעילות כרגע</p>
             <p className="text-stone-400 text-sm">
               עברו ל
-              <Link href="/admin" className="text-wine underline mx-1">
+              <Link href="/admin/tastings" className="text-wine underline mx-1">
                 ניהול
               </Link>
               כדי ליצור טעימה חדשה

@@ -13,7 +13,7 @@ export default async function RemoteMonitorPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-stone-800">בקרה מרחוק</h1>
+      <h1 className="text-2xl font-bold text-stone-800">בקר יקב</h1>
 
       {!connection ? (
         <div className="space-y-4">

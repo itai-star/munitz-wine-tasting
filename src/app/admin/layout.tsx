@@ -1,6 +1,9 @@
-import Link from "next/link"
-import Image from "next/image"
-import { AdminNav } from "@/components/admin/admin-nav"
+import { AdminHeader } from "@/components/admin/admin-header"
+import { AdminSidebar } from "@/components/admin/admin-sidebar"
+import { AdminBottomNav } from "@/components/admin/admin-bottom-nav"
+
+// The header reads the vintages and the URL on every request, so nothing here can be prerendered.
+export const dynamic = "force-dynamic"
 
 export default function AdminLayout({
   children,
@@ -9,32 +12,14 @@ export default function AdminLayout({
 }) {
   return (
     <div className="flex-1 flex flex-col">
-      <header className="bg-wine text-white print:hidden">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/admin" className="flex items-center gap-3">
-              <Image
-                src="/logo.png"
-                alt="יקב מוניץ"
-                width={100}
-                height={44}
-                className="brightness-0 invert"
-              />
-              <span className="text-lg font-bold">ניהול טעימות</span>
-            </Link>
-            <AdminNav />
-          </div>
-          <Link
-            href="/"
-            className="text-sm text-white/70 hover:text-white transition-colors"
-          >
-            חזרה לעמוד הראשי
-          </Link>
-        </div>
-      </header>
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8 pb-24 md:pb-8 print:p-0">
-        {children}
-      </main>
+      <AdminHeader />
+      <div className="flex-1 flex">
+        <AdminSidebar />
+        <main className="flex-1 min-w-0 max-w-5xl mx-auto w-full px-4 py-6 pb-28 md:pb-8 md:px-8 print:p-0">
+          {children}
+        </main>
+      </div>
+      <AdminBottomNav />
     </div>
   )
 }

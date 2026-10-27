@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
-import { VintageSelect } from "@/components/vineyard/vintage-select"
 import { IntakeForm } from "@/components/intake/intake-form"
 import { IntakeTable } from "@/components/intake/intake-table"
 
@@ -42,10 +41,6 @@ export default async function IntakePage({
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-stone-800">קליטת ענבים</h1>
-        <VintageSelect
-          vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
-          selectedYear={selectedVintage.year}
-        />
       </div>
 
       {blocks.length === 0 ? (

@@ -74,7 +74,7 @@ export default async function SessionResultsPage({ params }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <Link
-            href="/admin"
+            href="/admin/tastings"
             className="text-sm text-wine hover:text-wine-dark mb-1 inline-block"
           >
             ← חזרה לטעימות

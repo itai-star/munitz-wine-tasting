@@ -130,3 +130,48 @@ export function FinishedWineIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+export function GrapesIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M12 3c0 2-1 3-3 3" />
+      <path d="M12 3c1 1.5 2.5 2 4 1.5" />
+      <circle cx="8.5" cy="10" r="2.2" />
+      <circle cx="13.5" cy="10" r="2.2" />
+      <circle cx="11" cy="14.2" r="2.2" />
+      <circle cx="16" cy="14.2" r="2.2" />
+      <circle cx="13.5" cy="18.4" r="2.2" />
+    </svg>
+  )
+}
+
+export function HomeIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 11.5 12 5l8 6.5" />
+      <path d="M6 10.5V19h12v-8.5" />
+      <path d="M10 19v-5h4v5" />
+    </svg>
+  )
+}
+
+export function MoreIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function CellarControllerIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0Z" />
+      <path d="M12 9v7" />
+      <circle cx="12" cy="17.5" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M17 7h3M17 10h2" />
+    </svg>
+  )
+}

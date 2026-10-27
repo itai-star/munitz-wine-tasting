@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
-import { VintageSelect } from "@/components/vineyard/vintage-select"
 import { IntakeByWeekTable } from "@/components/season-summary/intake-by-week-table"
 import { VarietyWeightChart } from "@/components/season-summary/variety-weight-chart"
 import { VarietyExtractionTable } from "@/components/season-summary/variety-extraction-table"
@@ -44,10 +43,6 @@ export default async function SeasonSummaryPage({
           </p>
         </div>
         <div className="flex gap-4 items-center flex-wrap print:hidden">
-          <VintageSelect
-            vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
-            selectedYear={selectedVintage.year}
-          />
           <a
             href={`/api/season-summary/export?vintage=${selectedVintage.year}`}
             className="border border-stone-300 text-stone-700 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium"

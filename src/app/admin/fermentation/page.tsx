@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
-import { VintageSelect } from "@/components/vineyard/vintage-select"
 
 export const dynamic = "force-dynamic"
 
@@ -39,10 +38,6 @@ export default async function FermentationPage({
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-stone-800">מיכלים — {selectedVintage.label}</h1>
         <div className="flex gap-4 items-center flex-wrap">
-          <VintageSelect
-            vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
-            selectedYear={selectedVintage.year}
-          />
           <Link
             href="/admin/fermentation/new"
             className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"

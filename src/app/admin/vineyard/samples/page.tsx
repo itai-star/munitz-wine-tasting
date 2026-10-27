@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
-import { VintageSelect } from "@/components/vineyard/vintage-select"
 import { SampleBlockFilter } from "@/components/vineyard/sample-block-filter"
 import { SampleForm } from "@/components/vineyard/sample-form"
 import { SampleExcelImport } from "@/components/vineyard/sample-excel-import"
@@ -49,10 +48,6 @@ export default async function SamplesPage({
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-stone-800">דגימות הבשלה</h1>
-        <VintageSelect
-          vintages={vintages.map((v) => ({ year: v.year, label: v.label }))}
-          selectedYear={selectedVintage.year}
-        />
       </div>
 
       {blocks.length === 0 ? (
