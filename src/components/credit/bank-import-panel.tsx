@@ -2,11 +2,28 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { importCreditFromBank } from "@/server/actions/credit-bank-actions"
+import type { BankImportSummary } from "@/server/bank/mizrahi-credit-import"
+import type { Result } from "@/types"
 
 const inputClass =
   "w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wine/20 focus:border-wine outline-none"
 const labelClass = "block text-xs text-stone-500 mb-1"
+
+async function postImport(credentials: {
+  username: string
+  password: string
+}): Promise<Result<BankImportSummary>> {
+  try {
+    const response = await fetch("/admin/credit/bank-import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    })
+    return (await response.json()) as Result<BankImportSummary>
+  } catch {
+    return { success: false, error: { code: "SERVER_ERROR", message: "אין תקשורת עם האפליקציה שרצה על המחשב" } }
+  }
+}
 
 export function BankImportPanel() {
   const router = useRouter()
@@ -24,7 +41,7 @@ export function BankImportPanel() {
     setRunning(true)
     setMessage(null)
 
-    const result = await importCreditFromBank(credentials)
+    const result = await postImport(credentials)
     setRunning(false)
     if (result.success) {
       const { added, skipped, cards, months, byCard } = result.data

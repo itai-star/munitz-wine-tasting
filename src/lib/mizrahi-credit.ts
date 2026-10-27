@@ -129,7 +129,10 @@ export function parseBankMonthDetails(payload: unknown): BankMonthTransaction[] 
         amountAgorot,
         installmentNumber: installments?.number ?? null,
         installmentsTotal: installments?.total ?? null,
-        category: row.bankCCMonthlyDetailsMoreDetails?.chargeDetails_category?.trim() || null,
+        category:
+          row.bankCCMonthlyDetailsMoreDetails?.chargeDetails_category
+            ?.replace(/[\u200E\u200F]/g, "")
+            .trim() || null,
         categoryCode: row.CategoryNumber?.trim() || null,
       },
     })

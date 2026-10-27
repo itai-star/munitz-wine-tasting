@@ -43,9 +43,12 @@ type Selection = { month?: string; card?: string; year?: string }
 
 const NO_CATEGORY_LABEL = "ללא קטגוריה"
 
-function categoryLabelOf(row: { category: string | null; categoryCode: string | null }): string {
-  if (row.category) return row.category
-  return row.categoryCode ? `קטגוריה ${row.categoryCode}` : NO_CATEGORY_LABEL
+const DIRECTION_MARKS = /[\u200E\u200F]/g
+
+// The bank leaves some purchases without a category name (foreign and online purchases,
+// card fees), so they are grouped together instead of showing the bank's internal code.
+function categoryLabelOf(row: { category: string | null }): string {
+  return row.category?.replace(DIRECTION_MARKS, "").trim() || NO_CATEGORY_LABEL
 }
 
 function buildBreakdown(rows: { label: string; amountAgorot: number }[]): CategoryBreakdownRow[] {
