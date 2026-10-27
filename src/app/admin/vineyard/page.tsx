@@ -21,7 +21,7 @@ export default async function VineyardPage() {
           </Link>
           <Link
             href="/admin/vineyard/new"
-            className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
+            className="hidden md:inline-block bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
           >
             + בלוק חדש
           </Link>

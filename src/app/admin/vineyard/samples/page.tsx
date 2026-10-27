@@ -57,7 +57,9 @@ export default async function SamplesPage({
       ) : (
         <>
           <div className="grid gap-4 lg:grid-cols-2">
-            <SampleForm vintageId={selectedVintage.id} blocks={blocks} />
+            <div id="sample-form" className="scroll-mt-36">
+              <SampleForm vintageId={selectedVintage.id} blocks={blocks} />
+            </div>
             <SampleExcelImport vintageId={selectedVintage.id} />
           </div>
 

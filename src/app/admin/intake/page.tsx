@@ -49,7 +49,9 @@ export default async function IntakePage({
         </p>
       ) : (
         <>
-          <IntakeForm vintageId={selectedVintage.id} blocks={blocks} />
+          <div id="intake-form" className="scroll-mt-36">
+            <IntakeForm vintageId={selectedVintage.id} blocks={blocks} />
+          </div>
 
           <IntakeTable
             intakes={intakes.map((i) => ({

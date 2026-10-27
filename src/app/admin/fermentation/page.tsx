@@ -40,7 +40,7 @@ export default async function FermentationPage({
         <div className="flex gap-4 items-center flex-wrap">
           <Link
             href="/admin/fermentation/new"
-            className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
+            className="hidden md:inline-block bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
           >
             + מיכל חדש
           </Link>

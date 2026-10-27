@@ -22,7 +22,7 @@ export default async function TastingsPage() {
         <h1 className="text-2xl font-bold text-stone-800">טעימות</h1>
         <Link
           href="/admin/sessions/new"
-          className="bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
+          className="hidden md:inline-block bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine-dark transition-colors text-sm font-medium"
         >
           + טעימה חדשה
         </Link>
