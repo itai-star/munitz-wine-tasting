@@ -12,7 +12,6 @@ import {
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 
-const SAMPLE_RETENTION_DAYS = 35
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export type StationOverview = {
@@ -116,8 +115,6 @@ async function pollAllStations(): Promise<Result<PollOutcome>> {
       recorded += 1
     }
 
-    const cutoff = new Date(recordedAt.getTime() - SAMPLE_RETENTION_DAYS * DAY_MS)
-    await prisma.ecowittSample.deleteMany({ where: { recordedAt: { lt: cutoff } } })
     return ok({ recorded, errors })
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת הדגימות" })

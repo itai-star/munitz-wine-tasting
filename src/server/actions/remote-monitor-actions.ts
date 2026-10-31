@@ -137,28 +137,22 @@ export async function fetchRemoteMonitorReadings(): Promise<
   }
 }
 
-const SAMPLE_RETENTION_DAYS = 35
-
 export async function recordRemoteMonitorSample(): Promise<Result<{ count: number }>> {
   const result = await fetchRemoteMonitorReadings()
   if (!result.success) return result
 
   const recordedAt = new Date()
-  const cutoff = new Date(recordedAt.getTime() - SAMPLE_RETENTION_DAYS * 24 * 60 * 60 * 1000)
 
   try {
-    await prisma.$transaction([
-      prisma.remoteSensorSample.createMany({
-        data: result.data.sensors.map((sensor) => ({
-          sensorKey: sensor.key,
-          sensorName: sensor.name,
-          temperatureC: sensor.temperatureC,
-          humidityPercent: sensor.humidityPercent,
-          recordedAt,
-        })),
-      }),
-      prisma.remoteSensorSample.deleteMany({ where: { recordedAt: { lt: cutoff } } }),
-    ])
+    await prisma.remoteSensorSample.createMany({
+      data: result.data.sensors.map((sensor) => ({
+        sensorKey: sensor.key,
+        sensorName: sensor.name,
+        temperatureC: sensor.temperatureC,
+        humidityPercent: sensor.humidityPercent,
+        recordedAt,
+      })),
+    })
     return ok({ count: result.data.sensors.length })
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת הדגימה" })
