@@ -196,6 +196,17 @@ export function AccountIcon({ className }: IconProps) {
   )
 }
 
+export function MonthlySummaryIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <rect x="3.5" y="5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17" />
+      <path d="M8 3.5v3M16 3.5v3" />
+      <path d="M8 17v-3M12 17v-5M16 17v-2" />
+    </svg>
+  )
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

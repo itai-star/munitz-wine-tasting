@@ -368,6 +368,7 @@ enum Permission {
   REMOTE_CONTROL
   CREDIT
   TASTINGS
+  SALES
 }
 
 model AppUser {
@@ -413,4 +414,59 @@ model PasswordResetRequest {
   user AppUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([handledAt, requestedAt])
+}
+
+// Wine sales imported from the sales workbook. Amounts are in agorot and include VAT.
+model SalesMonth {
+  id                 String   @id @default(cuid())
+  year               Int
+  month              Int
+  bottles            Int
+  wineRevenueAgorot  Int
+  sourceFile         String?
+  importedAt         DateTime @default(now())
+
+  sales SalesSale[]
+
+  @@unique([year, month])
+}
+
+// One row of the workbook: a customer and what they bought in the month.
+model SalesSale {
+  id             String  @id @default(cuid())
+  monthId        String
+  name           String
+  // PRIVATE or WHOLESALE; empty while the customer has not been classified.
+  customerType   String?
+  bottles        Int
+  revenueAgorot  Int
+
+  month SalesMonth      @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  items SalesSaleItem[]
+
+  @@index([monthId])
+  @@index([name])
+}
+
+// The part of a sale that belongs to one wine. The workbook records revenue per customer, not per wine,
+// so a sale's revenue is divided between its wines by the number of bottles.
+model SalesSaleItem {
+  id             String @id @default(cuid())
+  saleId         String
+  wine           String
+  bottles        Int
+  revenueAgorot  Int
+
+  sale SalesSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+}
+
+// What the app knows about a customer from earlier imports or from the user, used for months whose
+// sheet has no customer type column.
+model SalesCustomerRule {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  customerType String
+  updatedAt    DateTime @updatedAt
 }

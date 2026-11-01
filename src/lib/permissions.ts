@@ -1,4 +1,4 @@
-export const PERMISSIONS = ["HARVEST", "INVENTORY", "REMOTE_CONTROL", "CREDIT", "TASTINGS"] as const
+export const PERMISSIONS = ["HARVEST", "INVENTORY", "REMOTE_CONTROL", "CREDIT", "TASTINGS", "SALES"] as const
 
 export type PermissionKey = (typeof PERMISSIONS)[number]
 
@@ -10,6 +10,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   REMOTE_CONTROL: "בקרה מרחוק",
   CREDIT: "נתוני אשראי",
   TASTINGS: "טעימות יין",
+  SALES: "סיכום חודשי",
 }
 
 export type SessionUser = {
@@ -53,6 +54,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/admin/more", "USER"],
   ["/admin/account", "USER"],
   ["/admin/credit", "CREDIT"],
+  ["/admin/monthly-summary", "SALES"],
   ["/admin/sessions", "TASTINGS"],
   ["/admin/tastings", "TASTINGS"],
   ["/admin/wines", "INVENTORY"],
@@ -87,6 +89,7 @@ const LANDING_PAGES: [PermissionKey, string][] = [
   ["INVENTORY", "/admin/inventory"],
   ["TASTINGS", "/admin/tastings"],
   ["CREDIT", "/admin/credit"],
+  ["SALES", "/admin/monthly-summary"],
 ]
 
 // The first screen the user is allowed to open, used after login and when a page is off limits.

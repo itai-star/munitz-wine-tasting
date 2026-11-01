@@ -7,6 +7,7 @@ import {
   HomeIcon,
   IntakeIcon,
   InventoryIcon,
+  MonthlySummaryIcon,
   MoreIcon,
   RemoteMonitorIcon,
   SeasonSummaryIcon,
@@ -24,6 +25,8 @@ export type AdminItem = {
   label: string
   title: string
   icon: AdminIcon
+  // Overrides the permission of the area, for areas that hold items of different functions.
+  permission?: PermissionKey
   // Extra path prefixes that belong to this item (detail pages, creation forms).
   alsoMatches?: string[]
 }
@@ -34,7 +37,7 @@ export type AdminArea = {
   title: string
   icon: AdminIcon
   href: string
-  // Left out for areas every signed-in user may open.
+  // Left out for areas every signed-in user may open, or whose items each carry their own.
   permission?: PermissionKey
   items: AdminItem[]
 }
@@ -103,8 +106,16 @@ export const adminAreas: AdminArea[] = [
     title: "כספים",
     icon: CreditIcon,
     href: "/admin/credit",
-    permission: "CREDIT",
-    items: [{ href: "/admin/credit", label: "אשראי", title: "מעקב אשראי", icon: CreditIcon }],
+    items: [
+      { href: "/admin/credit", label: "אשראי", title: "מעקב אשראי", icon: CreditIcon, permission: "CREDIT" },
+      {
+        href: "/admin/monthly-summary",
+        label: "סיכום חודשי",
+        title: "סיכום חודשי",
+        icon: MonthlySummaryIcon,
+        permission: "SALES",
+      },
+    ],
   },
   {
     id: "more",

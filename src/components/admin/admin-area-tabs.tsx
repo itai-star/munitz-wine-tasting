@@ -4,26 +4,28 @@ import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { findActive, itemMatches, withVintage } from "@/components/admin/admin-areas"
+import { useVisibleAreas } from "@/components/admin/admin-access"
 
 // Phone-only row of chips for jumping between the screens of the current area.
 export function AdminAreaTabs() {
   const pathname = usePathname()
   const vintageParam = useSearchParams().get("vintage")
   const active = findActive(pathname)
+  const area = useVisibleAreas().find((candidate) => candidate.id === active?.area.id)
   const activeChip = useRef<HTMLAnchorElement | null>(null)
 
   useEffect(() => {
     activeChip.current?.scrollIntoView({ inline: "center", block: "nearest" })
   }, [pathname])
 
-  if (!active || active.area.items.length < 2) return null
+  if (!active || !area || area.items.length < 2) return null
 
   return (
     <nav
-      aria-label={active.area.title}
+      aria-label={area.title}
       className="md:hidden flex gap-2 overflow-x-auto px-3 py-2 bg-white border-b border-stone-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {active.area.items.map((item) => {
+      {area.items.map((item) => {
         const isActive = itemMatches(pathname, item)
         const Icon = item.icon
         return (
