@@ -41,16 +41,23 @@ function askHidden(question) {
     let value = ""
     const onData = (chunk) => {
       for (const char of chunk) {
-        if (char === "\r" || char === "\n") {
+        // An empty Enter (the second half of a CR+LF pair, or a stray key press) is ignored.
+        if ((char === "\r" || char === "\n") && value.length > 0) {
           stdin.setRawMode(false)
           stdin.pause()
           stdin.off("data", onData)
-          process.stdout.write("\n")
+          process.stdout.write(` (${value.length} תווים)\n`)
           return resolve(value)
         }
+        if (char === "\r" || char === "\n") continue
         if (char === "\u0003") process.exit(130)
-        if (char === "\u007f" || char === "\b") value = value.slice(0, -1)
-        else value += char
+        if (char === "\u007f" || char === "\b") {
+          if (value.length > 0) process.stdout.write("\b \b")
+          value = value.slice(0, -1)
+        } else {
+          value += char
+          process.stdout.write("*")
+        }
       }
     }
     stdin.on("data", onData)
