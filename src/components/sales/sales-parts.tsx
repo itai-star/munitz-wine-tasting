@@ -1,5 +1,7 @@
 import { formatShekels } from "@/lib/credit"
-import { formatCount, formatPercent, formatSignedPercent } from "@/lib/sales-summary"
+import { formatCount, formatSignedPercent } from "@/lib/sales-summary"
+import { SalesPie, shareText } from "@/components/sales/sales-pie"
+import type { PieSlice } from "@/components/sales/sales-pie"
 import { TYPE_KEYS, TYPE_LABELS } from "@/server/sales-data"
 import type { CustomerRow, TypeKey, TypeRow, TypeSplit, WineRow } from "@/server/sales-data"
 
@@ -9,12 +11,16 @@ export const TYPE_COLORS: Record<TypeKey, string> = {
   UNCLASSIFIED: "#a8a29e",
 }
 
+const CATEGORY_COLORS = ["#722F37", "#0f766e", "#b45309", "#1d4ed8", "#7c3aed", "#be185d", "#0e7490", "#4d7c0f"]
+const REST_COLOR = "#a8a29e"
+const COLORED_ROWS = CATEGORY_COLORS.length
+
 export function Card({ title, note, children }: { title?: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 sm:p-5">
-      {title && <h3 className="font-semibold text-stone-800">{title}</h3>}
-      {note && <p className="text-xs text-stone-500 mt-1">{note}</p>}
-      <div className={title ? "mt-3" : ""}>{children}</div>
+    <section className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5 sm:p-6">
+      {title && <h3 className="text-lg sm:text-xl font-extrabold text-stone-900">{title}</h3>}
+      {note && <p className="text-sm text-stone-600 mt-1">{note}</p>}
+      <div className={title ? "mt-4" : ""}>{children}</div>
     </section>
   )
 }
@@ -29,52 +35,31 @@ export function Kpi({
   change?: number | null
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-3.5">
-      <p className="text-xs text-stone-500">{label}</p>
-      <p className="mt-1 text-lg sm:text-xl font-bold text-stone-800">
+    <div className="bg-white rounded-2xl shadow-sm border border-stone-200 border-s-4 border-s-wine p-3.5 sm:p-4">
+      <p className="text-sm font-semibold text-stone-600">{label}</p>
+      <p className="mt-1 text-xl sm:text-2xl font-extrabold text-stone-900 leading-tight">
         <bdi>{value}</bdi>
       </p>
       {change !== null && change !== undefined && (
-        <p className={`mt-0.5 text-xs font-medium ${change >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-          <bdi>{formatSignedPercent(change)}</bdi> לעומת החודש הקודם
+        <p className={`mt-1 text-sm font-bold ${change >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+          <bdi>{formatSignedPercent(change)}</bdi> <span className="font-medium">לעומת החודש הקודם</span>
         </p>
       )}
     </div>
   )
 }
 
-function Bar({ percent, color = "#722F37" }: { percent: number; color?: string }) {
-  return (
-    <span className="mt-1 block h-2.5 rounded bg-stone-100 overflow-hidden" aria-hidden="true">
-      <span
-        className="block h-full rounded"
-        style={{ width: `${Math.min(Math.max(percent, 1.5), 100)}%`, backgroundColor: color }}
-      />
-    </span>
-  )
-}
-
 export function TypeShares({ rows }: { rows: TypeRow[] }) {
-  if (rows.length === 0) return <p className="text-sm text-stone-400">אין נתונים</p>
-
-  return (
-    <ul className="space-y-3">
-      {rows.map((row) => (
-        <li key={row.key}>
-          <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-stone-700">{row.label}</span>
-            <span className="text-stone-700 whitespace-nowrap">
-              <bdi>{formatShekels(row.revenueAgorot)}</bdi> · <bdi>{formatPercent(row.sharePercent)}</bdi>
-            </span>
-          </div>
-          <Bar percent={row.sharePercent} color={TYPE_COLORS[row.key]} />
-          <p className="mt-1 text-xs text-stone-500">
-            <bdi>{formatCount(row.bottles)}</bdi> בקבוקים
-          </p>
-        </li>
-      ))}
-    </ul>
-  )
+  const total = rows.reduce((sum, row) => sum + row.revenueAgorot, 0)
+  const slices: PieSlice[] = rows.map((row) => ({
+    key: row.key,
+    label: row.label,
+    value: row.revenueAgorot,
+    color: TYPE_COLORS[row.key],
+    valueText: shareText(formatShekels(row.revenueAgorot), row.sharePercent),
+    detail: `${formatCount(row.bottles)} בקבוקים`,
+  }))
+  return <SalesPie slices={slices} centerLabel="הכנסות" centerValue={formatShekels(total)} ariaLabel="חלוקת ההכנסות לפרטי וסיטונאי" />
 }
 
 function splitText(byType: TypeSplit): string {
@@ -83,62 +68,64 @@ function splitText(byType: TypeSplit): string {
     .join(" · ")
 }
 
-export function WineShares({ rows }: { rows: WineRow[] }) {
-  if (rows.length === 0) return <p className="text-sm text-stone-400">אין נתוני יינות</p>
+export function WineShares({ rows, totalAgorot }: { rows: WineRow[]; totalAgorot: number }) {
+  const slices: PieSlice[] = rows.map((row, index) => ({
+    key: row.label,
+    label: row.label,
+    value: row.revenueAgorot,
+    color: index < COLORED_ROWS ? CATEGORY_COLORS[index] : REST_COLOR,
+    valueText: shareText(formatShekels(row.revenueAgorot), row.sharePercent),
+    detail: [`${formatCount(row.bottles)} בקבוקים`, splitText(row.byType)].filter(Boolean).join(" · "),
+    inChart: index < COLORED_ROWS,
+  }))
 
-  return (
-    <ul className="space-y-3">
-      {rows.map((row) => (
-        <li key={row.label}>
-          <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-stone-700 break-words min-w-0">{row.label}</span>
-            <span className="text-stone-700 whitespace-nowrap">
-              <bdi>{formatShekels(row.revenueAgorot)}</bdi> · <bdi>{formatPercent(row.sharePercent)}</bdi>
-            </span>
-          </div>
-          <Bar percent={row.sharePercent} />
-          <p className="mt-1 text-xs text-stone-500">
-            <bdi>{formatCount(row.bottles)}</bdi> בקבוקים
-            {splitText(row.byType) && (
-              <>
-                {" · "}
-                <bdi>{splitText(row.byType)}</bdi>
-              </>
-            )}
-          </p>
-        </li>
-      ))}
-    </ul>
-  )
+  // Wines beyond the colored ones are drawn together as one grey slice, so the pie stays readable.
+  const rest = rows.slice(COLORED_ROWS)
+  if (rest.length > 0) {
+    slices.push({
+      key: "rest",
+      label: "שאר היינות",
+      value: rest.reduce((sum, row) => sum + row.revenueAgorot, 0),
+      color: REST_COLOR,
+      valueText: "",
+      inLegend: false,
+    })
+  }
+  return <SalesPie slices={slices} centerLabel="הכנסות" centerValue={formatShekels(totalAgorot)} ariaLabel="חלוקת ההכנסות לפי יין" />
 }
 
-export function CustomerShares({ rows }: { rows: CustomerRow[] }) {
-  if (rows.length === 0) return <p className="text-sm text-stone-400">אין נתונים</p>
-
-  return (
-    <ul className="space-y-2.5">
-      {rows.map((row) => (
-        <li key={row.name}>
-          <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-stone-700 break-words min-w-0">{row.name}</span>
-            <span className="text-stone-700 whitespace-nowrap">
-              <bdi>{formatShekels(row.revenueAgorot)}</bdi> · <bdi>{formatPercent(row.sharePercent)}</bdi>
-            </span>
-          </div>
-          <Bar percent={row.sharePercent} />
-        </li>
-      ))}
-    </ul>
-  )
+export function CustomerShares({ rows, totalAgorot }: { rows: CustomerRow[]; totalAgorot: number }) {
+  const named = rows.reduce((sum, row) => sum + row.revenueAgorot, 0)
+  const slices: PieSlice[] = rows.map((row, index) => ({
+    key: row.name,
+    label: row.name,
+    value: row.revenueAgorot,
+    color: CATEGORY_COLORS[index % COLORED_ROWS],
+    valueText: shareText(formatShekels(row.revenueAgorot), row.sharePercent),
+    detail: `${formatCount(row.bottles)} בקבוקים`,
+  }))
+  if (totalAgorot - named > 0) {
+    slices.push({
+      key: "rest",
+      label: "שאר הלקוחות",
+      value: totalAgorot - named,
+      color: REST_COLOR,
+      valueText: shareText(formatShekels(totalAgorot - named), 100 - rows.reduce((sum, row) => sum + row.sharePercent, 0)),
+    })
+  }
+  return <SalesPie slices={slices} centerLabel="הכנסות" centerValue={formatShekels(totalAgorot)} ariaLabel="חלוקת ההכנסות בין הלקוחות הגדולים לשאר" />
 }
 
 export function Insights({ items }: { items: string[] }) {
   if (items.length === 0) return null
   return (
     <Card title="תובנות">
-      <ul className="list-disc ps-5 space-y-1.5 text-sm text-stone-700">
+      <ul className="space-y-2.5">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item} className="flex gap-3 text-base font-medium text-stone-800">
+            <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-wine" aria-hidden="true" />
+            {item}
+          </li>
         ))}
       </ul>
     </Card>
@@ -147,10 +134,10 @@ export function Insights({ items }: { items: string[] }) {
 
 export function TypeLegend() {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
+    <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm font-semibold text-stone-700">
       {TYPE_KEYS.map((key) => (
-        <li key={key} className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: TYPE_COLORS[key] }} aria-hidden="true" />
+        <li key={key} className="inline-flex items-center gap-2">
+          <span className="h-3.5 w-3.5 rounded-sm" style={{ backgroundColor: TYPE_COLORS[key] }} aria-hidden="true" />
           {TYPE_LABELS[key]}
         </li>
       ))}

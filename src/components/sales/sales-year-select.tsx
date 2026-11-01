@@ -6,7 +6,7 @@ export function SalesYearSelect({ year, years }: { year: number; years: number[]
   const router = useRouter()
 
   return (
-    <label className="inline-flex items-center gap-2 text-sm font-medium text-stone-700">
+    <label className="inline-flex items-center gap-2 text-base font-bold text-stone-800">
       שנה
       <select
         value={year}

@@ -18,7 +18,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-stone-800">סיכום חודשי</h1>
+        <h1 className="text-3xl font-extrabold text-stone-900">סיכום חודשי</h1>
         <SalesYearSelect year={overview.year} years={overview.years} />
       </div>
 
@@ -32,7 +32,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
       )}
 
       <details open={!hasData} className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
-        <summary className="cursor-pointer text-sm font-medium text-wine">ייבוא נתוני מכירות מאקסל</summary>
+        <summary className="cursor-pointer text-base font-bold text-wine">ייבוא נתוני מכירות מאקסל</summary>
         <div className="mt-3">
           <SalesImportPanel year={overview.year} />
         </div>
@@ -44,7 +44,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
 
       {hasData && overview.monthSummary && (
         <section className="space-y-3" aria-label="סיכום החודש">
-          <h2 className="text-lg font-semibold text-stone-800">
+          <h2 className="text-2xl font-extrabold text-stone-900">
             סיכום {overview.monthSummary.label} {overview.year}
           </h2>
           <nav aria-label="בחירת חודש" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -55,7 +55,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
                   key={month}
                   href={`/admin/monthly-summary?year=${overview.year}&month=${month}${overview.byVintage ? "&vintages=1" : ""}`}
                   aria-current={isActive ? "page" : undefined}
-                  className={`shrink-0 inline-flex items-center rounded-full px-3.5 min-h-10 text-sm font-medium border transition-colors ${
+                  className={`shrink-0 inline-flex items-center rounded-full px-4 min-h-11 text-base font-bold border transition-colors ${
                     isActive ? "bg-wine text-white border-wine" : "bg-white text-stone-700 border-stone-200 hover:border-wine/40"
                   }`}
                 >
@@ -70,7 +70,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
 
       {hasData && (
         <section className="space-y-3" aria-label="סיכום השנה">
-          <h2 className="text-lg font-semibold text-stone-800">סיכום שנתי {overview.year}</h2>
+          <h2 className="text-2xl font-extrabold text-stone-900">סיכום שנתי {overview.year}</h2>
           <SalesYearView summary={overview.yearSummary} />
         </section>
       )}

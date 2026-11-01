@@ -24,17 +24,17 @@ export function SalesMonthView({ summary }: { summary: MonthSummary }) {
         <Kpi label="ממוצע למכירה (כולל מע״מ)" value={formatShekels(summary.avgSaleAgorot)} />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid xl:grid-cols-2 gap-4">
         <Card title="פרטי או סיטונאי">
           <TypeShares rows={summary.types} />
         </Card>
         <Card title="הלקוחות הגדולים">
-          <CustomerShares rows={summary.topCustomers} />
+          <CustomerShares rows={summary.topCustomers} totalAgorot={summary.revenueAgorot} />
         </Card>
       </div>
 
       <Card title="לפי יין" note={WINE_NOTE}>
-        <WineShares rows={summary.wines} />
+        <WineShares rows={summary.wines} totalAgorot={summary.revenueAgorot} />
       </Card>
 
       <Insights items={summary.insights} />

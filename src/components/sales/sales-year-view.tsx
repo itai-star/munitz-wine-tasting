@@ -21,7 +21,7 @@ export function SalesYearView({ summary }: { summary: YearSummary }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Kpi label="בקבוקים שנמכרו" value={formatCount(summary.bottles)} />
         <Kpi label="הכנסות (כולל מע״מ)" value={formatShekels(summary.revenueAgorot)} />
         <Kpi label="הכנסות לפני מע״מ" value={formatShekels(summary.revenueNetAgorot)} />
@@ -40,15 +40,15 @@ export function SalesYearView({ summary }: { summary: YearSummary }) {
               <div className="flex items-baseline justify-between gap-3 text-sm">
                 <Link
                   href={`/admin/monthly-summary?year=${summary.year}&month=${row.month}`}
-                  className="text-stone-700 hover:text-wine hover:underline"
+                  className="text-base font-bold text-stone-900 hover:text-wine hover:underline"
                 >
                   {row.label}
                 </Link>
-                <span className="font-semibold text-stone-800">
+                <span className="text-base font-extrabold text-stone-900">
                   <bdi>{formatShekels(row.revenueAgorot)}</bdi>
                 </span>
               </div>
-              <span className="mt-1 flex h-3 rounded bg-stone-100 overflow-hidden" role="img" aria-label={row.label}>
+              <span className="mt-1.5 flex h-4 rounded-md bg-stone-100 overflow-hidden" role="img" aria-label={row.label}>
                 {TYPE_KEYS.map((key) =>
                   row.byType[key].revenueAgorot > 0 ? (
                     <span
@@ -63,7 +63,7 @@ export function SalesYearView({ summary }: { summary: YearSummary }) {
                   ) : null
                 )}
               </span>
-              <p className="mt-1 text-xs text-stone-500">
+              <p className="mt-1.5 text-sm font-medium text-stone-600">
                 <bdi>{formatCount(row.bottles)}</bdi> בקבוקים · מחיר ממוצע לפני מע״מ{" "}
                 <bdi>{formatShekels(row.avgPriceNetAgorot)}</bdi> · מצטבר מתחילת השנה לפני מע״מ{" "}
                 <bdi>{formatShekels(row.cumulativeNetAgorot)}</bdi>
@@ -73,17 +73,17 @@ export function SalesYearView({ summary }: { summary: YearSummary }) {
         </ul>
       </Card>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid xl:grid-cols-2 gap-4">
         <Card title="פרטי או סיטונאי (כל השנה)">
           <TypeShares rows={summary.types} />
         </Card>
         <Card title="הלקוחות הגדולים בשנה">
-          <CustomerShares rows={summary.topCustomers} />
+          <CustomerShares rows={summary.topCustomers} totalAgorot={summary.revenueAgorot} />
         </Card>
       </div>
 
       <Card title="לפי יין (כל השנה)" note={WINE_NOTE}>
-        <WineShares rows={summary.wines} />
+        <WineShares rows={summary.wines} totalAgorot={summary.revenueAgorot} />
       </Card>
 
       <Insights items={summary.insights} />
