@@ -5,6 +5,7 @@ import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import type { VineyardBlock } from "@prisma/client"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const BlockSchema = z.object({
   name: z.string().min(1, "שם הבלוק נדרש"),
@@ -31,6 +32,7 @@ const UpdateBlockSchema = BlockSchema.extend({
 export async function createBlock(
   input: z.infer<typeof BlockSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = BlockSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -47,6 +49,7 @@ export async function createBlock(
 export async function updateBlock(
   input: z.infer<typeof UpdateBlockSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateBlockSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -65,6 +68,7 @@ export async function updateBlock(
 export async function listBlocks(): Promise<
   Result<Awaited<ReturnType<typeof prisma.vineyardBlock.findMany>>>
 > {
+  await requirePermission("HARVEST", "REMOTE_CONTROL")
   try {
     const blocks = await prisma.vineyardBlock.findMany({
       orderBy: { name: "asc" },
@@ -76,6 +80,7 @@ export async function listBlocks(): Promise<
 }
 
 export async function getBlock(id: string): Promise<Result<VineyardBlock>> {
+  await requirePermission("HARVEST", "REMOTE_CONTROL")
   try {
     const block = await prisma.vineyardBlock.findUnique({ where: { id } })
     if (!block) {

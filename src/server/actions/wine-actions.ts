@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result, AppError } from "@/types"
 import { z } from "zod"
+import { requirePermission, requireUser } from "@/server/auth/guards"
 
 const CreateWineSchema = z.object({
   name: z.string().min(1, "שם היין נדרש"),
@@ -31,6 +32,7 @@ const UpdateWineSchema = CreateWineSchema.extend({
 })
 
 export async function getWines(): Promise<Result<Awaited<ReturnType<typeof prisma.wine.findMany>>>> {
+  await requireUser()
   try {
     const wines = await prisma.wine.findMany({
       orderBy: { createdAt: "desc" },
@@ -42,6 +44,7 @@ export async function getWines(): Promise<Result<Awaited<ReturnType<typeof prism
 }
 
 export async function createWine(input: z.infer<typeof CreateWineSchema>): Promise<Result<{ id: string }>> {
+  await requirePermission("INVENTORY")
   const parsed = CreateWineSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -70,6 +73,7 @@ export async function createWine(input: z.infer<typeof CreateWineSchema>): Promi
 }
 
 export async function updateWine(input: z.infer<typeof UpdateWineSchema>): Promise<Result<{ id: string }>> {
+  await requirePermission("INVENTORY")
   const parsed = UpdateWineSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -99,6 +103,7 @@ export async function updateWine(input: z.infer<typeof UpdateWineSchema>): Promi
 }
 
 export async function deleteWine(id: string): Promise<Result<void, AppError>> {
+  await requirePermission("INVENTORY")
   try {
     await prisma.wine.delete({ where: { id } })
     return ok(undefined)

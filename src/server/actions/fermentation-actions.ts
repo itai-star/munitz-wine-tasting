@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const WINE_TYPES = ["אדום", "לבן", "רוזה"] as const
 
@@ -23,6 +24,7 @@ const CreateBatchSchema = z.object({
 export async function createBatch(
   input: z.infer<typeof CreateBatchSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = CreateBatchSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -52,6 +54,7 @@ const UpdateBatchSchema = CreateBatchSchema.extend({
 export async function updateBatch(
   input: z.infer<typeof UpdateBatchSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateBatchSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -74,6 +77,7 @@ export async function updateBatch(
 }
 
 export async function deleteBatch(id: string): Promise<Result<void>> {
+  await requirePermission("HARVEST")
   try {
     await prisma.fermentationBatch.delete({ where: { id } })
     return ok(undefined)
@@ -91,6 +95,7 @@ const UpdateBatchStatusSchema = z.object({
 export async function updateBatchStatus(
   input: z.infer<typeof UpdateBatchStatusSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateBatchStatusSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -110,6 +115,7 @@ export async function updateBatchStatus(
 export async function listActiveBatches(vintageId: string): Promise<
   Result<Awaited<ReturnType<typeof prisma.fermentationBatch.findMany>>>
 > {
+  await requirePermission("HARVEST")
   try {
     const batches = await prisma.fermentationBatch.findMany({
       where: { vintageId, status: "active" },
@@ -125,6 +131,7 @@ export async function listActiveBatches(vintageId: string): Promise<
 export async function getBatch(id: string): Promise<
   Result<NonNullable<Awaited<ReturnType<typeof prisma.fermentationBatch.findFirst>>>>
 > {
+  await requirePermission("HARVEST")
   try {
     const batch = await prisma.fermentationBatch.findUnique({
       where: { id },
@@ -155,6 +162,7 @@ const ReadingSchema = z.object({
 export async function addReading(
   input: z.infer<typeof ReadingSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = ReadingSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -190,6 +198,7 @@ const UpdateReadingSchema = z.object({
 export async function updateReading(
   input: z.infer<typeof UpdateReadingSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateReadingSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -211,6 +220,7 @@ export async function updateReading(
 export async function listReadings(
   batchId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.fermentationReading.findMany>>>> {
+  await requirePermission("HARVEST")
   try {
     const readings = await prisma.fermentationReading.findMany({
       where: { batchId },

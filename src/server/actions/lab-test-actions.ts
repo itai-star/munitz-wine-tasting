@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
@@ -34,6 +35,7 @@ const LabTestSchema = z.object({
 export async function createLabTest(
   input: z.infer<typeof LabTestSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = LabTestSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -54,6 +56,7 @@ const UpdateLabTestSchema = LabTestSchema.omit({ finishedWineId: true }).extend(
 export async function updateLabTest(
   input: z.infer<typeof UpdateLabTestSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateLabTestSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -72,6 +75,7 @@ export async function updateLabTest(
 export async function listLabTests(
   finishedWineId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.labTest.findMany>>>> {
+  await requirePermission("HARVEST")
   try {
     const tests = await prisma.labTest.findMany({
       where: { finishedWineId },
@@ -84,6 +88,7 @@ export async function listLabTests(
 }
 
 export async function deleteLabTest(id: string): Promise<Result<void>> {
+  await requirePermission("HARVEST")
   try {
     await prisma.labTest.delete({ where: { id } })
     return ok(undefined)
@@ -117,6 +122,7 @@ export async function importLabTestsFromExcel(
   vintageId: string,
   formData: FormData
 ): Promise<Result<{ imported: number; updated: number; errors: ImportRowError[] }>> {
+  await requirePermission("HARVEST")
   const file = formData.get("file")
   if (!(file instanceof File)) {
     return err({ code: "VALIDATION", message: "לא נבחר קובץ" })

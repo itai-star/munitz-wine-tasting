@@ -1,4 +1,5 @@
-import { isCreditSessionValid } from "@/server/credit-auth"
+import { canUse } from "@/lib/permissions"
+import { getCurrentUser } from "@/server/auth/session"
 import {
   isUnexpectedBankResponse,
   runMizrahiCreditImport,
@@ -32,8 +33,9 @@ function describeError(error: unknown): string {
 
 // The credentials only live in this call's memory; nothing here stores or logs them.
 export async function runBankImport(input: unknown): Promise<Result<BankImportSummary>> {
-  if (!(await isCreditSessionValid())) {
-    return err({ code: "VALIDATION", message: "פג תוקף הכניסה, יש להתחבר מחדש" })
+  const user = await getCurrentUser()
+  if (!user || !canUse(user, "CREDIT")) {
+    return err({ code: "VALIDATION", message: "אין הרשאה לפעולה הזו, יש להתחבר מחדש" })
   }
 
   if (process.env.VERCEL) {

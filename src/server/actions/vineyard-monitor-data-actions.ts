@@ -2,15 +2,10 @@
 
 import { prisma } from "@/lib/prisma"
 import { defaultSensorLabel, sensorKindFromKey, type SensorTile } from "@/lib/ecowitt"
-import {
-  REQUEST_SPACING_MS,
-  fetchStationReadings,
-  loadCredentials,
-  pause,
-  saveStationSample,
-} from "@/server/ecowitt-client"
+import { pollAllStations } from "@/server/vineyard-polling"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
+import { requirePermission } from "@/server/auth/guards"
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -85,6 +80,7 @@ async function loadOverviews(errors: Map<string, string>): Promise<StationOvervi
 }
 
 export async function getVineyardStationsOverview(): Promise<Result<StationOverview[]>> {
+  await requirePermission("REMOTE_CONTROL")
   try {
     return ok(await loadOverviews(new Map()))
   } catch {
@@ -92,36 +88,8 @@ export async function getVineyardStationsOverview(): Promise<Result<StationOverv
   }
 }
 
-type PollOutcome = { recorded: number; errors: Map<string, string> }
-
-async function pollAllStations(): Promise<Result<PollOutcome>> {
-  const credentials = await loadCredentials()
-  if (!credentials.success) return credentials
-
-  try {
-    const stations = await prisma.ecowittStation.findMany({ select: { id: true, mac: true } })
-    const errors = new Map<string, string>()
-    const recordedAt = new Date()
-    let recorded = 0
-
-    for (const [index, station] of stations.entries()) {
-      if (index > 0) await pause(REQUEST_SPACING_MS)
-      const readings = await fetchStationReadings(credentials.data, station.mac)
-      if (!readings.success) {
-        errors.set(station.id, readings.error.message)
-        continue
-      }
-      await saveStationSample(station.id, readings.data, recordedAt)
-      recorded += 1
-    }
-
-    return ok({ recorded, errors })
-  } catch {
-    return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת הדגימות" })
-  }
-}
-
 export async function refreshVineyardStations(): Promise<Result<StationOverview[]>> {
+  await requirePermission("REMOTE_CONTROL")
   const outcome = await pollAllStations()
   if (!outcome.success) return outcome
 
@@ -130,14 +98,6 @@ export async function refreshVineyardStations(): Promise<Result<StationOverview[
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בטעינת התחנות" })
   }
-}
-
-export async function recordVineyardStationSamples(): Promise<
-  Result<{ stations: number; failed: number }>
-> {
-  const outcome = await pollAllStations()
-  if (!outcome.success) return outcome
-  return ok({ stations: outcome.data.recorded, failed: outcome.data.errors.size })
 }
 
 export type VineyardSamplePoint = {
@@ -154,6 +114,7 @@ export async function getVineyardSensorHistory(
   sensorKey: string,
   days = 7
 ): Promise<Result<VineyardSamplePoint[]>> {
+  await requirePermission("REMOTE_CONTROL")
   try {
     const since = new Date(Date.now() - days * DAY_MS)
     const samples = await prisma.ecowittSample.findMany({
@@ -176,6 +137,7 @@ export async function getVineyardSensorHistory(
 }
 
 export async function getSensorTilesForBlock(blockId: string): Promise<Result<SensorTile[]>> {
+  await requirePermission("HARVEST", "REMOTE_CONTROL")
   const overviews = await getVineyardStationsOverview()
   if (!overviews.success) return overviews
 

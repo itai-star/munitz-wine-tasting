@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission, requireUser } from "@/server/auth/guards"
 
 const CreateVintageSchema = z.object({
   year: z.number().int().min(2000).max(2100),
@@ -13,6 +14,7 @@ const CreateVintageSchema = z.object({
 export async function createVintage(
   input: z.infer<typeof CreateVintageSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = CreateVintageSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -29,6 +31,7 @@ export async function createVintage(
 export async function listVintages(): Promise<
   Result<Array<{ id: string; year: number; label: string }>>
 > {
+  await requireUser()
   try {
     const vintages = await prisma.vintage.findMany({
       orderBy: { year: "desc" },

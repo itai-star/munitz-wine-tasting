@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { adminAreas, findActive, itemMatches, withVintage } from "@/components/admin/admin-areas"
+import { findActive, itemMatches, withVintage } from "@/components/admin/admin-areas"
+import { useVisibleAreas } from "@/components/admin/admin-access"
 
 export function AdminSidebar() {
   const pathname = usePathname()
   const vintageParam = useSearchParams().get("vintage")
   const activeAreaId = findActive(pathname)?.area.id
+  const areas = useVisibleAreas()
 
   return (
     <aside className="hidden md:block print:hidden w-60 shrink-0 border-e border-stone-200 bg-white">
@@ -15,7 +17,7 @@ export function AdminSidebar() {
         aria-label="אזורי האפליקציה"
         className="sticky top-14 max-h-[calc(100vh-3.5rem)] overflow-y-auto p-3 space-y-1"
       >
-        {adminAreas.map((area) => {
+        {areas.map((area) => {
           const isActiveArea = area.id === activeAreaId
           const Icon = area.icon
           const showItems = isActiveArea && area.items.length > 1

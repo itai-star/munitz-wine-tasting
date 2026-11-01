@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result, AppError } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const CreateSessionSchema = z.object({
   name: z.string().min(1, "שם הטעימה נדרש"),
@@ -11,6 +12,7 @@ const CreateSessionSchema = z.object({
 })
 
 export async function getSessions(): Promise<Result<Awaited<ReturnType<typeof fetchSessions>>>> {
+  await requirePermission("TASTINGS")
   try {
     const sessions = await fetchSessions()
     return ok(sessions)
@@ -33,6 +35,7 @@ async function fetchSessions() {
 }
 
 export async function getSession(id: string): Promise<Result<NonNullable<Awaited<ReturnType<typeof fetchSession>>>>> {
+  await requirePermission("TASTINGS")
   try {
     const session = await fetchSession(id)
     if (!session) {
@@ -59,6 +62,7 @@ async function fetchSession(id: string) {
 }
 
 export async function createSession(input: z.infer<typeof CreateSessionSchema>): Promise<Result<{ id: string }>> {
+  await requirePermission("TASTINGS")
   const parsed = CreateSessionSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -83,6 +87,7 @@ export async function createSession(input: z.infer<typeof CreateSessionSchema>):
 }
 
 export async function toggleSession(id: string): Promise<Result<{ isActive: boolean }>> {
+  await requirePermission("TASTINGS")
   try {
     const session = await prisma.tastingSession.findUnique({ where: { id } })
     if (!session) {
@@ -99,6 +104,7 @@ export async function toggleSession(id: string): Promise<Result<{ isActive: bool
 }
 
 export async function deleteSession(id: string): Promise<Result<void, AppError>> {
+  await requirePermission("TASTINGS")
   try {
     await prisma.tastingSession.delete({ where: { id } })
     return ok(undefined)

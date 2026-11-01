@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const CreateFinishedWineSchema = z.object({
   vintageId: z.string().min(1),
@@ -18,6 +19,7 @@ const CreateFinishedWineSchema = z.object({
 export async function createFinishedWine(
   input: z.infer<typeof CreateFinishedWineSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = CreateFinishedWineSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -38,6 +40,7 @@ const UpdateFinishedWineSchema = CreateFinishedWineSchema.extend({
 export async function updateFinishedWine(
   input: z.infer<typeof UpdateFinishedWineSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateFinishedWineSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -54,6 +57,7 @@ export async function updateFinishedWine(
 }
 
 export async function deleteFinishedWine(id: string): Promise<Result<void>> {
+  await requirePermission("HARVEST")
   try {
     await prisma.finishedWine.delete({ where: { id } })
     return ok(undefined)
@@ -65,6 +69,7 @@ export async function deleteFinishedWine(id: string): Promise<Result<void>> {
 export async function listFinishedWines(
   vintageId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.finishedWine.findMany>>>> {
+  await requirePermission("HARVEST")
   try {
     const wines = await prisma.finishedWine.findMany({
       where: { vintageId },
@@ -80,6 +85,7 @@ export async function getIntakeWeightForBlock(
   vintageId: string,
   blockId: string
 ): Promise<Result<{ totalWeightKg: number }>> {
+  await requirePermission("HARVEST")
   try {
     const result = await prisma.grapeIntake.aggregate({
       where: { vintageId, blockId },
@@ -94,6 +100,7 @@ export async function getIntakeWeightForBlock(
 export async function getFinishedWine(
   id: string
 ): Promise<Result<NonNullable<Awaited<ReturnType<typeof prisma.finishedWine.findUnique>>>>> {
+  await requirePermission("HARVEST")
   try {
     const wine = await prisma.finishedWine.findUnique({ where: { id } })
     if (!wine) {

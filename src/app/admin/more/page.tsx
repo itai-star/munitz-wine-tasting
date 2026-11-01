@@ -1,5 +1,7 @@
 import Link from "next/link"
-import { TastingIcon } from "@/components/admin/nav-icons"
+import { AccountIcon, TastingIcon, UsersIcon } from "@/components/admin/nav-icons"
+import { LogoutButton } from "@/components/auth/logout-button"
+import { getCurrentUser } from "@/server/auth/session"
 
 type MoreLink = {
   href: string
@@ -10,6 +12,12 @@ type MoreLink = {
 
 const LINKS: MoreLink[] = [
   {
+    href: "/admin/account",
+    title: "החשבון שלי",
+    description: "שינוי סיסמה והפונקציות הזמינות לך",
+    icon: AccountIcon,
+  },
+  {
     href: "/",
     title: "לאתר הטעימות",
     description: "העמוד שהאורחים רואים, עם הטעימות הפעילות",
@@ -17,13 +25,25 @@ const LINKS: MoreLink[] = [
   },
 ]
 
-export default function MorePage() {
+const ADMIN_LINKS: MoreLink[] = [
+  {
+    href: "/admin/users",
+    title: "ניהול משתמשים",
+    description: "יצירת משתמשים, הרשאות ואיפוס סיסמאות",
+    icon: UsersIcon,
+  },
+]
+
+export default async function MorePage() {
+  const user = await getCurrentUser()
+  const links = user?.role === "ADMIN" ? [...ADMIN_LINKS, ...LINKS] : LINKS
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-stone-800">עוד</h1>
 
       <div className="grid gap-3">
-        {LINKS.map((link) => {
+        {links.map((link) => {
           const Icon = link.icon
           return (
             <Link
@@ -42,6 +62,8 @@ export default function MorePage() {
           )
         })}
       </div>
+
+      <LogoutButton />
 
       <section className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
         <h2 className="font-semibold text-stone-800 mb-2">התקנה על מסך הבית של הטלפון</h2>

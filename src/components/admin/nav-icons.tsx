@@ -176,6 +176,26 @@ export function CellarControllerIcon({ className }: IconProps) {
   )
 }
 
+export function UsersIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="9" cy="8.5" r="3" />
+      <path d="M3 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+      <path d="M16 5.8a3 3 0 0 1 0 5.4" />
+      <path d="M18 14.3c1.8.7 3 2.4 3 5.2" />
+    </svg>
+  )
+}
+
+export function AccountIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" />
+    </svg>
+  )
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

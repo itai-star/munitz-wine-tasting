@@ -5,7 +5,7 @@ import { AdminAreaTabs } from "@/components/admin/admin-area-tabs"
 import { AdminHeaderTitle } from "@/components/admin/admin-header-title"
 import { AdminVintageChip } from "@/components/admin/admin-vintage-chip"
 
-export async function AdminHeader() {
+export async function AdminHeader({ username }: { username: string }) {
   const vintages = await prisma.vintage.findMany({
     orderBy: { year: "desc" },
     select: { year: true, label: true },
@@ -34,6 +34,13 @@ export async function AdminHeader() {
             className="hidden md:inline text-sm text-white/75 hover:text-white transition-colors"
           >
             לאתר הטעימות
+          </Link>
+          <Link
+            href="/admin/account"
+            className="hidden md:inline max-w-32 truncate text-sm text-white/75 hover:text-white transition-colors"
+            dir="ltr"
+          >
+            {username}
           </Link>
         </div>
       </div>

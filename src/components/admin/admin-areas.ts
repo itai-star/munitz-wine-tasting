@@ -15,6 +15,7 @@ import {
   VineyardMonitorIcon,
   WineIcon,
 } from "@/components/admin/nav-icons"
+import type { PermissionKey } from "@/lib/permissions"
 
 export type AdminIcon = (props: { className?: string }) => React.JSX.Element
 
@@ -33,6 +34,8 @@ export type AdminArea = {
   title: string
   icon: AdminIcon
   href: string
+  // Left out for areas every signed-in user may open.
+  permission?: PermissionKey
   items: AdminItem[]
 }
 
@@ -43,6 +46,7 @@ export const adminAreas: AdminArea[] = [
     title: "הבציר",
     icon: GrapesIcon,
     href: "/admin",
+    permission: "HARVEST",
     items: [
       { href: "/admin", label: "מבט על", title: "מבט על הבציר", icon: HomeIcon },
       { href: "/admin/vineyard", label: "כרם", title: "כרם ודגימות", icon: VineyardIcon },
@@ -58,6 +62,7 @@ export const adminAreas: AdminArea[] = [
     title: "בקרה מרחוק",
     icon: RemoteMonitorIcon,
     href: "/admin/vineyard-monitor",
+    permission: "REMOTE_CONTROL",
     items: [
       { href: "/admin/vineyard-monitor", label: "ניטור כרמים", title: "ניטור כרמים", icon: VineyardMonitorIcon },
       { href: "/admin/remote-monitor", label: "בקר יקב", title: "בקר יקב", icon: CellarControllerIcon },
@@ -69,6 +74,7 @@ export const adminAreas: AdminArea[] = [
     title: "יינות ומלאי",
     icon: WineIcon,
     href: "/admin/inventory",
+    permission: "INVENTORY",
     items: [
       { href: "/admin/inventory", label: "מלאי", title: "מלאי", icon: InventoryIcon },
       { href: "/admin/wines", label: "יינות", title: "ניהול יינות", icon: WineIcon },
@@ -80,6 +86,7 @@ export const adminAreas: AdminArea[] = [
     title: "טעימות",
     icon: TastingIcon,
     href: "/admin/tastings",
+    permission: "TASTINGS",
     items: [
       {
         href: "/admin/tastings",
@@ -96,6 +103,7 @@ export const adminAreas: AdminArea[] = [
     title: "כספים",
     icon: CreditIcon,
     href: "/admin/credit",
+    permission: "CREDIT",
     items: [{ href: "/admin/credit", label: "אשראי", title: "מעקב אשראי", icon: CreditIcon }],
   },
   {

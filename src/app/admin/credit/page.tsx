@@ -1,9 +1,7 @@
 import { loadCreditOverview } from "@/server/credit-data"
-import { CreditGate } from "@/components/credit/credit-gate"
 import { CreditYearlyChart } from "@/components/credit/credit-yearly-chart"
 import { CreditMonthView } from "@/components/credit/credit-month-view"
 import { CreditCardManager } from "@/components/credit/credit-card-manager"
-import { CreditLogoutButton } from "@/components/credit/credit-logout-button"
 import { BankImportPanel } from "@/components/credit/bank-import-panel"
 import { isBankImportAvailable } from "@/server/actions/credit-bank-actions"
 
@@ -19,10 +17,6 @@ async function CreditContent({ searchParams }: { searchParams: SearchParams }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <CreditLogoutButton />
-      </div>
-
       {!hasData && (
         <p className="text-stone-500">
           עדיין לא יובאו עסקאות.
@@ -81,9 +75,7 @@ export default async function CreditPage({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-stone-800">מעקב אשראי</h1>
-      <CreditGate>
-        <CreditContent searchParams={params} />
-      </CreditGate>
+      <CreditContent searchParams={params} />
     </div>
   )
 }

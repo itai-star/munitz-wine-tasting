@@ -5,6 +5,7 @@ import { formatWineName } from "@/lib/wine-label"
 import { ok, err } from "@/types"
 import type { Result, AppError } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const WithdrawSchema = z
   .object({
@@ -19,6 +20,7 @@ const WithdrawSchema = z
 export async function withdrawWine(
   input: z.infer<typeof WithdrawSchema>
 ): Promise<Result<{ wineId: string; wineName: string; newQuantity: number }>> {
+  await requirePermission("INVENTORY")
   const parsed = WithdrawSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -80,6 +82,7 @@ const AdjustStockSchema = z.discriminatedUnion("mode", [
 export async function adjustWineStock(
   input: z.infer<typeof AdjustStockSchema>
 ): Promise<Result<{ wineName: string; newQuantity: number }>> {
+  await requirePermission("INVENTORY")
   const parsed = AdjustStockSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -105,6 +108,7 @@ export async function adjustWineStock(
 export async function getRecentWithdrawals(limit = 20): Promise<
   Result<Array<{ id: string; wineName: string; quantity: number; createdAt: Date }>>
 > {
+  await requirePermission("INVENTORY")
   try {
     const withdrawals = await prisma.wineWithdrawal.findMany({
       take: limit,

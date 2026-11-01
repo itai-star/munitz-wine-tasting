@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { requireCreditSession } from "@/server/credit-auth"
+import { requirePermission } from "@/server/auth/guards"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
@@ -17,10 +17,10 @@ const CardFieldsSchema = z.object({
 
 async function authorize(): Promise<Result<void>> {
   try {
-    await requireCreditSession()
+    await requirePermission("CREDIT")
     return ok(undefined)
   } catch {
-    return err({ code: "VALIDATION", message: "פג תוקף הכניסה, יש להתחבר מחדש" })
+    return err({ code: "VALIDATION", message: "אין הרשאה לפעולה הזו, יש להתחבר מחדש" })
   }
 }
 

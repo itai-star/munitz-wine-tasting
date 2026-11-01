@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const IntakeSchema = z.object({
   vintageId: z.string().min(1),
@@ -17,6 +18,7 @@ const IntakeSchema = z.object({
 export async function createIntake(
   input: z.infer<typeof IntakeSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = IntakeSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -35,6 +37,7 @@ const UpdateIntakeSchema = IntakeSchema.omit({ vintageId: true }).extend({ id: z
 export async function updateIntake(
   input: z.infer<typeof UpdateIntakeSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateIntakeSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -52,6 +55,7 @@ export async function updateIntake(
 export async function listIntakes(
   vintageId: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.grapeIntake.findMany>>>> {
+  await requirePermission("HARVEST")
   try {
     const intakes = await prisma.grapeIntake.findMany({
       where: { vintageId },
@@ -68,6 +72,7 @@ const DeleteIntakesSchema = z.object({
 })
 
 export async function deleteIntakes(ids: string[]): Promise<Result<{ deleted: number }>> {
+  await requirePermission("HARVEST")
   const parsed = DeleteIntakesSchema.safeParse({ ids })
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })

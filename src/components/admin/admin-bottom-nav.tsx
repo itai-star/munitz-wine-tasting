@@ -2,19 +2,22 @@
 
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { adminAreas, findActive, withVintage } from "@/components/admin/admin-areas"
+import { findActive, withVintage } from "@/components/admin/admin-areas"
+import { useVisibleAreas } from "@/components/admin/admin-access"
 
 export function AdminBottomNav() {
   const pathname = usePathname()
   const vintageParam = useSearchParams().get("vintage")
   const activeAreaId = findActive(pathname)?.area.id
+  const areas = useVisibleAreas()
 
   return (
     <nav
       aria-label="אזורי האפליקציה"
-      className="md:hidden print:hidden fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 bg-wine border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
+      style={{ gridTemplateColumns: `repeat(${areas.length}, minmax(0, 1fr))` }}
+      className="md:hidden print:hidden fixed inset-x-0 bottom-0 z-40 grid bg-wine border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
     >
-      {adminAreas.map((area) => {
+      {areas.map((area) => {
         const isActive = area.id === activeAreaId
         const Icon = area.icon
         return (

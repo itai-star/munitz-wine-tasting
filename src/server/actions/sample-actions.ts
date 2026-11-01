@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
@@ -29,6 +30,7 @@ const SampleSchema = z.object({
 export async function createSample(
   input: z.infer<typeof SampleSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = SampleSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -49,6 +51,7 @@ const UpdateSampleSchema = SampleSchema.omit({ vintageId: true }).extend({
 export async function updateSample(
   input: z.infer<typeof UpdateSampleSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("HARVEST")
   const parsed = UpdateSampleSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -68,6 +71,7 @@ export async function listSamples(
   vintageId: string,
   blockId?: string
 ): Promise<Result<Awaited<ReturnType<typeof prisma.ripenessSample.findMany>>>> {
+  await requirePermission("HARVEST")
   try {
     const samples = await prisma.ripenessSample.findMany({
       where: { vintageId, ...(blockId ? { blockId } : {}) },
@@ -84,6 +88,7 @@ const DeleteSamplesSchema = z.object({
 })
 
 export async function deleteSamples(ids: string[]): Promise<Result<{ deleted: number }>> {
+  await requirePermission("HARVEST")
   const parsed = DeleteSamplesSchema.safeParse({ ids })
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -107,6 +112,7 @@ export async function importSamplesFromExcel(
   vintageId: string,
   formData: FormData
 ): Promise<Result<{ imported: number; errors: ImportRowError[] }>> {
+  await requirePermission("HARVEST")
   if (!vintageId) {
     return err({ code: "VALIDATION", message: "יש לבחור בציר/עונה לפני הייבוא" })
   }

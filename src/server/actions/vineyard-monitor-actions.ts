@@ -7,6 +7,7 @@ import { fetchStationReadings, loadCredentials, saveStationSample } from "@/serv
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { requirePermission } from "@/server/auth/guards"
 
 const SETTINGS_ID = "default"
 
@@ -18,6 +19,7 @@ const SaveKeysSchema = z.object({
 export async function saveVineyardMonitorKeys(
   input: z.input<typeof SaveKeysSchema>
 ): Promise<Result<void>> {
+  await requirePermission("REMOTE_CONTROL")
   const parsed = SaveKeysSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -41,6 +43,7 @@ export async function saveVineyardMonitorKeys(
 }
 
 export async function deleteVineyardMonitorKeys(): Promise<Result<void>> {
+  await requirePermission("REMOTE_CONTROL")
   try {
     await prisma.ecowittSettings.deleteMany({ where: { id: SETTINGS_ID } })
     return ok(undefined)
@@ -50,6 +53,7 @@ export async function deleteVineyardMonitorKeys(): Promise<Result<void>> {
 }
 
 export async function hasVineyardMonitorKeys(): Promise<boolean> {
+  await requirePermission("REMOTE_CONTROL")
   try {
     return (await prisma.ecowittSettings.count({ where: { id: SETTINGS_ID } })) > 0
   } catch {
@@ -70,6 +74,7 @@ const CreateStationSchema = StationFieldsSchema.extend({
 export async function createVineyardStation(
   input: z.input<typeof CreateStationSchema>
 ): Promise<Result<{ id: string }>> {
+  await requirePermission("REMOTE_CONTROL")
   const parsed = CreateStationSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -102,6 +107,7 @@ const UpdateStationSchema = StationFieldsSchema.extend({ id: z.string().min(1) }
 export async function updateVineyardStation(
   input: z.input<typeof UpdateStationSchema>
 ): Promise<Result<void>> {
+  await requirePermission("REMOTE_CONTROL")
   const parsed = UpdateStationSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
@@ -117,6 +123,7 @@ export async function updateVineyardStation(
 }
 
 export async function deleteVineyardStation(id: string): Promise<Result<void>> {
+  await requirePermission("REMOTE_CONTROL")
   try {
     await prisma.ecowittStation.delete({ where: { id } })
     return ok(undefined)
@@ -134,6 +141,7 @@ const SensorLabelSchema = z.object({
 export async function saveVineyardSensorLabel(
   input: z.infer<typeof SensorLabelSchema>
 ): Promise<Result<void>> {
+  await requirePermission("REMOTE_CONTROL")
   const parsed = SensorLabelSchema.safeParse(input)
   if (!parsed.success) {
     return err({ code: "VALIDATION", message: "שם החיישן אינו תקין" })
