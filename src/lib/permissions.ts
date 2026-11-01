@@ -43,6 +43,7 @@ const PUBLIC_PREFIXES = [
   // The scheduled collection jobs carry no session; each route checks its own secret.
   "/api/remote-monitor/poll",
   "/api/vineyard-monitor/poll",
+  "/api/backup/weekly",
 ]
 
 export function isPublicPath(pathname: string): boolean {

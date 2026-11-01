@@ -7,6 +7,10 @@
     {
       "path": "/api/vineyard-monitor/poll",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/backup/weekly",
+      "schedule": "0 4 * * 0"
     }
   ]
 }
