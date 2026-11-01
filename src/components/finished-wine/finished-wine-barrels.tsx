@@ -113,10 +113,12 @@ function MixedRow({ entry, colors }: { entry: MixedBarrels; colors: Map<string, 
 }
 
 export function FinishedWineBarrels({
+  vintageYear,
   records,
   combinations,
   allVarieties,
 }: {
+  vintageYear: number
   records: BarrelRecord[]
   combinations: BarrelCombination[]
   allVarieties: string[]
@@ -126,7 +128,18 @@ export function FinishedWineBarrels({
 
   return (
     <div>
-      <h3 className="text-lg font-extrabold text-stone-900">צפי חביות ליין אדום</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-extrabold text-stone-900">צפי חביות ליין אדום</h3>
+        {plan.tanks > 0 && (
+          <a
+            href={`/api/finished-wine/barrels/export?vintage=${vintageYear}`}
+            download
+            className="inline-flex min-h-10 items-center rounded-lg border border-stone-300 px-4 text-sm font-bold text-stone-800 hover:bg-stone-50 transition-colors"
+          >
+            ייצוא לאקסל
+          </a>
+        )}
+      </div>
       <p className="text-sm text-stone-600 mt-1 mb-4">
         חבית היא {BARREL_LITERS} ליטר. לכל חבית מפרישים בנפרד {TOPPING_LITERS_PER_BARREL} ליטר מאותו יין למילוי, ולכן כל חבית דורשת{" "}
         {LITERS_PER_BARREL_WITH_TOPPING} ליטר. כל זן ממלא חביות לבדו, ורק מה שנשאר מתחת לחבית שלמה מתאחד עם זנים מהשילובים המאושרים.

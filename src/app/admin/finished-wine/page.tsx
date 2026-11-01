@@ -71,6 +71,7 @@ export default async function FinishedWinePage({
       <FinishedWineVolumes records={wines} />
 
       <FinishedWineBarrels
+        vintageYear={selectedVintage.year}
         records={wines.map((wine) => ({ ...wine, variety: wine.block?.variety ?? null }))}
         combinations={combinations.map((combination) => ({
           id: combination.id,

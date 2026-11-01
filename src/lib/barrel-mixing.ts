@@ -1,9 +1,13 @@
 export type MixCombination = { id: string; varieties: string[] }
 
+export type MixedBarrelDraw = { combinationId: string; draws: { variety: string; liters: number }[] }
+
 export type MixResult = {
   // Whole mixed barrels filled for each combination, and the liters each variety gave to them.
   barrels: Map<string, number>
   drawn: Map<string, Map<string, number>>
+  // The same barrels one by one, in the order they are filled, with what each variety gave to each.
+  barrelList: MixedBarrelDraw[]
   // What every variety still has after the mixed barrels.
   remaining: Map<string, number>
 }
@@ -74,6 +78,7 @@ export function mixLeftovers(leftovers: Map<string, number>, combinations: MixCo
 
   const barrels = new Map<string, number>()
   const drawn = new Map<string, Map<string, number>>()
+  const barrelList: MixedBarrelDraw[] = []
   let state = start
   for (;;) {
     const move = memo.get(state.join(","))?.move ?? -1
@@ -88,8 +93,12 @@ export function mixLeftovers(leftovers: Map<string, number>, combinations: MixCo
       byVariety.set(names[member], (byVariety.get(names[member]) ?? 0) + liters)
     }
     drawn.set(combination.id, byVariety)
+    barrelList.push({
+      combinationId: combination.id,
+      draws: attempt.draws.map(({ member, liters }) => ({ variety: names[member], liters })),
+    })
     state = attempt.next
   }
 
-  return { barrels, drawn, remaining: new Map(names.map((name, index) => [name, state[index]])) }
+  return { barrels, drawn, barrelList, remaining: new Map(names.map((name, index) => [name, state[index]])) }
 }

@@ -73,6 +73,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/api/admin", "ADMIN"],
   ["/api/season-summary", "HARVEST"],
   ["/api/vineyard", "HARVEST"],
+  ["/api/finished-wine", "HARVEST"],
   ["/api/grower-payments", "GROWERS"],
   ["/api/upload", "USER"],
   ["/api/auth", "USER"],

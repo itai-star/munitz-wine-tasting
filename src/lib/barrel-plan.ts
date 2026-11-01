@@ -1,4 +1,5 @@
 import { mixLeftovers } from "@/lib/barrel-mixing"
+import type { MixedBarrelDraw } from "@/lib/barrel-mixing"
 
 export const BARREL_LITERS = 225
 // Every barrel needs this much wine kept outside the barrels, to top it up while it ages.
@@ -46,6 +47,8 @@ export type MixedBarrels = {
 export type BarrelPlan = {
   varieties: VarietyBarrels[]
   mixed: MixedBarrels[]
+  // Every mixed barrel on its own, for the workbook.
+  mixedBarrelList: MixedBarrelDraw[]
   pureBarrels: number
   mixedBarrels: number
   totalBarrels: number
@@ -69,6 +72,17 @@ export function forecastFinalLiters(record: BarrelRecord): number | null {
 
   const estimate = Math.round(record.litersAfterPressing * (1 - EXPECTED_LOSS_PERCENT / 100))
   return Math.min(record.litersAfterFirstRacking ?? record.litersAfterPressing, estimate)
+}
+
+export type ForecastBasis = "SECOND_RACKING" | "FIRST_RACKING" | "PRESSING_LESS_LOSS" | "NONE"
+
+// Where a tank's forecast comes from, so a reader can tell a real final figure from an estimate.
+export function forecastBasis(record: BarrelRecord): ForecastBasis {
+  if (record.litersAfterSecondRacking != null) return "SECOND_RACKING"
+  if (record.litersAfterPressing == null) return record.litersAfterFirstRacking != null ? "FIRST_RACKING" : "NONE"
+
+  const estimate = Math.round(record.litersAfterPressing * (1 - EXPECTED_LOSS_PERCENT / 100))
+  return record.litersAfterFirstRacking != null && record.litersAfterFirstRacking < estimate ? "FIRST_RACKING" : "PRESSING_LESS_LOSS"
 }
 
 function barrelsFor(liters: number): { barrels: number; leftover: number } {
@@ -158,6 +172,7 @@ export function planBarrels(records: BarrelRecord[], combinations: BarrelCombina
   return {
     varieties,
     mixed,
+    mixedBarrelList: mixing.barrelList,
     pureBarrels,
     mixedBarrels,
     totalBarrels: pureBarrels + mixedBarrels,
