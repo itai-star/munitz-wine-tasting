@@ -2,6 +2,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
 import { FinishedWineAverageChart } from "@/components/finished-wine/finished-wine-charts"
+import { FinishedWineVolumes } from "@/components/finished-wine/finished-wine-volumes"
 import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
 import { calculateWineEfficiency } from "@/lib/wine-efficiency"
 
@@ -54,6 +55,8 @@ export default async function FinishedWinePage({
       </div>
 
       <FinishedWineAverageChart records={wines} />
+
+      <FinishedWineVolumes records={wines} />
 
       <LabTestExcelImport vintageId={selectedVintage.id} />
 

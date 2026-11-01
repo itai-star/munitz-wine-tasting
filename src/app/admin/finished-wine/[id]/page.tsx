@@ -47,6 +47,7 @@ export default async function FinishedWineDetailPage({
             vintageId: wine.vintageId,
             blockId: wine.blockId,
             tank: wine.tank,
+            wineType: wine.wineType,
             harvestedWeightKg: wine.harvestedWeightKg,
             litersAfterPressing: wine.litersAfterPressing,
             litersAfterFirstRacking: wine.litersAfterFirstRacking,

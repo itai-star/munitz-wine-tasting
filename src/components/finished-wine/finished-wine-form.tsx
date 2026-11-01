@@ -10,11 +10,18 @@ import {
   updateFinishedWine,
   getIntakeWeightForBlock,
 } from "@/server/actions/finished-wine-actions"
+import {
+  FINISHED_WINE_TYPE_KEYS,
+  FINISHED_WINE_TYPE_LABELS,
+  isFinishedWineType,
+  type FinishedWineTypeKey,
+} from "@/lib/finished-wine-volumes"
 
 const FormSchema = z.object({
   vintageId: z.string().min(1, "יש לבחור בציר"),
   blockId: z.string(),
   tank: z.string().min(1, "יש להזין שם/מספר מכל"),
+  wineType: z.string().min(1, "יש לבחור סוג יין"),
   harvestedWeightKg: z.string().min(1, "יש להזין כמות שנבצרה"),
   litersAfterPressing: z.string(),
   litersAfterFirstRacking: z.string(),
@@ -37,6 +44,7 @@ export type EditableFinishedWine = {
   vintageId: string
   blockId: string | null
   tank: string
+  wineType: FinishedWineTypeKey | null
   harvestedWeightKg: number
   litersAfterPressing: number | null
   litersAfterFirstRacking: number | null
@@ -70,6 +78,7 @@ export function FinishedWineForm({
           vintageId: editingWine.vintageId,
           blockId: editingWine.blockId ?? "",
           tank: editingWine.tank,
+          wineType: editingWine.wineType ?? "",
           harvestedWeightKg: toInputNumber(editingWine.harvestedWeightKg),
           litersAfterPressing: toInputNumber(editingWine.litersAfterPressing),
           litersAfterFirstRacking: toInputNumber(editingWine.litersAfterFirstRacking),
@@ -79,6 +88,7 @@ export function FinishedWineForm({
           vintageId,
           blockId: "",
           tank: "",
+          wineType: "",
           harvestedWeightKg: "",
           litersAfterPressing: "",
           litersAfterFirstRacking: "",
@@ -101,10 +111,15 @@ export function FinishedWineForm({
 
   async function onSubmit(values: FormValues) {
     setServerError("")
+    if (!isFinishedWineType(values.wineType)) {
+      setServerError("יש לבחור סוג יין")
+      return
+    }
     const payload = {
       vintageId: values.vintageId,
       blockId: values.blockId.length > 0 ? values.blockId : null,
       tank: values.tank,
+      wineType: values.wineType,
       harvestedWeightKg: toNullableInt(values.harvestedWeightKg) ?? 0,
       litersAfterPressing: toNullableInt(values.litersAfterPressing),
       litersAfterFirstRacking: toNullableInt(values.litersAfterFirstRacking),
@@ -171,6 +186,19 @@ export function FinishedWineForm({
         <label className={labelClass}>מכל *</label>
         <input className={inputClass} {...register("tank")} />
         {errors.tank && <p className="text-red-600 text-xs mt-1">{errors.tank.message}</p>}
+      </div>
+
+      <div>
+        <label className={labelClass}>סוג יין *</label>
+        <select className={inputClass} {...register("wineType")}>
+          <option value="">— בחירה —</option>
+          {FINISHED_WINE_TYPE_KEYS.map((key) => (
+            <option key={key} value={key}>
+              {FINISHED_WINE_TYPE_LABELS[key]}
+            </option>
+          ))}
+        </select>
+        {errors.wineType && <p className="text-red-600 text-xs mt-1">{errors.wineType.message}</p>}
       </div>
 
       <div>

@@ -10,6 +10,7 @@ const CreateFinishedWineSchema = z.object({
   vintageId: z.string().min(1),
   blockId: z.string().min(1).nullable(),
   tank: z.string().min(1, "שם/מספר המכל נדרש"),
+  wineType: z.enum(["RED", "WHITE", "ROSE", "FRESH"], { errorMap: () => ({ message: "יש לבחור סוג יין" }) }),
   harvestedWeightKg: z.number().int().positive(),
   litersAfterPressing: z.number().int().positive().nullable(),
   litersAfterFirstRacking: z.number().int().positive().nullable(),

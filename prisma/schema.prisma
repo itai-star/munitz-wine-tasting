@@ -219,11 +219,20 @@ model FermentationReading {
   @@unique([batchId, readingDate])
 }
 
+// The kind of wine in a finished-wine record. FRESH is the light red style sold as "רענן".
+enum FinishedWineType {
+  RED
+  WHITE
+  ROSE
+  FRESH
+}
+
 model FinishedWine {
   id                       String   @id @default(cuid())
   vintageId                String
   blockId                  String?
   tank                     String
+  wineType                 FinishedWineType?
   harvestedWeightKg        Int
   litersAfterPressing      Int?
   litersAfterFirstRacking  Int?
