@@ -5,9 +5,9 @@ import {
   fetchRemoteMonitorReadings,
   deleteRemoteMonitorSettings,
   getRemoteMonitorHistory,
-  type RemoteSensorReading,
   type RemoteSensorSamplePoint,
 } from "@/server/actions/remote-monitor-actions"
+import type { RemoteSensorReading } from "@/server/remote-monitor-polling"
 import { RemoteMonitorSettingsForm } from "@/components/remote-monitor/remote-monitor-settings-form"
 import { RemoteMonitorSensorChart } from "@/components/remote-monitor/remote-monitor-sensor-chart"
 import type { Result } from "@/types"

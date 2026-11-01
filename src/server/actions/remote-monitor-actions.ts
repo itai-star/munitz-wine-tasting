@@ -63,8 +63,6 @@ export async function getRemoteMonitorConnection(): Promise<
   }
 }
 
-export type { RemoteSensorReading }
-
 export async function fetchRemoteMonitorReadings(): Promise<
   Result<{ sensors: RemoteSensorReading[]; fetchedAt: string }>
 > {
