@@ -57,6 +57,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/admin/credit", "CREDIT"],
   ["/admin/monthly-summary", "SALES"],
   ["/admin/growers", "GROWERS"],
+  ["/admin/grower-payments", "GROWERS"],
   ["/admin/sessions", "TASTINGS"],
   ["/admin/tastings", "TASTINGS"],
   ["/admin/wines", "INVENTORY"],
@@ -71,6 +72,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/api/admin", "ADMIN"],
   ["/api/season-summary", "HARVEST"],
   ["/api/vineyard", "HARVEST"],
+  ["/api/grower-payments", "GROWERS"],
   ["/api/upload", "USER"],
   ["/api/auth", "USER"],
 ]

@@ -4,6 +4,7 @@ import {
   FermentationIcon,
   FinishedWineIcon,
   GrapesIcon,
+  GrowerPaymentsIcon,
   HomeIcon,
   IntakeIcon,
   InventoryIcon,
@@ -122,6 +123,13 @@ export const adminAreas: AdminArea[] = [
         icon: VineyardIcon,
         permission: "GROWERS",
       },
+      {
+        href: "/admin/grower-payments",
+        label: "תשלומי כורמים",
+        title: "תשלומי כורמים",
+        icon: GrowerPaymentsIcon,
+        permission: "GROWERS",
+      },
     ],
   },
   {
@@ -159,6 +167,7 @@ const VINTAGE_PATHS = [
   "/admin/fermentation",
   "/admin/finished-wine",
   "/admin/season-summary",
+  "/admin/grower-payments",
 ]
 
 export function showsVintage(pathname: string): boolean {

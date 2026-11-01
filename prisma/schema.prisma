@@ -96,6 +96,8 @@ model Vintage {
   batches       FermentationBatch[]
   intakes       GrapeIntake[]
   finishedWines FinishedWine[]
+  blockPrices   BlockVintagePrice[]
+  paymentPlans  GrowerPaymentPlan[]
 }
 
 model VineyardBlock {
@@ -123,6 +125,7 @@ model VineyardBlock {
   updatedAt              DateTime @updatedAt
 
   grower        Grower?  @relation(fields: [growerId], references: [id], onDelete: SetNull)
+  vintagePrices BlockVintagePrice[]
   samples       RipenessSample[]
   fermentations FermentationBatchBlock[]
   intakes       GrapeIntake[]
@@ -485,5 +488,50 @@ model Grower {
   notes     String?
   createdAt DateTime @default(now())
 
-  blocks VineyardBlock[]
+  blocks       VineyardBlock[]
+  paymentPlans GrowerPaymentPlan[]
+}
+
+// The price per kg of a block for one vintage. It wins over the block's default price.
+model BlockVintagePrice {
+  id               String @id @default(cuid())
+  blockId          String
+  vintageId        String
+  pricePerKgAgorot Int
+
+  block   VineyardBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  vintage Vintage       @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+
+  @@unique([blockId, vintageId])
+}
+
+// How one grower is paid for one vintage: the month of the first payment and the number of monthly payments.
+model GrowerPaymentPlan {
+  id               String @id @default(cuid())
+  vintageId        String
+  growerId         String
+  // The month of the first payment, as YYYY-MM.
+  firstMonth       String
+  installmentCount Int
+
+  vintage      Vintage             @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+  grower       Grower              @relation(fields: [growerId], references: [id], onDelete: Cascade)
+  installments GrowerInstallment[]
+
+  @@unique([vintageId, growerId])
+}
+
+// One monthly payment of a plan. It is paid once paidAt is set.
+model GrowerInstallment {
+  id           String    @id @default(cuid())
+  planId       String
+  sequence     Int
+  dueMonth     String
+  amountAgorot Int
+  paidAt       DateTime?
+
+  plan GrowerPaymentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, sequence])
+  @@index([dueMonth])
 }
