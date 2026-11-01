@@ -248,6 +248,25 @@ model FinishedWine {
   @@index([blockId])
 }
 
+// A set of varieties approved to share a barrel when none of them has enough wine for a barrel of its own.
+// A variety belongs to one combination at most.
+model BarrelCombination {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  varieties BarrelCombinationVariety[]
+}
+
+model BarrelCombinationVariety {
+  id            String @id @default(cuid())
+  combinationId String
+  variety       String @unique
+
+  combination BarrelCombination @relation(fields: [combinationId], references: [id], onDelete: Cascade)
+
+  @@index([combinationId])
+}
+
 model LabTest {
   id             String   @id @default(cuid())
   finishedWineId String

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
 import { FinishedWineAverageChart } from "@/components/finished-wine/finished-wine-charts"
 import { FinishedWineVolumes } from "@/components/finished-wine/finished-wine-volumes"
+import { FinishedWineBarrels } from "@/components/finished-wine/finished-wine-barrels"
 import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
 import { calculateWineEfficiency } from "@/lib/wine-efficiency"
 
@@ -40,6 +41,11 @@ export default async function FinishedWinePage({
     orderBy: { createdAt: "desc" },
   })
 
+  const [combinations, blockVarieties] = await Promise.all([
+    prisma.barrelCombination.findMany({ orderBy: { createdAt: "asc" }, include: { varieties: true } }),
+    prisma.vineyardBlock.findMany({ select: { variety: true }, distinct: ["variety"], orderBy: { variety: "asc" } }),
+  ])
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-3">
@@ -57,6 +63,15 @@ export default async function FinishedWinePage({
       <FinishedWineAverageChart records={wines} />
 
       <FinishedWineVolumes records={wines} />
+
+      <FinishedWineBarrels
+        records={wines.map((wine) => ({ ...wine, variety: wine.block?.variety ?? null }))}
+        combinations={combinations.map((combination) => ({
+          id: combination.id,
+          varieties: combination.varieties.map((entry) => entry.variety),
+        }))}
+        allVarieties={blockVarieties.map((block) => block.variety)}
+      />
 
       <LabTestExcelImport vintageId={selectedVintage.id} />
 
