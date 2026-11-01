@@ -7,7 +7,7 @@ import { randomBytes, scrypt } from "node:crypto"
 import { createInterface } from "node:readline/promises"
 import { PrismaClient } from "@prisma/client"
 
-const PERMISSIONS = ["HARVEST", "INVENTORY", "REMOTE_CONTROL", "CREDIT", "TASTINGS", "SALES"]
+const PERMISSIONS = ["HARVEST", "INVENTORY", "REMOTE_CONTROL", "CREDIT", "TASTINGS", "SALES", "GROWERS"]
 const USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{2,31}$/
 
 // Mirrors src/lib/password-policy.ts.

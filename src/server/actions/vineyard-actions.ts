@@ -6,24 +6,7 @@ import type { Result } from "@/types"
 import type { VineyardBlock } from "@prisma/client"
 import { z } from "zod"
 import { requirePermission } from "@/server/auth/guards"
-
-const BlockSchema = z.object({
-  name: z.string().min(1, "שם הבלוק נדרש"),
-  location: z.string().trim().min(1).nullable(),
-  elevationMeters: z.number().int().nullable(),
-  slopeDirection: z.string().trim().min(1).nullable(),
-  slopeAngleDegrees: z.number().nullable(),
-  soilType: z.string().trim().min(1).nullable(),
-  variety: z.string().min(1, "זן הגפן נדרש"),
-  rootstock: z.string().trim().min(1).nullable(),
-  plantingYear: z.number().int().min(1900).max(2100).nullable(),
-  plantingDensity: z.string().trim().min(1).nullable(),
-  rowDirection: z.string().trim().min(1).nullable(),
-  trellisMethod: z.string().trim().min(1).nullable(),
-  irrigationType: z.string().trim().min(1).nullable(),
-  estimatedYieldPerDunam: z.number().nullable(),
-  diseaseHistory: z.string().trim().min(1).nullable(),
-})
+import { BlockSchema } from "@/lib/vineyard-block-schema"
 
 const UpdateBlockSchema = BlockSchema.extend({
   id: z.string().min(1),
@@ -79,7 +62,7 @@ export async function listBlocks(): Promise<
   }
 }
 
-export async function getBlock(id: string): Promise<Result<VineyardBlock>> {
+export async function getBlock(id: string): Promise<Result<Omit<VineyardBlock, "growerId" | "pricePerKgAgorot">>> {
   await requirePermission("HARVEST", "REMOTE_CONTROL")
   try {
     const block = await prisma.vineyardBlock.findUnique({ where: { id } })

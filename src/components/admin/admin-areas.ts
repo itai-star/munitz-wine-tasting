@@ -115,6 +115,13 @@ export const adminAreas: AdminArea[] = [
         icon: MonthlySummaryIcon,
         permission: "SALES",
       },
+      {
+        href: "/admin/growers",
+        label: "כורמים",
+        title: "כורמים ומחירי ענבים",
+        icon: VineyardIcon,
+        permission: "GROWERS",
+      },
     ],
   },
   {

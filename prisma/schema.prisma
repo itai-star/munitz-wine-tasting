@@ -115,9 +115,14 @@ model VineyardBlock {
   irrigationType         String?
   estimatedYieldPerDunam Float?
   diseaseHistory         String?
+  // The grower who sold us this block's grapes, and the default price per kg in agorot.
+  // A price can be set for a single vintage too, which then wins over this one.
+  growerId               String?
+  pricePerKgAgorot       Int?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
+  grower        Grower?  @relation(fields: [growerId], references: [id], onDelete: SetNull)
   samples       RipenessSample[]
   fermentations FermentationBatchBlock[]
   intakes       GrapeIntake[]
@@ -369,6 +374,7 @@ enum Permission {
   CREDIT
   TASTINGS
   SALES
+  GROWERS
 }
 
 model AppUser {
@@ -469,4 +475,15 @@ model SalesCustomerRule {
   name         String   @unique
   customerType String
   updatedAt    DateTime @updatedAt
+}
+
+// A grower we buy grapes from. Blocks point at their grower, so the list is chosen from, never typed.
+model Grower {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  blocks VineyardBlock[]
 }

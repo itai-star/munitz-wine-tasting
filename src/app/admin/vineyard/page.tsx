@@ -1,5 +1,8 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { canUse } from "@/lib/permissions"
+import { VineyardExcelPanel } from "@/components/vineyard/vineyard-excel-panel"
+import { getCurrentUser } from "@/server/auth/session"
 
 export const dynamic = "force-dynamic"
 
@@ -7,6 +10,8 @@ export default async function VineyardPage() {
   const blocks = await prisma.vineyardBlock.findMany({
     orderBy: { name: "asc" },
   })
+  const user = await getCurrentUser()
+  const includesFinance = user !== null && canUse(user, "GROWERS")
 
   return (
     <div>
@@ -26,6 +31,10 @@ export default async function VineyardPage() {
             + בלוק חדש
           </Link>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <VineyardExcelPanel includesFinance={includesFinance} />
       </div>
 
       {blocks.length === 0 ? (
