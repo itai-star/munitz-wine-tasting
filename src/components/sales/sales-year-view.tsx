@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { formatShekels } from "@/lib/credit"
-import { formatCount } from "@/lib/sales-summary"
+import { formatCount, formatPercent, percentOf } from "@/lib/sales-summary"
 import {
   Card,
   CustomerShares,
@@ -18,6 +18,11 @@ import type { YearSummary } from "@/server/sales-data"
 export function SalesYearView({ summary }: { summary: YearSummary }) {
   const monthsWithData = summary.months.filter((row) => row.hasData)
   const largest = Math.max(...monthsWithData.map((row) => row.revenueAgorot), 1)
+  const topCustomersShare = percentOf(
+    summary.topCustomers.reduce((sum, row) => sum + row.revenueAgorot, 0),
+    summary.revenueAgorot
+  )
+  const topCustomersNote = `יחד הם ${formatPercent(topCustomersShare)} מהכנסות השנה. האחוזים בגרף הם מתוך הלקוחות האלה`
 
   return (
     <div className="space-y-4">
@@ -77,8 +82,8 @@ export function SalesYearView({ summary }: { summary: YearSummary }) {
         <Card title="פרטי או סיטונאי (כל השנה)">
           <TypeShares rows={summary.types} />
         </Card>
-        <Card title="הלקוחות הגדולים בשנה">
-          <CustomerShares rows={summary.topCustomers} totalAgorot={summary.revenueAgorot} />
+        <Card title={`${summary.topCustomers.length} הלקוחות הגדולים בשנה`} note={topCustomersNote}>
+          <CustomerShares rows={summary.topCustomers} totalAgorot={summary.revenueAgorot} withRest={false} />
         </Card>
       </div>
 

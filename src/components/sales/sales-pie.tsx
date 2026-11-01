@@ -16,6 +16,9 @@ export type PieSlice = {
 
 const CIRCUMFERENCE_RADIUS = 15.9155 // a circle of circumference 100, so a slice's length equals its percentage
 const GAP = 0.5
+// A slice smaller than this is too narrow to hold its own percentage; the legend still lists it.
+const MIN_LABEL_PERCENT = 5
+const LIGHT_SLICE_COLORS = new Set(["#a8a29e"])
 
 // A thin gap between slices, except when a single slice fills the whole ring.
 function gapBetween(count: number): number {
@@ -50,23 +53,46 @@ export function SalesPie({
     <div className="@container">
       <div className="flex flex-col @xl:flex-row @xl:items-center gap-5 @xl:gap-8">
         <div className="relative mx-auto @xl:mx-0 w-52 h-52 @xl:w-60 @xl:h-60 shrink-0">
-          <svg viewBox="0 0 42 42" className="w-full h-full -rotate-90" role="img" aria-label={ariaLabel}>
-            <circle cx="21" cy="21" r={CIRCUMFERENCE_RADIUS} fill="none" stroke="#f5f5f4" strokeWidth="6.5" />
-            {arcs.map(({ slice, percent, start }) => (
-              <circle
-                key={slice.key}
-                cx="21"
-                cy="21"
-                r={CIRCUMFERENCE_RADIUS}
-                fill="none"
-                stroke={slice.color}
-                strokeWidth="6.5"
-                strokeDasharray={`${Math.max(percent - gap, 0.2)} ${100 - percent + gap}`}
-                strokeDashoffset={-start}
-              >
-                <title>{`${slice.label}: ${slice.valueText}`}</title>
-              </circle>
-            ))}
+          <svg viewBox="0 0 42 42" className="w-full h-full" role="img" aria-label={ariaLabel}>
+            {/* The ring is drawn from the top, so the circles are turned a quarter and the labels are not. */}
+            <g transform="rotate(-90 21 21)">
+              <circle cx="21" cy="21" r={CIRCUMFERENCE_RADIUS} fill="none" stroke="#f5f5f4" strokeWidth="6.5" />
+              {arcs.map(({ slice, percent, start }) => (
+                <circle
+                  key={slice.key}
+                  cx="21"
+                  cy="21"
+                  r={CIRCUMFERENCE_RADIUS}
+                  fill="none"
+                  stroke={slice.color}
+                  strokeWidth="6.5"
+                  strokeDasharray={`${Math.max(percent - gap, 0.2)} ${100 - percent + gap}`}
+                  strokeDashoffset={-start}
+                >
+                  <title>{`${slice.label}: ${slice.valueText}`}</title>
+                </circle>
+              ))}
+            </g>
+            {arcs
+              .filter(({ percent }) => percent >= MIN_LABEL_PERCENT)
+              .map(({ slice, percent, start }) => {
+                const angle = ((start + percent / 2) / 100) * 2 * Math.PI - Math.PI / 2
+                return (
+                  <text
+                    key={slice.key}
+                    x={21 + CIRCUMFERENCE_RADIUS * Math.cos(angle)}
+                    y={21 + CIRCUMFERENCE_RADIUS * Math.sin(angle)}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="3"
+                    fontWeight="800"
+                    fill={LIGHT_SLICE_COLORS.has(slice.color) ? "#1c1917" : "#ffffff"}
+                    style={{ direction: "ltr" }}
+                  >
+                    {`${Math.round(percent)}%`}
+                  </text>
+                )
+              })}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-10 pointer-events-none">
             <span className="text-sm font-semibold text-stone-500">{centerLabel}</span>

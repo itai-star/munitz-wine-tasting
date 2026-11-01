@@ -81,6 +81,9 @@ export type SalesOverview = {
   unclassified: UnclassifiedCustomer[]
 }
 
+// The yearly chart lists this many customers; the monthly one lists five plus the rest.
+const YEAR_TOP_CUSTOMERS = 10
+
 function loadYearRows(year: number) {
   return prisma.salesMonth.findMany({
     where: { year },
@@ -288,7 +291,7 @@ function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolea
 
   const types = typeRows(sales, revenue)
   const wines = wineRows(sales, revenue, byVintage)
-  const topCustomers = customerRows(sales, revenue, 5)
+  const topCustomers = customerRows(sales, revenue, YEAR_TOP_CUSTOMERS)
 
   return {
     year,

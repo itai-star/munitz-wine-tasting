@@ -11,9 +11,10 @@ export const TYPE_COLORS: Record<TypeKey, string> = {
   UNCLASSIFIED: "#a8a29e",
 }
 
-const CATEGORY_COLORS = ["#722F37", "#0f766e", "#b45309", "#1d4ed8", "#7c3aed", "#be185d", "#0e7490", "#4d7c0f"]
+const CATEGORY_COLORS = ["#722F37", "#0f766e", "#b45309", "#1d4ed8", "#7c3aed", "#be185d", "#0e7490", "#4d7c0f", "#c2410c", "#475569"]
 const REST_COLOR = "#a8a29e"
-const COLORED_ROWS = CATEGORY_COLORS.length
+// The wine chart colours its eight biggest wines and folds the rest into one grey slice.
+const COLORED_ROWS = 8
 
 export function Card({ title, note, children }: { title?: string; note?: string; children: React.ReactNode }) {
   return (
@@ -94,16 +95,36 @@ export function WineShares({ rows, totalAgorot }: { rows: WineRow[]; totalAgorot
   return <SalesPie slices={slices} centerLabel="הכנסות" centerValue={formatShekels(totalAgorot)} ariaLabel="חלוקת ההכנסות לפי יין" />
 }
 
-export function CustomerShares({ rows, totalAgorot }: { rows: CustomerRow[]; totalAgorot: number }) {
+// With `withRest` the chart ends in a grey slice for every other customer. Without it the chart holds only
+// the listed customers, and the percentages are shares of that group.
+export function CustomerShares({
+  rows,
+  totalAgorot,
+  withRest = true,
+}: {
+  rows: CustomerRow[]
+  totalAgorot: number
+  withRest?: boolean
+}) {
   const named = rows.reduce((sum, row) => sum + row.revenueAgorot, 0)
   const slices: PieSlice[] = rows.map((row, index) => ({
     key: row.name,
     label: row.name,
     value: row.revenueAgorot,
-    color: CATEGORY_COLORS[index % COLORED_ROWS],
-    valueText: shareText(formatShekels(row.revenueAgorot), row.sharePercent),
+    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+    valueText: shareText(formatShekels(row.revenueAgorot), withRest ? row.sharePercent : (row.revenueAgorot / named) * 100),
     detail: `${formatCount(row.bottles)} בקבוקים`,
   }))
+  if (!withRest) {
+    return (
+      <SalesPie
+        slices={slices}
+        centerLabel={`${rows.length} הגדולים`}
+        centerValue={formatShekels(named)}
+        ariaLabel="חלוקת ההכנסות בין הלקוחות הגדולים"
+      />
+    )
+  }
   if (totalAgorot - named > 0) {
     slices.push({
       key: "rest",
