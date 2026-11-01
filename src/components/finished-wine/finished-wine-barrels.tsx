@@ -9,6 +9,7 @@ import type { BarrelCombination, BarrelPlan, BarrelRecord, MixedBarrels, Variety
 import { Card, Kpi } from "@/components/sales/sales-parts"
 import { BarrelRow, barrelsText, colorsByVariety, litersText } from "@/components/finished-wine/barrel-parts"
 import { BarrelCombinationsEditor } from "@/components/finished-wine/barrel-combinations-editor"
+import { BarrelLeftovers } from "@/components/finished-wine/barrel-leftovers"
 
 function StatusBadge({ plan }: { plan: BarrelPlan }) {
   if (plan.isFinal) {
@@ -173,6 +174,8 @@ export function FinishedWineBarrels({
               </ul>
             </Card>
           )}
+
+          <BarrelLeftovers plan={plan} combinations={combinations} colors={colors} />
         </div>
       )}
 
