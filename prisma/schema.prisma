@@ -249,7 +249,7 @@ model FinishedWine {
 }
 
 // A set of varieties approved to share a barrel when none of them has enough wine for a barrel of its own.
-// A variety belongs to one combination at most.
+// A variety may belong to several combinations.
 model BarrelCombination {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -260,10 +260,11 @@ model BarrelCombination {
 model BarrelCombinationVariety {
   id            String @id @default(cuid())
   combinationId String
-  variety       String @unique
+  variety       String
 
   combination BarrelCombination @relation(fields: [combinationId], references: [id], onDelete: Cascade)
 
+  @@unique([combinationId, variety])
   @@index([combinationId])
 }
 

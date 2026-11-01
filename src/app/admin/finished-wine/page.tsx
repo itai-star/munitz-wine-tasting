@@ -41,9 +41,15 @@ export default async function FinishedWinePage({
     orderBy: { createdAt: "desc" },
   })
 
-  const [combinations, blockVarieties] = await Promise.all([
-    prisma.barrelCombination.findMany({ orderBy: { createdAt: "asc" }, include: { varieties: true } }),
-    prisma.vineyardBlock.findMany({ select: { variety: true }, distinct: ["variety"], orderBy: { variety: "asc" } }),
+  const [combinations, redVarieties] = await Promise.all([
+    prisma.barrelCombination.findMany({ orderBy: { createdAt: "asc" }, include: { varieties: { orderBy: { variety: "asc" } } } }),
+    // Only red wine goes into barrels, so a variety is offered once any vintage has a red finished wine of it.
+    prisma.vineyardBlock.findMany({
+      where: { finishedWines: { some: { wineType: "RED" } } },
+      select: { variety: true },
+      distinct: ["variety"],
+      orderBy: { variety: "asc" },
+    }),
   ])
 
   return (
@@ -70,7 +76,7 @@ export default async function FinishedWinePage({
           id: combination.id,
           varieties: combination.varieties.map((entry) => entry.variety),
         }))}
-        allVarieties={blockVarieties.map((block) => block.variety)}
+        allVarieties={redVarieties.map((block) => block.variety)}
       />
 
       <LabTestExcelImport vintageId={selectedVintage.id} />

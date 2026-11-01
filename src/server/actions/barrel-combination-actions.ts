@@ -10,7 +10,7 @@ import type { Result } from "@/types"
 
 const PAGE = "/admin/finished-wine"
 const MIN_VARIETIES = 2
-const ALREADY_USED = "אחד הזנים כבר שייך לשילוב אחר. זן יכול להופיע בשילוב אחד בלבד"
+const ALREADY_IN_COMBINATION = "הזן כבר נמצא בשילוב הזה"
 
 const VarietySchema = z.string().transform((value) => value.replace(/\s+/g, " ").trim()).pipe(z.string().min(1).max(60))
 
@@ -39,7 +39,7 @@ export async function createBarrelCombination(input: z.input<typeof CreateSchema
     revalidatePath(PAGE)
     return ok({ id: combination.id })
   } catch (error) {
-    if (isDuplicate(error)) return err({ code: "DUPLICATE", message: ALREADY_USED })
+    if (isDuplicate(error)) return err({ code: "DUPLICATE", message: ALREADY_IN_COMBINATION })
     return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת השילוב" })
   }
 }
@@ -56,7 +56,7 @@ export async function addVarietyToCombination(input: z.input<typeof AddSchema>):
     revalidatePath(PAGE)
     return ok(undefined)
   } catch (error) {
-    if (isDuplicate(error)) return err({ code: "DUPLICATE", message: ALREADY_USED })
+    if (isDuplicate(error)) return err({ code: "DUPLICATE", message: ALREADY_IN_COMBINATION })
     return err({ code: "SERVER_ERROR", message: "שגיאה בהוספת הזן לשילוב" })
   }
 }

@@ -31,8 +31,8 @@ export function BarrelLeftovers({
       <ul className="mt-4 space-y-4">
         {rows.map((entry) => {
           const partners = combinations
-            .find((combination) => combination.varieties.includes(entry.variety))
-            ?.varieties.filter((variety) => variety !== entry.variety)
+            .filter((combination) => combination.varieties.includes(entry.variety))
+            .map((combination) => combination.varieties.filter((variety) => variety !== entry.variety))
           const share = Math.min((entry.leftoverLiters / LITERS_PER_BARREL_WITH_TOPPING) * 100, 100)
           const color = colors.get(entry.variety) ?? "#a8a29e"
 
@@ -54,10 +54,9 @@ export function BarrelLeftovers({
                 <span className="font-semibold text-stone-600">
                   חסרים <bdi>{litersText(LITERS_PER_BARREL_WITH_TOPPING - entry.leftoverLiters)}</bdi> לחבית
                 </span>
-                {partners ? (
+                {partners.length > 0 ? (
                   <span className="font-bold text-emerald-800">
-                    {entry.inMixedPool ? "משולב עם " : "שילוב מאושר עם "}
-                    {partners.join(", ")}
+                    ניתן לשלב עם {partners.map((group) => group.join(" + ")).join(" או ")}
                   </span>
                 ) : (
                   <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 font-extrabold text-amber-900">

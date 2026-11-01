@@ -61,7 +61,11 @@ function VarietyRow({ entry, color }: { entry: VarietyBarrels; color: string }) 
       </dl>
       {entry.leftoverLiters > 0 && (
         <p className="mt-1 text-sm font-semibold text-stone-600">
-          {entry.inMixedPool ? "השארית עוברת לחבית מעורבת, בהמשך." : missingText(entry.leftoverLiters)}
+          {entry.inMixedPool
+            ? `${entry.mixedLiters.toLocaleString("he-IL")} ליטר מהשארית נכנסים לחביות מעורבות.${
+                entry.remainingLiters > 0 ? ` נשארים בלי חבית ${entry.remainingLiters.toLocaleString("he-IL")} ליטר.` : ""
+              }`
+            : missingText(entry.leftoverLiters)}
         </p>
       )}
     </li>
@@ -69,37 +73,41 @@ function VarietyRow({ entry, color }: { entry: VarietyBarrels; color: string }) 
 }
 
 function MixedRow({ entry, colors }: { entry: MixedBarrels; colors: Map<string, string> }) {
-  const paint = entry.contributions.map((part) => colors.get(part.variety) ?? "#a8a29e")
+  const names = Array.from(new Set([...entry.drawn, ...entry.available].map((part) => part.variety)))
+  const paint = entry.drawn.map((part) => colors.get(part.variety) ?? "#a8a29e")
   return (
     <li className="rounded-xl border border-stone-200 p-3.5 sm:p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-lg font-extrabold text-stone-900">{entry.contributions.map((part) => part.variety).join(" + ")}</span>
+        <span className="text-lg font-extrabold text-stone-900">{names.join(" + ")}</span>
         <span className="text-xl font-extrabold text-stone-900">{entry.barrels > 0 ? barrelsText(entry.barrels) : "אין חבית מעורבת"}</span>
       </div>
       {entry.barrels > 0 && (
-        <div className="mt-3">
-          <BarrelRow count={entry.barrels} colors={paint} />
-        </div>
+        <>
+          <div className="mt-3">
+            <BarrelRow count={entry.barrels} colors={paint} />
+          </div>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {entry.drawn.map((part) => (
+              <li key={part.variety} className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm font-bold text-stone-800">
+                <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: colors.get(part.variety) }} aria-hidden="true" />
+                {part.variety} · <bdi>{litersText(part.liters)}</bdi>
+              </li>
+            ))}
+          </ul>
+          <dl className="mt-3 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="font-semibold text-stone-600">יין למילוי</dt>
+              <dd className="font-extrabold text-stone-900"><bdi>{litersText(entry.toppingLiters)}</bdi></dd>
+            </div>
+          </dl>
+        </>
       )}
-      <ul className="mt-3 flex flex-wrap gap-2">
-        {entry.contributions.map((part) => (
-          <li key={part.variety} className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm font-bold text-stone-800">
-            <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: colors.get(part.variety) }} aria-hidden="true" />
-            {part.variety} · <bdi>{litersText(part.liters)}</bdi>
-          </li>
-        ))}
-      </ul>
-      <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-        <div className="flex justify-between gap-3">
-          <dt className="font-semibold text-stone-600">יין למילוי</dt>
-          <dd className="font-extrabold text-stone-900"><bdi>{litersText(entry.toppingLiters)}</bdi></dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="font-semibold text-stone-600">נשאר בלי חבית</dt>
-          <dd className="font-extrabold text-stone-900"><bdi>{litersText(entry.remainderLiters)}</bdi></dd>
-        </div>
-      </dl>
-      {entry.remainderLiters > 0 && <p className="mt-1 text-sm font-semibold text-stone-600">{missingText(entry.remainderLiters)}</p>}
+      {entry.availableLiters > 0 && (
+        <p className="mt-2 text-sm font-semibold text-stone-600">
+          נשאר זמין לשילוב הזה <bdi>{litersText(entry.availableLiters)}</bdi> ({entry.available.map((part) => `${part.variety} ${part.liters}`).join(", ")}).{" "}
+          {entry.availableLiters < LITERS_PER_BARREL_WITH_TOPPING && missingText(entry.availableLiters)}
+        </p>
+      )}
     </li>
   )
 }
@@ -179,7 +187,7 @@ export function FinishedWineBarrels({
         </div>
       )}
 
-      <BarrelCombinationsEditor combinations={combinations} allVarieties={allVarieties} />
+      <BarrelCombinationsEditor combinations={combinations} redVarieties={allVarieties} colors={Object.fromEntries(colors)} />
     </div>
   )
 }

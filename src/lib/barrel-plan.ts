@@ -1,3 +1,5 @@
+import { mixLeftovers } from "@/lib/barrel-mixing"
+
 export const BARREL_LITERS = 225
 // Every barrel needs this much wine kept outside the barrels, to top it up while it ages.
 export const TOPPING_LITERS_PER_BARREL = 15
@@ -22,18 +24,23 @@ export type VarietyBarrels = {
   isFinal: boolean
   barrels: number
   toppingLiters: number
+  // What is left of the variety after its whole barrels and their topping wine, before any mixing.
   leftoverLiters: number
-  // True when the leftover goes into a mixed barrel pool instead of staying on its own.
+  // The part of the leftover that goes into mixed barrels, and what stays without a barrel after them.
+  mixedLiters: number
+  remainingLiters: number
   inMixedPool: boolean
 }
 
 export type MixedBarrels = {
   combinationId: string
-  contributions: { variety: string; liters: number }[]
-  poolLiters: number
   barrels: number
   toppingLiters: number
-  remainderLiters: number
+  // What each variety gave to this combination's mixed barrels.
+  drawn: { variety: string; liters: number }[]
+  // What the combination's varieties still have after all mixed barrels, enough or not for another one of its own.
+  available: { variety: string; liters: number }[]
+  availableLiters: number
 }
 
 export type BarrelPlan = {
@@ -105,34 +112,46 @@ export function planBarrels(records: BarrelRecord[], combinations: BarrelCombina
       barrels,
       toppingLiters: barrels * TOPPING_LITERS_PER_BARREL,
       leftoverLiters: leftover,
+      mixedLiters: 0,
+      remainingLiters: leftover,
       inMixedPool: false,
     }
   })
 
+  const leftovers = new Map(varieties.filter((entry) => entry.leftoverLiters > 0).map((entry) => [entry.variety, entry.leftoverLiters]))
+  const mixing = mixLeftovers(leftovers, combinations, LITERS_PER_BARREL_WITH_TOPPING)
+  const byVariety = new Map(varieties.map((entry) => [entry.variety, entry]))
+  for (const entry of varieties) {
+    entry.remainingLiters = mixing.remaining.get(entry.variety) ?? entry.leftoverLiters
+    entry.mixedLiters = entry.leftoverLiters - entry.remainingLiters
+    entry.inMixedPool = entry.mixedLiters > 0
+  }
+
   const mixed: MixedBarrels[] = []
   for (const combination of combinations) {
-    const members = varieties.filter((entry) => combination.varieties.includes(entry.variety) && entry.leftoverLiters > 0)
+    const members = combination.varieties.filter((variety) => (byVariety.get(variety)?.leftoverLiters ?? 0) > 0)
     if (members.length < 2) continue
 
-    const poolLiters = members.reduce((sum, entry) => sum + entry.leftoverLiters, 0)
-    const { barrels, leftover } = barrelsFor(poolLiters)
-    for (const entry of members) entry.inMixedPool = true
+    const barrels = mixing.barrels.get(combination.id) ?? 0
+    const given = mixing.drawn.get(combination.id) ?? new Map<string, number>()
+    const available = members
+      .map((variety) => ({ variety, liters: byVariety.get(variety)?.remainingLiters ?? 0 }))
+      .filter((part) => part.liters > 0)
     mixed.push({
       combinationId: combination.id,
-      contributions: members.map((entry) => ({ variety: entry.variety, liters: entry.leftoverLiters })),
-      poolLiters,
       barrels,
       toppingLiters: barrels * TOPPING_LITERS_PER_BARREL,
-      remainderLiters: leftover,
+      drawn: Array.from(given, ([variety, liters]) => ({ variety, liters })),
+      available,
+      availableLiters: available.reduce((sum, part) => sum + part.liters, 0),
     })
   }
 
   varieties.sort((a, b) => b.barrels - a.barrels || b.liters - a.liters || a.variety.localeCompare(b.variety, "he"))
-  mixed.sort((a, b) => b.barrels - a.barrels || b.poolLiters - a.poolLiters)
+  mixed.sort((a, b) => b.barrels - a.barrels || b.availableLiters - a.availableLiters)
 
   const pureBarrels = varieties.reduce((sum, entry) => sum + entry.barrels, 0)
   const mixedBarrels = mixed.reduce((sum, entry) => sum + entry.barrels, 0)
-  const standaloneLeftover = varieties.filter((entry) => !entry.inMixedPool).reduce((sum, entry) => sum + entry.leftoverLiters, 0)
   const tanks = varieties.reduce((sum, entry) => sum + entry.tanks, 0)
   const tanksAtLastStage = varieties.reduce((sum, entry) => sum + entry.tanksAtLastStage, 0)
 
@@ -143,7 +162,7 @@ export function planBarrels(records: BarrelRecord[], combinations: BarrelCombina
     mixedBarrels,
     totalBarrels: pureBarrels + mixedBarrels,
     toppingLiters: (pureBarrels + mixedBarrels) * TOPPING_LITERS_PER_BARREL,
-    remainderLiters: standaloneLeftover + mixed.reduce((sum, entry) => sum + entry.remainderLiters, 0),
+    remainderLiters: varieties.reduce((sum, entry) => sum + entry.remainingLiters, 0),
     tanks,
     tanksAtLastStage,
     isFinal: tanks > 0 && tanksAtLastStage === tanks,
