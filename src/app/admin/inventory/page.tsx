@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getRecentWithdrawals } from "@/server/actions/inventory-actions"
+import { StockOverview } from "@/components/inventory/stock-overview"
 import { InventoryScanner } from "@/components/admin/inventory-scanner"
 import { StockAdjuster } from "@/components/admin/stock-adjuster"
 
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic"
 
 export default async function InventoryPage() {
   const wines = await prisma.wine.findMany({
-    select: { id: true, name: true, year: true, barcode: true, quantity: true },
+    select: { id: true, name: true, year: true, type: true, barcode: true, quantity: true },
     orderBy: { name: "asc" },
   })
   const withdrawalsResult = await getRecentWithdrawals()
@@ -17,6 +18,7 @@ export default async function InventoryPage() {
     <div>
       <h1 className="text-2xl font-bold text-stone-800 mb-6">ניהול מלאי</h1>
       <div className="grid gap-6">
+        <StockOverview wines={wines} />
         <StockAdjuster wines={wines} />
         <InventoryScanner wines={wines} recentWithdrawals={recentWithdrawals} />
       </div>
