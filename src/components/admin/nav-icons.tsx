@@ -219,6 +219,20 @@ export function GrowerPaymentsIcon({ className }: IconProps) {
   )
 }
 
+export function CalendarIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 10h17" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+      <path d="M8 14h2" />
+      <path d="M14 14h2" />
+      <path d="M8 17.5h2" />
+    </svg>
+  )
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

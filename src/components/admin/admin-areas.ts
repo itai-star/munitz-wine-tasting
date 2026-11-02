@@ -1,4 +1,5 @@
 import {
+  CalendarIcon,
   CellarControllerIcon,
   CreditIcon,
   FermentationIcon,
@@ -131,6 +132,15 @@ export const adminAreas: AdminArea[] = [
         permission: "GROWERS",
       },
     ],
+  },
+  {
+    id: "events",
+    label: "אירועים",
+    title: "לוח אירועים",
+    icon: CalendarIcon,
+    href: "/admin/events",
+    permission: "EVENTS",
+    items: [{ href: "/admin/events", label: "לוח אירועים", title: "לוח אירועים", icon: CalendarIcon }],
   },
   {
     id: "more",

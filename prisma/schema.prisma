@@ -407,6 +407,7 @@ enum Permission {
   TASTINGS
   SALES
   GROWERS
+  EVENTS
 }
 
 model AppUser {
@@ -563,4 +564,30 @@ model GrowerInstallment {
 
   @@unique([planId, sequence])
   @@index([dueMonth])
+}
+
+// A kind of winery event, chosen from a list. The colour tells the kinds apart in the calendar.
+model EventCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  events CalendarEvent[]
+}
+
+// An event on the winery calendar. Cancelling keeps it on the calendar, marked as cancelled.
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  categoryId  String
+  details     String
+  date        DateTime  @db.Date
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category EventCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([date])
 }

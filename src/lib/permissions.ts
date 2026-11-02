@@ -1,4 +1,4 @@
-export const PERMISSIONS = ["HARVEST", "INVENTORY", "REMOTE_CONTROL", "CREDIT", "TASTINGS", "SALES", "GROWERS"] as const
+export const PERMISSIONS = ["HARVEST", "INVENTORY", "REMOTE_CONTROL", "CREDIT", "TASTINGS", "SALES", "GROWERS", "EVENTS"] as const
 
 export type PermissionKey = (typeof PERMISSIONS)[number]
 
@@ -12,6 +12,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   TASTINGS: "טעימות יין",
   SALES: "סיכום חודשי",
   GROWERS: "תשלומי כורמים",
+  EVENTS: "לוח אירועים",
 }
 
 export type SessionUser = {
@@ -59,6 +60,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/admin/monthly-summary", "SALES"],
   ["/admin/growers", "GROWERS"],
   ["/admin/grower-payments", "GROWERS"],
+  ["/admin/events", "EVENTS"],
   ["/admin/sessions", "TASTINGS"],
   ["/admin/tastings", "TASTINGS"],
   ["/admin/wines", "INVENTORY"],
@@ -75,6 +77,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/api/vineyard", "HARVEST"],
   ["/api/finished-wine", "HARVEST"],
   ["/api/grower-payments", "GROWERS"],
+  ["/api/events", "EVENTS"],
   ["/api/upload", "USER"],
   ["/api/auth", "USER"],
 ]
@@ -98,6 +101,7 @@ const LANDING_PAGES: [PermissionKey, string][] = [
   ["CREDIT", "/admin/credit"],
   ["SALES", "/admin/monthly-summary"],
   ["GROWERS", "/admin/growers"],
+  ["EVENTS", "/admin/events"],
 ]
 
 // The first screen the user is allowed to open, used after login and when a page is off limits.
