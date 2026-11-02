@@ -583,6 +583,11 @@ model CalendarEvent {
   categoryId  String
   details     String
   date        DateTime  @db.Date
+  // Times of day as HH:MM, and the place; all optional.
+  startTime   String?
+  endTime     String?
+  city        String?
+  street      String?
   cancelledAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

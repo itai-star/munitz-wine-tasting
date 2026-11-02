@@ -11,6 +11,7 @@ import type { Result } from "@/types"
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const MAX_DETAILS = 500
+const MAX_PLACE = 60
 
 export type EventsImportSummary = {
   created: number
@@ -49,7 +50,16 @@ export async function importEventsFromExcel(formData: FormData): Promise<Result<
   const seen = new Set(existing.map((event) => signature(event.categoryId, event.details, toDayKey(event.date))))
 
   const errors: EventsImportSummary["errors"] = []
-  const data: { categoryId: string; details: string; date: Date; cancelledAt: Date | null }[] = []
+  const data: {
+    categoryId: string
+    details: string
+    date: Date
+    startTime: string | null
+    endTime: string | null
+    city: string | null
+    street: string | null
+    cancelledAt: Date | null
+  }[] = []
   let skipped = 0
 
   for (const row of rows) {
@@ -60,12 +70,24 @@ export async function importEventsFromExcel(formData: FormData): Promise<Result<
     else if (!row.details) errors.push({ row: row.row, message: "חסרים פרטי האירוע" })
     else if (row.details.length > MAX_DETAILS) errors.push({ row: row.row, message: "פרטי האירוע ארוכים מדי" })
     else if (!date || !row.date) errors.push({ row: row.row, message: "התאריך חסר או לא תקין" })
+    else if (row.startTime === "invalid" || row.endTime === "invalid") errors.push({ row: row.row, message: "השעה לא תקינה, יש לכתוב שעה כמו 18:00" })
+    else if (row.endTime && !row.startTime) errors.push({ row: row.row, message: "יש שעת סיום בלי שעת התחלה" })
+    else if (row.city.length > MAX_PLACE || row.street.length > MAX_PLACE) errors.push({ row: row.row, message: "שם העיר או הרחוב ארוך מדי" })
     else {
       const key = signature(categoryId, row.details, row.date)
       if (seen.has(key)) skipped += 1
       else {
         seen.add(key)
-        data.push({ categoryId, details: row.details, date, cancelledAt: row.cancelled ? new Date() : null })
+        data.push({
+          categoryId,
+          details: row.details,
+          date,
+          startTime: row.startTime,
+          endTime: row.endTime,
+          city: row.city || null,
+          street: row.street || null,
+          cancelledAt: row.cancelled ? new Date() : null,
+        })
       }
     }
   }

@@ -47,6 +47,10 @@ function EventDialog({ state, categories, onClose }: { state: EditorState; categ
   const [categoryId, setCategoryId] = useState(existing?.categoryId ?? "")
   const [details, setDetails] = useState(existing?.details ?? "")
   const [date, setDate] = useState<DayKey>(existing?.date ?? (state.mode === "create" ? state.date : ""))
+  const [startTime, setStartTime] = useState(existing?.startTime ?? "")
+  const [endTime, setEndTime] = useState(existing?.endTime ?? "")
+  const [city, setCity] = useState(existing?.city ?? "")
+  const [street, setStreet] = useState(existing?.street ?? "")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
 
@@ -74,7 +78,8 @@ function EventDialog({ state, categories, onClose }: { state: EditorState; categ
 
   function save(event: React.FormEvent): void {
     event.preventDefault()
-    void run(() => (existing ? updateEvent({ id: existing.id, categoryId, details, date }) : createEvent({ categoryId, details, date })))
+    const fields = { categoryId, details, date, startTime, endTime, city, street }
+    void run(() => (existing ? updateEvent({ id: existing.id, ...fields }) : createEvent(fields)))
   }
 
   return (
@@ -139,6 +144,36 @@ function EventDialog({ state, categories, onClose }: { state: EditorState; categ
             תאריך *
           </label>
           <input id="event-date" type="date" className={inputClass} value={date} onChange={(event) => setDate(event.target.value)} required />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="event-start">
+              שעת התחלה
+            </label>
+            <input id="event-start" type="time" className={inputClass} value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="event-end">
+              שעת סיום
+            </label>
+            <input id="event-end" type="time" className={inputClass} value={endTime} onChange={(event) => setEndTime(event.target.value)} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="event-city">
+              עיר
+            </label>
+            <input id="event-city" className={inputClass} value={city} maxLength={60} onChange={(event) => setCity(event.target.value)} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="event-street">
+              רחוב
+            </label>
+            <input id="event-street" className={inputClass} value={street} maxLength={60} onChange={(event) => setStreet(event.target.value)} />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pt-1">

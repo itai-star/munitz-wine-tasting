@@ -4,22 +4,45 @@ import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { CATEGORY_COLORS, parseDayKey } from "@/lib/calendar-events"
+import { CATEGORY_COLORS, isTimeOfDay, parseDayKey } from "@/lib/calendar-events"
 import { requirePermission } from "@/server/auth/guards"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 
 const PAGE = "/admin/events"
 const MAX_DETAILS = 500
+const MAX_PLACE = 60
 const MAX_CATEGORY_NAME = 40
 
-const EventFieldsSchema = z.object({
-  categoryId: z.string().min(1, "יש לבחור קטגוריה"),
-  details: z.string().trim().min(1, "יש להזין את פרטי האירוע").max(MAX_DETAILS, "פרטי האירוע ארוכים מדי"),
-  date: z.string().refine((value) => parseDayKey(value) !== null, "יש לבחור תאריך תקין"),
-})
+// A field the form leaves empty arrives as an empty string and is stored as nothing.
+const optionalTime = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || isTimeOfDay(value), "השעה צריכה להיות בפורמט שעות ודקות")
+  .transform((value) => value || null)
 
-const UpdateEventSchema = EventFieldsSchema.extend({ id: z.string().min(1) })
+const optionalPlace = z
+  .string()
+  .trim()
+  .max(MAX_PLACE, "שם העיר או הרחוב ארוך מדי")
+  .transform((value) => value || null)
+
+const EventFieldsSchema = z
+  .object({
+    categoryId: z.string().min(1, "יש לבחור קטגוריה"),
+    details: z.string().trim().min(1, "יש להזין את פרטי האירוע").max(MAX_DETAILS, "פרטי האירוע ארוכים מדי"),
+    date: z.string().refine((value) => parseDayKey(value) !== null, "יש לבחור תאריך תקין"),
+    startTime: optionalTime,
+    endTime: optionalTime,
+    city: optionalPlace,
+    street: optionalPlace,
+  })
+  .refine((value) => value.endTime === null || value.startTime !== null, {
+    message: "כדי להזין שעת סיום צריך להזין גם שעת התחלה",
+    path: ["endTime"],
+  })
+
+const UpdateEventSchema = z.intersection(EventFieldsSchema, z.object({ id: z.string().min(1) }))
 
 const CategoryNameSchema = z
   .string()
@@ -42,9 +65,7 @@ export async function createEvent(input: z.input<typeof EventFieldsSchema>): Pro
   if (!parsed.success) return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
 
   try {
-    const event = await prisma.calendarEvent.create({
-      data: { categoryId: parsed.data.categoryId, details: parsed.data.details, date: dateOf(parsed.data.date) },
-    })
+    const event = await prisma.calendarEvent.create({ data: { ...parsed.data, date: dateOf(parsed.data.date) } })
     revalidatePath(PAGE)
     return ok({ id: event.id })
   } catch {
@@ -57,9 +78,9 @@ export async function updateEvent(input: z.input<typeof UpdateEventSchema>): Pro
   const parsed = UpdateEventSchema.safeParse(input)
   if (!parsed.success) return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
 
-  const { id, categoryId, details, date } = parsed.data
+  const { id, date, ...fields } = parsed.data
   try {
-    await prisma.calendarEvent.update({ where: { id }, data: { categoryId, details, date: dateOf(date) } })
+    await prisma.calendarEvent.update({ where: { id }, data: { ...fields, date: dateOf(date) } })
     revalidatePath(PAGE)
     return ok(undefined)
   } catch {

@@ -8,6 +8,10 @@ export type EventRow = {
   color: string
   details: string
   date: DayKey
+  startTime: string | null
+  endTime: string | null
+  city: string | null
+  street: string | null
   cancelled: boolean
 }
 
@@ -27,6 +31,27 @@ export const CATEGORY_COLORS = ["#166534", "#c2410c", "#1d4ed8", "#722F37", "#7e
 const DAY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 const MS_PER_DAY = 86_400_000
 const DAYS_PER_WEEK = 7
+
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
+
+// A time of day written "HH:MM", as the time field of a form gives it.
+export function isTimeOfDay(value: string): boolean {
+  return TIME_PATTERN.test(value)
+}
+
+export function formatTimeRange(event: Pick<EventRow, "startTime" | "endTime">): string {
+  if (event.startTime && event.endTime) return `${event.startTime}-${event.endTime}`
+  return event.startTime ?? ""
+}
+
+export function formatPlace(event: Pick<EventRow, "city" | "street">): string {
+  return [event.city, event.street].filter((part): part is string => Boolean(part)).join(", ")
+}
+
+// Within a day, events without a time come first and the rest follow in the order of their start.
+export function compareEvents(a: EventRow, b: EventRow): number {
+  return a.date.localeCompare(b.date) || (a.startTime ?? "").localeCompare(b.startTime ?? "")
+}
 
 export function toDayKey(date: Date): DayKey {
   return date.toISOString().slice(0, 10)

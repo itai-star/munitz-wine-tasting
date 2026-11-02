@@ -1,6 +1,7 @@
 "use client"
 
 import { useEventEditor } from "@/components/events/event-editor"
+import { formatPlace, formatTimeRange } from "@/lib/calendar-events"
 import type { DayKey, EventRow } from "@/lib/calendar-events"
 
 // An event on the calendar, written as a coloured line that opens the editor. A cancelled event stays, struck through.
@@ -20,7 +21,9 @@ export function EventPill({ event, showDate }: { event: EventRow; showDate?: str
         {event.categoryName}
         {event.cancelled && " · מבוטל"}
       </span>
+      {formatTimeRange(event) && <span className="block text-xs font-extrabold text-stone-700"><bdi>{formatTimeRange(event)}</bdi></span>}
       <span className={`block break-words ${event.cancelled ? "line-through" : ""}`}>{event.details}</span>
+      {formatPlace(event) && <span className="block text-xs font-semibold text-stone-600">{formatPlace(event)}</span>}
     </button>
   )
 }

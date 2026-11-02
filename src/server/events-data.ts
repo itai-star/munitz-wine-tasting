@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { parseDayKey, toDayKey } from "@/lib/calendar-events"
+import { compareEvents, parseDayKey, toDayKey } from "@/lib/calendar-events"
 import type { CategoryRow, DayKey, EventRow } from "@/lib/calendar-events"
 
 export async function loadCategories(): Promise<CategoryRow[]> {
@@ -12,6 +12,10 @@ function toRow(event: {
   categoryId: string
   details: string
   date: Date
+  startTime: string | null
+  endTime: string | null
+  city: string | null
+  street: string | null
   cancelledAt: Date | null
   category: { name: string; color: string }
 }): EventRow {
@@ -22,6 +26,10 @@ function toRow(event: {
     color: event.category.color,
     details: event.details,
     date: toDayKey(event.date),
+    startTime: event.startTime,
+    endTime: event.endTime,
+    city: event.city,
+    street: event.street,
     cancelled: event.cancelledAt !== null,
   }
 }
@@ -35,7 +43,7 @@ export async function loadEvents(range?: { from: DayKey; to: DayKey }): Promise<
     include: { category: { select: { name: true, color: true } } },
     orderBy: [{ date: "asc" }, { createdAt: "asc" }],
   })
-  return events.map(toRow)
+  return events.map(toRow).sort(compareEvents)
 }
 
 // The years that hold events, for the year filter.
