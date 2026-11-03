@@ -60,6 +60,8 @@ function addSummary(workbook: ExcelJS.Workbook, vintageLabel: string, plan: Barr
     ["חביות מעורבות", plan.mixedBarrels],
     ["יין למילוי (ליטר)", plan.toppingLiters],
     ["יין שנשאר בלי חבית (ליטר)", plan.remainderLiters],
+    ["רענן ממכלים שסומנו רענן (ליטר)", plan.freshTankLiters],
+    ["רענן שהוגדר ידנית, ללא חבית (ליטר)", plan.freshManualLiters],
     ["מכלי יין אדום", plan.tanks],
     ["מכלים שנמדדו אחרי שפייה שנייה", plan.tanksAtLastStage],
     ["מצב הנתונים", plan.isFinal ? "סופי" : "חלקי, חלק מהכמויות בהערכה"],
@@ -70,7 +72,7 @@ function addSummary(workbook: ExcelJS.Workbook, vintageLabel: string, plan: Barr
 }
 
 function addVarieties(workbook: ExcelJS.Workbook, plan: BarrelPlan): void {
-  const sheet = addSheet(workbook, "כמות לפי זן", [22, 12, 16, 14, 24, 14, 14, 16, 16, 16, 18])
+  const sheet = addSheet(workbook, "כמות לפי זן", [22, 12, 16, 14, 24, 18, 14, 14, 16, 16, 16, 18])
   styleHeader(
     sheet.addRow([
       "זן",
@@ -78,6 +80,7 @@ function addVarieties(workbook: ExcelJS.Workbook, plan: BarrelPlan): void {
       "נמדדו אחרי שפייה שנייה",
       "מצב",
       "כמות אחרי שפייה שנייה, אמיתית או מוערכת (ליטר)",
+      "מתוכה רענן, ללא חבית (ליטר)",
       "חביות של זן אחד",
       "יין למילוי (ליטר)",
       "שארית לפני שילובים (ליטר)",
@@ -93,6 +96,7 @@ function addVarieties(workbook: ExcelJS.Workbook, plan: BarrelPlan): void {
       entry.tanksAtLastStage,
       entry.isFinal ? "סופי" : "חלקי",
       entry.liters,
+      entry.freshLiters,
       entry.barrels,
       entry.toppingLiters,
       entry.leftoverLiters,
@@ -107,6 +111,7 @@ function addVarieties(workbook: ExcelJS.Workbook, plan: BarrelPlan): void {
     plan.tanksAtLastStage,
     plan.isFinal ? "סופי" : "חלקי",
     plan.varieties.reduce((sum, entry) => sum + entry.liters, 0),
+    plan.freshManualLiters,
     plan.pureBarrels,
     plan.varieties.reduce((sum, entry) => sum + entry.barrels * TOPPING_LITERS_PER_BARREL, 0),
     plan.varieties.reduce((sum, entry) => sum + entry.leftoverLiters, 0),
@@ -115,7 +120,7 @@ function addVarieties(workbook: ExcelJS.Workbook, plan: BarrelPlan): void {
     null,
   ])
   styleTotal(total)
-  formatLiters(sheet, 5, 11)
+  formatLiters(sheet, 5, 12)
 }
 
 function addTanks(workbook: ExcelJS.Workbook, tanks: BarrelTank[]): void {

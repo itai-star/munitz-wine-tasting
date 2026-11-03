@@ -41,7 +41,8 @@ export default async function FinishedWinePage({
     orderBy: { createdAt: "desc" },
   })
 
-  const [combinations, redVarieties] = await Promise.all([
+  const [freshAllocations, combinations, redVarieties] = await Promise.all([
+    prisma.freshAllocation.findMany({ where: { vintageId: selectedVintage.id }, orderBy: { variety: "asc" } }),
     prisma.barrelCombination.findMany({ orderBy: { createdAt: "asc" }, include: { varieties: { orderBy: { variety: "asc" } } } }),
     // Only red wine goes into barrels, so a variety is offered once any vintage has a red finished wine of it.
     prisma.vineyardBlock.findMany({
@@ -71,7 +72,9 @@ export default async function FinishedWinePage({
       <FinishedWineVolumes records={wines} />
 
       <FinishedWineBarrels
+        vintageId={selectedVintage.id}
         vintageYear={selectedVintage.year}
+        freshEntries={freshAllocations.map((entry) => ({ id: entry.id, variety: entry.variety, liters: entry.liters }))}
         records={wines.map((wine) => ({ ...wine, variety: wine.block?.variety ?? null }))}
         combinations={combinations.map((combination) => ({
           id: combination.id,

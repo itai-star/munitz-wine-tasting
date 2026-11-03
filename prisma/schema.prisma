@@ -98,6 +98,7 @@ model Vintage {
   finishedWines FinishedWine[]
   blockPrices   BlockVintagePrice[]
   paymentPlans  GrowerPaymentPlan[]
+  freshWines    FreshAllocation[]
 }
 
 model VineyardBlock {
@@ -595,4 +596,20 @@ model CalendarEvent {
   category EventCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   @@index([date])
+}
+
+// Liters of a variety that are set aside by hand as fresh wine for a vintage. They need no barrel,
+// so the barrel plan leaves them out.
+model FreshAllocation {
+  id        String   @id @default(cuid())
+  vintageId String
+  variety   String
+  liters    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vintage Vintage @relation(fields: [vintageId], references: [id], onDelete: Cascade)
+
+  @@unique([vintageId, variety])
+  @@index([vintageId])
 }

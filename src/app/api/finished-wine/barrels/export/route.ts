@@ -16,9 +16,10 @@ export async function GET(request: Request): Promise<Response> {
   const vintage = Number.isInteger(year) && year > 0 ? await prisma.vintage.findUnique({ where: { year } }) : null
   if (!vintage) return Response.json({ error: "הבציר לא נמצא" }, { status: 404 })
 
-  const [wines, stored] = await Promise.all([
+  const [wines, stored, fresh] = await Promise.all([
     prisma.finishedWine.findMany({ where: { vintageId: vintage.id }, include: { block: true } }),
     prisma.barrelCombination.findMany({ orderBy: { createdAt: "asc" }, include: { varieties: { orderBy: { variety: "asc" } } } }),
+    prisma.freshAllocation.findMany({ where: { vintageId: vintage.id } }),
   ])
   const tanks = wines.map((wine) => ({ ...wine, variety: wine.block?.variety ?? null }))
   const combinations = stored.map((combination) => ({ id: combination.id, varieties: combination.varieties.map((entry) => entry.variety) }))
@@ -27,7 +28,7 @@ export async function GET(request: Request): Promise<Response> {
     vintageLabel: vintage.label,
     tanks,
     combinations,
-    plan: planBarrels(tanks, combinations),
+    plan: planBarrels(tanks, combinations, new Map(fresh.map((entry) => [entry.variety, entry.liters]))),
   })
   return new Response(new Uint8Array(workbook), {
     headers: {

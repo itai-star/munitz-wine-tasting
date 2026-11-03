@@ -10,6 +10,8 @@ import { Card, Kpi } from "@/components/sales/sales-parts"
 import { BarrelRow, barrelsText, colorsByVariety, litersText } from "@/components/finished-wine/barrel-parts"
 import { BarrelCombinationsEditor } from "@/components/finished-wine/barrel-combinations-editor"
 import { BarrelLeftovers } from "@/components/finished-wine/barrel-leftovers"
+import { FreshAllocationsEditor } from "@/components/finished-wine/fresh-allocations-editor"
+import type { FreshEntry } from "@/components/finished-wine/fresh-allocations-editor"
 
 function StatusBadge({ plan }: { plan: BarrelPlan }) {
   if (plan.isFinal) {
@@ -44,6 +46,11 @@ function VarietyRow({ entry, color }: { entry: VarietyBarrels; color: string }) 
         {entry.isFinal ? "✓ סופי" : "◐ חלקי"} · <bdi>{entry.tanksAtLastStage}</bdi> מתוך <bdi>{entry.tanks}</bdi> מכלים נמדדו אחרי שפייה שנייה
         {entry.isFinal ? "" : ", והשאר בהערכה"} · {entry.isFinal ? "סך הכול" : "צפי"} <bdi>{litersText(entry.liters)}</bdi>
       </p>
+      {entry.freshLiters > 0 && (
+        <p className="mt-1 inline-block rounded-full bg-cyan-100 border border-cyan-300 px-3 py-0.5 text-sm font-extrabold text-cyan-900">
+          מתוכם רענן, בלי חבית: <bdi>{litersText(entry.freshLiters)}</bdi>
+        </p>
+      )}
       {entry.barrels > 0 && (
         <div className="mt-3">
           <BarrelRow count={entry.barrels} colors={[color]} />
@@ -113,17 +120,21 @@ function MixedRow({ entry, colors }: { entry: MixedBarrels; colors: Map<string, 
 }
 
 export function FinishedWineBarrels({
+  vintageId,
   vintageYear,
   records,
   combinations,
   allVarieties,
+  freshEntries,
 }: {
+  vintageId: string
   vintageYear: number
   records: BarrelRecord[]
   combinations: BarrelCombination[]
   allVarieties: string[]
+  freshEntries: FreshEntry[]
 }) {
-  const plan = planBarrels(records, combinations)
+  const plan = planBarrels(records, combinations, new Map(freshEntries.map((entry) => [entry.variety, entry.liters])))
   const colors = colorsByVariety([...allVarieties, ...plan.varieties.map((entry) => entry.variety)])
 
   return (
@@ -177,6 +188,14 @@ export function FinishedWineBarrels({
               {plan.tanksWithoutVariety > 0 && ` · ${plan.tanksWithoutVariety} מכלים ללא כרם או זן לא נכללו בחישוב`}
             </p>
           </div>
+
+          <FreshAllocationsEditor
+            vintageId={vintageId}
+            varieties={plan.varieties.map((entry) => ({ variety: entry.variety, forecastLiters: entry.liters })).sort((a, b) => a.variety.localeCompare(b.variety, "he"))}
+            entries={freshEntries}
+            freshTankLiters={plan.freshTankLiters}
+            freshManualLiters={plan.freshManualLiters}
+          />
 
           <Card title="חביות לפי זן" note="ממוין מהזן עם מספר החביות הגבוה ביותר לנמוך.">
             <ul className="space-y-3">

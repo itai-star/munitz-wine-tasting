@@ -6,7 +6,7 @@ export const BARREL_LITERS = 225
 export const TOPPING_LITERS_PER_BARREL = 15
 export const LITERS_PER_BARREL_WITH_TOPPING = BARREL_LITERS + TOPPING_LITERS_PER_BARREL
 // From the liters after pressing to the final liters, the winery expects to lose this share.
-export const EXPECTED_LOSS_PERCENT = 10
+export const EXPECTED_LOSS_PERCENT = 12
 
 export type BarrelRecord = {
   variety: string | null
@@ -18,7 +18,11 @@ export type BarrelRecord = {
 
 export type VarietyBarrels = {
   variety: string
+  // The forecast of all the variety's red wine, fresh liters included.
   liters: number
+  // Liters set aside by hand as fresh wine, which need no barrel, and what was asked for before it was limited to the forecast.
+  freshLiters: number
+  freshRequestedLiters: number
   tanks: number
   // Tanks with a measurement after the second racking: their figure is the real final one, not an estimate.
   tanksAtLastStage: number
@@ -49,6 +53,9 @@ export type BarrelPlan = {
   mixed: MixedBarrels[]
   // Every mixed barrel on its own, for the workbook.
   mixedBarrelList: MixedBarrelDraw[]
+  // Fresh wine: the liters of tanks marked fresh, and the liters set aside by hand out of the red varieties.
+  freshTankLiters: number
+  freshManualLiters: number
   pureBarrels: number
   mixedBarrels: number
   totalBarrels: number
@@ -111,15 +118,26 @@ function totalsByVariety(records: BarrelRecord[]): { totals: Map<string, Variety
 
 // Each variety fills whole barrels on its own. Only what is left over, too little for another barrel,
 // is pooled with the other varieties of the same approved combination, so mixed barrels are as few as possible.
-export function planBarrels(records: BarrelRecord[], combinations: BarrelCombination[]): BarrelPlan {
+export function planBarrels(
+  records: BarrelRecord[],
+  combinations: BarrelCombination[],
+  freshByVariety: ReadonlyMap<string, number> = new Map(),
+): BarrelPlan {
   const red = records.filter((record) => record.wineType === "RED")
   const { totals, withoutVariety } = totalsByVariety(red)
+  const freshTankLiters = records
+    .filter((record) => record.wineType === "FRESH")
+    .reduce((sum, record) => sum + (forecastFinalLiters(record) ?? 0), 0)
 
   const varieties: VarietyBarrels[] = Array.from(totals, ([variety, entry]) => {
-    const { barrels, leftover } = barrelsFor(entry.liters)
+    const freshRequestedLiters = freshByVariety.get(variety) ?? 0
+    const freshLiters = Math.min(freshRequestedLiters, entry.liters)
+    const { barrels, leftover } = barrelsFor(entry.liters - freshLiters)
     return {
       variety,
       liters: entry.liters,
+      freshLiters,
+      freshRequestedLiters,
       tanks: entry.tanks,
       tanksAtLastStage: entry.tanksAtLastStage,
       isFinal: entry.tanksAtLastStage === entry.tanks,
@@ -173,6 +191,8 @@ export function planBarrels(records: BarrelRecord[], combinations: BarrelCombina
     varieties,
     mixed,
     mixedBarrelList: mixing.barrelList,
+    freshTankLiters,
+    freshManualLiters: varieties.reduce((sum, entry) => sum + entry.freshLiters, 0),
     pureBarrels,
     mixedBarrels,
     totalBarrels: pureBarrels + mixedBarrels,
