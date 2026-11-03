@@ -233,6 +233,16 @@ export function CalendarIcon({ className }: IconProps) {
   )
 }
 
+export function BarrelIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M6.5 3.5h11c1.2 2.4 1.8 5 1.8 8.5s-.6 6.1-1.8 8.5h-11C5.3 18.1 4.7 15.5 4.7 12s.6-6.1 1.8-8.5Z" />
+      <path d="M5.2 8h13.6" />
+      <path d="M5.2 16h13.6" />
+    </svg>
+  )
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

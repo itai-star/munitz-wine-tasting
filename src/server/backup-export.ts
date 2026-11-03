@@ -38,6 +38,7 @@ const TABLES: BackupTable[] = [
   { sheet: "קטגוריות אירועים", load: () => prisma.eventCategory.findMany({ orderBy: { sortOrder: "asc" } }) },
   { sheet: "לוח אירועים", load: () => prisma.calendarEvent.findMany({ orderBy: { date: "asc" } }) },
   { sheet: "רענן ידני", load: () => prisma.freshAllocation.findMany({ orderBy: { variety: "asc" } }) },
+  { sheet: "חדר חביות", load: () => prisma.barrel.findMany({ orderBy: { number: "asc" } }) },
   { sheet: "טעימות", load: () => prisma.tastingSession.findMany({ orderBy: { date: "asc" } }) },
   { sheet: "יינות בטעימה", load: () => prisma.tastingSessionWine.findMany() },
   { sheet: "דירוגים", load: () => prisma.rating.findMany({ orderBy: { createdAt: "asc" } }) },
