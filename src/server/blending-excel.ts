@@ -58,14 +58,14 @@ export async function buildBlendingWorkbook(year: number, wines: BlendWineView[]
   byVariety.getColumn(4).numFmt = "0.0%"
   byBlock.getColumn(4).numFmt = LITERS_FORMAT
 
-  const barrels = addSheet(workbook, "חביות ביינות", [28, 12, 22, 14, 60, 10, 12, 10, 10], ["יין", "מספר חבית", "סוג חבית", "ליטרים שנלקחו", "הרכב החבית", "ציון", "אלכוהול % (ממוצע)", "pH (ממוצע)", "מספר בדיקות"])
+  const barrels = addSheet(workbook, "חביות ביינות", [28, 12, 22, 14, 60, 10, 12, 10, 10], ["יין", "מספר חבית", "סוג חבית", "ליטרים שנלקחו", "הרכב החבית", "ציון", "אלכוהול % (בדיקה אחרונה)", "pH (בדיקה אחרונה)", "מספר בדיקות"])
   for (const { wine } of compositions) {
     for (const draw of wine.draws) barrels.addRow([wine.name, draw.number, draw.type, draw.liters, partsText(draw.parts), draw.score, draw.lab.ethanol, draw.lab.ph, draw.lab.tests])
   }
   barrels.getColumn(2).numFmt = "@"
   barrels.getColumn(4).numFmt = LITERS_FORMAT
 
-  const unused = addSheet(workbook, "חביות לא משובצות", [12, 22, 14, 14, 60, 10, 60, 12, 10, 10], ["מספר חבית", "סוג חבית", "נשארו ליטרים", "זן עיקרי", "הרכב החבית", "ציון", "רשמי טעימה", "אלכוהול % (ממוצע)", "pH (ממוצע)", "מספר בדיקות"])
+  const unused = addSheet(workbook, "חביות לא משובצות", [12, 22, 14, 14, 60, 10, 60, 12, 10, 10], ["מספר חבית", "סוג חבית", "נשארו ליטרים", "זן עיקרי", "הרכב החבית", "ציון", "רשמי טעימה", "אלכוהול % (בדיקה אחרונה)", "pH (בדיקה אחרונה)", "מספר בדיקות"])
   for (const barrel of pile) unused.addRow([barrel.number, barrel.type, barrel.remaining, barrel.variety, partsText(barrel.parts), barrel.score, barrel.tastingNotes, barrel.lab.ethanol, barrel.lab.ph, barrel.lab.tests])
   unused.getColumn(1).numFmt = "@"
   unused.getColumn(3).numFmt = LITERS_FORMAT

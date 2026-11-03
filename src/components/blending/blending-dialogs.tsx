@@ -121,7 +121,7 @@ export function TastingDialog({
           "אין עדיין בדיקות מעבדה לחבית הזו"
         ) : (
           <>
-            ממוצע {barrel.lab.tests === 1 ? "בדיקה אחת" : `${barrel.lab.tests} בדיקות`}: אלכוהול <bdi>{barrel.lab.ethanol === null ? "אין נתון" : `${barrel.lab.ethanol}%`}</bdi> · pH{" "}
+            מהבדיקה האחרונה ({barrel.lab.tests === 1 ? "בדיקה אחת בחבית" : `${barrel.lab.tests} בדיקות בחבית`}): אלכוהול <bdi>{barrel.lab.ethanol === null ? "אין נתון" : `${barrel.lab.ethanol}%`}</bdi> · pH{" "}
             <bdi>{barrel.lab.ph === null ? "אין נתון" : barrel.lab.ph}</bdi>
           </>
         )}

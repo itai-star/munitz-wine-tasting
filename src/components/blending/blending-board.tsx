@@ -31,7 +31,7 @@ function LabValue({ label, unit, value, total }: { label: string; unit?: string;
       <p className="text-xl font-extrabold text-stone-900" aria-readonly="true">
         {value.value === null ? <span className="text-stone-400">אין נתונים</span> : <bdi>{value.value}{unit}</bdi>}
       </p>
-      <p className="text-xs font-semibold text-stone-500">{total === 0 ? "מחושב מבדיקות החביות" : value.barrels < total ? `מחושב מ-${value.barrels} חביות מתוך ${total}` : "מחושב מבדיקות החביות"}</p>
+      <p className="text-xs font-semibold text-stone-500">{total === 0 ? "מהבדיקה האחרונה של כל חבית" : value.barrels < total ? `מחושב מ-${value.barrels} חביות מתוך ${total}` : "מהבדיקה האחרונה של כל חבית"}</p>
     </div>
   )
 }

@@ -23,13 +23,13 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
         barrel: { select: { number: true, type: true } },
         components: { include: { block: { select: { name: true, variety: true } } } },
         draws: { select: { liters: true } },
-        tests: { select: { ethanol: true, ph: true } },
+        tests: { select: { testDate: true, createdAt: true, ethanol: true, ph: true } },
       },
     }),
     prisma.blendWine.findMany({
       where: { year },
       orderBy: { createdAt: "asc" },
-      include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: { ethanol: true, ph: true } } } } } } },
+      include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: { testDate: true, createdAt: true, ethanol: true, ph: true } } } } } } },
     }),
   ])
 
