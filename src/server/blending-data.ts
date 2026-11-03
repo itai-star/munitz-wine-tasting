@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { dominantVariety, remainingLiters, roundLiters } from "@/lib/blending"
+import { dominantVariety, labOf, remainingLiters, roundLiters } from "@/lib/blending"
 import type { BlendWineView, PileBarrel } from "@/lib/blending"
 import type { WinePart } from "@/lib/barrel-wine"
 
@@ -23,12 +23,13 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
         barrel: { select: { number: true, type: true } },
         components: { include: { block: { select: { name: true, variety: true } } } },
         draws: { select: { liters: true } },
+        tests: { select: { ethanol: true, ph: true } },
       },
     }),
     prisma.blendWine.findMany({
       where: { year },
       orderBy: { createdAt: "asc" },
-      include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } } } } } } },
+      include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: { ethanol: true, ph: true } } } } } } },
     }),
   ])
 
@@ -44,6 +45,7 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
         remaining: remainingLiters(fill.draws.reduce((sum, draw) => sum + draw.liters, 0)),
         score: fill.score,
         tastingNotes: fill.tastingNotes,
+        lab: labOf(fill.tests),
       }
     })
     .filter((barrel) => barrel.remaining > 0)
@@ -66,6 +68,7 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
             liters: roundLiters(draw.liters),
             parts: partsOf(draw.fill.components),
             score: draw.fill.score,
+            lab: labOf(draw.fill.tests),
           }))
           .sort((a, b) => a.number.localeCompare(b.number, "he", { numeric: true })),
       }),

@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs"
 import { formatPercent } from "@/lib/barrel-wine"
-import { compositionOf } from "@/lib/blending"
+import { compositionOf, wineLabOf } from "@/lib/blending"
 import type { BlendWineView, PileBarrel } from "@/lib/blending"
 
 const HEADER_FILL = "FFF5E6E8"
@@ -28,14 +28,17 @@ export async function buildBlendingWorkbook(year: number, wines: BlendWineView[]
   const workbook = new ExcelJS.Workbook()
   const compositions = wines.map((wine) => ({ wine, composition: compositionOf(wine.draws) }))
 
-  const summary = addSheet(workbook, "יינות", [28, 50, 12, 10, 12, 60, 50], ["שם היין", "תיאור לתווית", "ליטרים", "חביות", "הרכב סופי", "הרכב לפי זן", "מספרי החביות"])
+  const summary = addSheet(workbook, "יינות", [28, 50, 12, 10, 12, 12, 10, 60, 50], ["שם היין", "תיאור לתווית", "ליטרים", "חביות", "הרכב סופי", "אלכוהול %", "pH", "הרכב לפי זן", "מספרי החביות"])
   for (const { wine, composition } of compositions) {
+    const lab = wineLabOf(wine.draws)
     summary.addRow([
       wine.name,
       wine.description,
       composition.totalLiters,
       wine.draws.length,
       wine.finalized ? "כן" : "לא",
+      lab.ethanol.value,
+      lab.ph.value,
       composition.byVariety.map((share) => `${share.variety} ${formatPercent(share.percent)} (${share.liters} ליטר)`).join(" + "),
       wine.draws.map((draw) => draw.number).join(", "),
     ])
@@ -55,15 +58,15 @@ export async function buildBlendingWorkbook(year: number, wines: BlendWineView[]
   byVariety.getColumn(4).numFmt = "0.0%"
   byBlock.getColumn(4).numFmt = LITERS_FORMAT
 
-  const barrels = addSheet(workbook, "חביות ביינות", [28, 12, 22, 14, 60, 10], ["יין", "מספר חבית", "סוג חבית", "ליטרים שנלקחו", "הרכב החבית", "ציון"])
+  const barrels = addSheet(workbook, "חביות ביינות", [28, 12, 22, 14, 60, 10, 12, 10, 10], ["יין", "מספר חבית", "סוג חבית", "ליטרים שנלקחו", "הרכב החבית", "ציון", "אלכוהול % (ממוצע)", "pH (ממוצע)", "מספר בדיקות"])
   for (const { wine } of compositions) {
-    for (const draw of wine.draws) barrels.addRow([wine.name, draw.number, draw.type, draw.liters, partsText(draw.parts), draw.score])
+    for (const draw of wine.draws) barrels.addRow([wine.name, draw.number, draw.type, draw.liters, partsText(draw.parts), draw.score, draw.lab.ethanol, draw.lab.ph, draw.lab.tests])
   }
   barrels.getColumn(2).numFmt = "@"
   barrels.getColumn(4).numFmt = LITERS_FORMAT
 
-  const unused = addSheet(workbook, "חביות לא משובצות", [12, 22, 14, 14, 60, 10, 60], ["מספר חבית", "סוג חבית", "נשארו ליטרים", "זן עיקרי", "הרכב החבית", "ציון", "רשמי טעימה"])
-  for (const barrel of pile) unused.addRow([barrel.number, barrel.type, barrel.remaining, barrel.variety, partsText(barrel.parts), barrel.score, barrel.tastingNotes])
+  const unused = addSheet(workbook, "חביות לא משובצות", [12, 22, 14, 14, 60, 10, 60, 12, 10, 10], ["מספר חבית", "סוג חבית", "נשארו ליטרים", "זן עיקרי", "הרכב החבית", "ציון", "רשמי טעימה", "אלכוהול % (ממוצע)", "pH (ממוצע)", "מספר בדיקות"])
+  for (const barrel of pile) unused.addRow([barrel.number, barrel.type, barrel.remaining, barrel.variety, partsText(barrel.parts), barrel.score, barrel.tastingNotes, barrel.lab.ethanol, barrel.lab.ph, barrel.lab.tests])
   unused.getColumn(1).numFmt = "@"
   unused.getColumn(3).numFmt = LITERS_FORMAT
   unused.getColumn(7).alignment = { wrapText: true, vertical: "top" }

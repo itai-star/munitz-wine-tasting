@@ -4,10 +4,10 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { addBarrelToWine, clearBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
 import { AddAmountDialog, TastingDialog, WineDialog } from "@/components/blending/blending-dialogs"
-import { BarrelGlyph, TankBar } from "@/components/blending/blending-parts"
+import { BarrelGlyph, NoLabMark, TankBar } from "@/components/blending/blending-parts"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
-import { compositionOf } from "@/lib/blending"
-import type { BlendWineView, PileBarrel } from "@/lib/blending"
+import { compositionOf, wineLabOf } from "@/lib/blending"
+import type { BlendWineView, PileBarrel, WineLabValue } from "@/lib/blending"
 import type { Result } from "@/types"
 
 type Dialog = { kind: "tasting"; fillId: string } | { kind: "add"; wineId: string } | { kind: "wine"; wineId: string | null } | null
@@ -20,6 +20,20 @@ function barrelsText(count: number): string {
 
 function litersText(value: number): string {
   return `${value.toLocaleString("he-IL")} ליטר`
+}
+
+// A value that is worked out from the lab tests of the barrels, so it cannot be edited. When some barrels have no test for it,
+// the count says how many of the barrels it was worked out from.
+function LabValue({ label, unit, value, total }: { label: string; unit?: string; value: WineLabValue; total: number }) {
+  return (
+    <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2" aria-label={`${label}, מחושב אוטומטית`}>
+      <p className="text-sm font-bold text-stone-600">{label}</p>
+      <p className="text-xl font-extrabold text-stone-900" aria-readonly="true">
+        {value.value === null ? <span className="text-stone-400">אין נתונים</span> : <bdi>{value.value}{unit}</bdi>}
+      </p>
+      <p className="text-xs font-semibold text-stone-500">{total === 0 ? "מחושב מבדיקות החביות" : value.barrels < total ? `מחושב מ-${value.barrels} חביות מתוך ${total}` : "מחושב מבדיקות החביות"}</p>
+    </div>
+  )
 }
 
 function WineTank({
@@ -46,6 +60,7 @@ function WineTank({
   dropProps: React.HTMLAttributes<HTMLElement>
 }) {
   const composition = compositionOf(wine.draws)
+  const lab = wineLabOf(wine.draws)
 
   return (
     <section
@@ -107,10 +122,16 @@ function WineTank({
             </ul>
           )}
 
+          <div className="grid grid-cols-2 gap-3">
+            <LabValue label="אלכוהול" unit="%" value={lab.ethanol} total={lab.totalBarrels} />
+            <LabValue label="pH" value={lab.ph} total={lab.totalBarrels} />
+          </div>
+
           {wine.draws.length > 0 && (
             <ul className="flex flex-wrap gap-2" aria-label="החביות ביין">
               {wine.draws.map((draw) => (
                 <li key={draw.fillId} className="flex items-center gap-1.5 rounded-full bg-stone-100 ps-3 pe-1 py-1 text-sm font-bold text-stone-800">
+                  {draw.lab.tests === 0 && <NoLabMark />}
                   חבית <bdi>{draw.number}</bdi> · <bdi>{draw.liters}</bdi> ל׳
                   <button
                     type="button"
@@ -235,6 +256,11 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
             <p className="text-sm font-semibold text-stone-600">
               {barrelsText(pile.length)} עם יין, מקובצות לפי זן. גוררים חבית ליין, ולחיצה עליה פותחת טעימה וציון.
             </p>
+            {pile.some((barrel) => barrel.lab.tests === 0) && (
+              <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-stone-600">
+                <NoLabMark /> חבית בלי בדיקות מעבדה
+              </p>
+            )}
           </div>
           {groups.length === 0 && <p className="text-base font-bold text-stone-500">כל החביות שולבו, או שלא הוזן יין לחביות של {year}.</p>}
           {groups.map(([variety, barrels]) => (
@@ -265,7 +291,7 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
                       aria-label={`חבית ${barrel.number}, ${barrel.variety}`}
                       className={`cursor-grab rounded-lg p-1 hover:bg-white active:cursor-grabbing ${dragging === barrel.fillId ? "opacity-40" : ""}`}
                     >
-                      <BarrelGlyph number={barrel.number} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} />
+                      <BarrelGlyph number={barrel.number} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
                     </button>
                   </li>
                 ))}

@@ -105,7 +105,7 @@ export function TastingDialog({
   return (
     <Shell title={`חבית ${barrel.number}`} subtitle={`${barrel.type} · נשארו ${barrel.remaining} ליטר`} onClose={onClose}>
       <div className="flex items-center gap-4">
-        <BarrelGlyph number={barrel.number} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} />
+        <BarrelGlyph number={barrel.number} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
         <ul className="space-y-0.5 text-sm font-bold text-stone-800">
           {barrel.parts.map((part) => (
             <li key={part.blockId}>
@@ -115,6 +115,17 @@ export function TastingDialog({
           ))}
         </ul>
       </div>
+
+      <p className="text-sm font-bold text-stone-700">
+        {barrel.lab.tests === 0 ? (
+          "אין עדיין בדיקות מעבדה לחבית הזו"
+        ) : (
+          <>
+            ממוצע {barrel.lab.tests === 1 ? "בדיקה אחת" : `${barrel.lab.tests} בדיקות`}: אלכוהול <bdi>{barrel.lab.ethanol === null ? "אין נתון" : `${barrel.lab.ethanol}%`}</bdi> · pH{" "}
+            <bdi>{barrel.lab.ph === null ? "אין נתון" : barrel.lab.ph}</bdi>
+          </>
+        )}
+      </p>
 
       <ErrorLine message={error} />
 
@@ -292,18 +303,19 @@ export function WineDialog({ year, wine, onClose }: { year: number; wine: BlendW
           <button type="button" onClick={onClose} className={quietButton}>
             סגירה
           </button>
-          {wine && (
+          {wine && wine.draws.length === 0 && (
             <button
               type="button"
               disabled={busy}
               onClick={() => {
-                if (confirm(`למחוק את היין "${wine.name}"? החביות שלו יחזרו לערימה.`)) void run(() => deleteBlendWine(wine.id))
+                if (confirm(`למחוק את המיכל "${wine.name}"?`)) void run(() => deleteBlendWine(wine.id))
               }}
               className="ms-auto min-h-11 px-2 text-sm font-bold text-red-700 hover:underline disabled:opacity-50"
             >
-              מחיקת היין
+              מחיקת המיכל
             </button>
           )}
+          {wine && wine.draws.length > 0 && <p className="ms-auto text-sm font-semibold text-stone-500">אפשר למחוק מיכל רק כשהוא ריק. קודם לוחצים על איפוס היין.</p>}
         </div>
       </form>
     </Shell>

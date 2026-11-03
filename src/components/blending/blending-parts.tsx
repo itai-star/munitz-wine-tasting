@@ -21,6 +21,20 @@ export function stripesOf(parts: WinePart[], colors: Map<string, string>): strin
   return `linear-gradient(90deg, ${stops.join(", ")})`
 }
 
+// Marks a barrel that has no lab test in its year, so the alcohol and the pH of a wine cannot count it.
+export function NoLabMark({ className }: { className?: string }) {
+  return (
+    <span
+      className={`inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[11px] font-extrabold leading-none text-stone-900 ring-1 ring-amber-700/50 ${className ?? ""}`}
+      title="אין בדיקות מעבדה לחבית הזו, ולכן היא לא נספרת בחישוב האלכוהול וה-pH"
+      role="img"
+      aria-label="אין בדיקות מעבדה לחבית"
+    >
+      !
+    </span>
+  )
+}
+
 // A barrel drawn in plain CSS. The colour inside rises to the share of the 225 liters that is still in the barrel, so a barrel
 // that gave part of its wine away shows lower. The number is under it, and a score, when there is one, on its corner.
 export function BarrelGlyph({
@@ -30,6 +44,7 @@ export function BarrelGlyph({
   colors,
   score,
   selected,
+  noLab,
 }: {
   number: string
   remaining: number
@@ -37,6 +52,7 @@ export function BarrelGlyph({
   colors: Map<string, string>
   score?: number | null
   selected?: boolean
+  noLab?: boolean
 }) {
   const level = Math.max(0, Math.min(100, (remaining / BARREL_LITERS) * 100))
   return (
@@ -51,6 +67,7 @@ export function BarrelGlyph({
           <bdi>{score}</bdi>
         </span>
       )}
+      {noLab && <NoLabMark className="absolute -top-1.5 -start-1" />}
       <span className="text-sm font-extrabold leading-none text-stone-900">
         <bdi>{number}</bdi>
       </span>

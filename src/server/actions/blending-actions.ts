@@ -65,12 +65,15 @@ export async function updateBlendWine(input: z.input<typeof UpdateWineSchema>): 
   }
 }
 
-// The barrels of a deleted wine go back to the pile, since only the draws are removed.
+// A wine is deleted only when it is empty, so no wine is lost by mistake. One that still holds barrels is emptied first.
 export async function deleteBlendWine(id: string): Promise<Result<void>> {
   await requirePermission("BARRELS")
   if (id.length === 0) return err({ code: "VALIDATION", message: "היין לא נמצא" })
 
   try {
+    const wine = await prisma.blendWine.findUnique({ where: { id }, select: { _count: { select: { draws: true } } } })
+    if (!wine) return err({ code: "NOT_FOUND", message: "היין לא נמצא" })
+    if (wine._count.draws > 0) return err({ code: "VALIDATION", message: "אי אפשר למחוק מיכל שיש בו יין. קודם מרוקנים אותו בלחיצה על איפוס היין" })
     await prisma.blendWine.deleteMany({ where: { id } })
     revalidatePath(PAGE)
     return ok(undefined)

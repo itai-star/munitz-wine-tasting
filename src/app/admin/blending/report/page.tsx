@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { compositionOf } from "@/lib/blending"
+import { compositionOf, wineLabOf } from "@/lib/blending"
 import { todayKey } from "@/lib/calendar-events"
 import { AutoPrint } from "@/components/blending/auto-print"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
@@ -40,6 +40,7 @@ export default async function BlendingReportPage({ searchParams }: { searchParam
 
       {wines.map((wine) => {
         const composition = compositionOf(wine.draws)
+        const lab = wineLabOf(wine.draws)
         return (
           <section key={wine.id} className="wine-page rounded-2xl border border-stone-300 bg-white p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -50,6 +51,14 @@ export default async function BlendingReportPage({ searchParams }: { searchParam
               </span>
             </div>
             {wine.description && <p className="mt-2 whitespace-pre-line text-base text-stone-700">{wine.description}</p>}
+            {(lab.ethanol.value !== null || lab.ph.value !== null) && (
+              <p className="mt-2 text-base font-bold text-stone-800">
+                {lab.ethanol.value !== null && <>אלכוהול <bdi>{lab.ethanol.value}%</bdi></>}
+                {lab.ethanol.value !== null && lab.ph.value !== null && " · "}
+                {lab.ph.value !== null && <>pH <bdi>{lab.ph.value}</bdi></>}
+                {(lab.ethanol.barrels < lab.totalBarrels || lab.ph.barrels < lab.totalBarrels) && <span className="text-sm font-semibold text-stone-500"> (לא כל החביות נבדקו)</span>}
+              </p>
+            )}
             <div className="mt-4">
               {composition.byVariety.length === 0 ? (
                 <p className="text-base text-stone-500">עדיין לא נוספו חביות ליין הזה.</p>
