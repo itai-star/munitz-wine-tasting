@@ -27,9 +27,10 @@ export function validateShares(percents: number[]): string | null {
 const WITH_PARENTHESES = /^(.+?)\s*\(\s*(\d+(?:[.,]\d+)?)\s*%?\s*\)$/
 const WITH_SUFFIX = /^(.+?)\s+(\d+(?:[.,]\d+)?)\s*%$/
 
-// Reads the written form, "SHCF (65%) + PKMR (35%)". A wine from a single block may be written without a share.
+// Reads the written form, "SHCF (65%) + PKMR (35%)", where the blocks may also be joined with &. A wine from a single
+// block may be written without a share.
 export function parseWine(text: string): { parts: ParsedWinePart[] } | { error: string } {
-  const terms = text.split("+").map((term) => term.trim()).filter((term) => term.length > 0)
+  const terms = text.split(/[+&]/).map((term) => term.trim()).filter((term) => term.length > 0)
   if (terms.length === 0) return { error: "לא נכתב יין" }
 
   const written = terms.map((term) => {

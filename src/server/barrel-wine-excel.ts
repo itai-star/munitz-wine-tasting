@@ -93,6 +93,8 @@ export async function buildBarrelWineWorkbook(rows: BarrelYearRow[], blocks: Blo
 
 export type ParsedWineRow = { row: number; number: string; wine: string }
 
+export type ParsedWineSheet = { rows: ParsedWineRow[]; column: string }
+
 function textOf(value: ExcelJS.CellValue): string {
   if (value === null || value === undefined) return ""
   if (typeof value === "object" && "richText" in value) return normalizeText(value.richText.map((part) => part.text).join(""))
@@ -101,19 +103,33 @@ function textOf(value: ExcelJS.CellValue): string {
   return normalizeText(String(value))
 }
 
-export async function parseBarrelWineWorkbook(buffer: ArrayBuffer): Promise<ParsedWineRow[] | null> {
+// The wine column is the one headed "יין", or "יין (שם כרם)" as the export writes it. A workbook may also hold the wine of
+// other years in columns such as "יין 2024"; those are read only when no plain wine column exists, and the column of the
+// year being loaded comes before any other.
+function pickWineColumn(headers: { column: number; text: string }[], year: number): { column: number; text: string } | undefined {
+  const norm = (text: string): string => normalizeHeader(text).toLowerCase()
+  return (
+    headers.find((header) => [norm("יין"), norm(WINE_HEADER)].includes(norm(header.text))) ??
+    headers.find((header) => norm(header.text) === norm(`יין ${year}`)) ??
+    headers.find((header) => norm(header.text).startsWith(norm("יין")))
+  )
+}
+
+export async function parseBarrelWineWorkbook(buffer: ArrayBuffer, year: number): Promise<ParsedWineSheet | null> {
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(buffer)
   const sheet = workbook.getWorksheet(WINE_SHEET) ?? workbook.worksheets[0]
   if (!sheet) return null
 
   let numberColumn: number | undefined
-  let wineColumn: number | undefined
+  const headers: { column: number; text: string }[] = []
   sheet.getRow(1).eachCell((cell, column) => {
-    const header = normalizeHeader(textOf(cell.value))
-    if (header === normalizeHeader(NUMBER_HEADER)) numberColumn = column
-    else if (header.startsWith(normalizeHeader("יין")) && wineColumn === undefined) wineColumn = column
+    const text = textOf(cell.value)
+    if (normalizeHeader(text) === normalizeHeader(NUMBER_HEADER)) numberColumn = column
+    else headers.push({ column, text })
   })
+  const wine = pickWineColumn(headers, year)
+  const wineColumn = wine?.column
   if (!numberColumn || !wineColumn) return null
 
   const rows: ParsedWineRow[] = []
@@ -123,5 +139,5 @@ export async function parseBarrelWineWorkbook(buffer: ArrayBuffer): Promise<Pars
     if (!number) return
     rows.push({ row: rowNumber, number, wine: textOf(row.getCell(wineColumn as number).value) })
   })
-  return rows
+  return { rows, column: wine?.text ?? "" }
 }

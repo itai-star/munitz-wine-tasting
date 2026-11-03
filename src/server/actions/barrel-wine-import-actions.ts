@@ -2,19 +2,20 @@
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
-import { MAX_BARREL_YEAR, MIN_BARREL_YEAR, stateInYear } from "@/lib/barrel-room"
-import type { YearState } from "@/lib/barrel-room"
+import { MAX_BARREL_YEAR, MIN_BARREL_YEAR } from "@/lib/barrel-room"
 import { parseWine } from "@/lib/barrel-wine"
 import { normalizeHeader } from "@/lib/vineyard-excel"
 import { requirePermission } from "@/server/auth/guards"
 import { parseBarrelWineWorkbook } from "@/server/barrel-wine-excel"
+import { barrelsInYear, matchBarrel } from "@/server/barrel-year-match"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024
-const PREFERENCE: YearState[] = ["IN_STOCK", "REMOVED_LATER", "REMOVED_THIS_YEAR"]
 
 export type BarrelWineImportSummary = {
+  // The header of the column the wine was read from, so a wrong column is easy to notice.
+  column: string
   updated: number
   unchanged: number
   skippedEmpty: number
@@ -41,25 +42,24 @@ export async function importBarrelWineFromExcel(formData: FormData): Promise<Res
   if (!(file instanceof File) || file.size === 0) return err({ code: "VALIDATION", message: "יש לבחור קובץ אקסל" })
   if (file.size > MAX_FILE_BYTES) return err({ code: "VALIDATION", message: "הקובץ גדול מדי" })
 
-  let rows
+  let sheet
   try {
-    rows = await parseBarrelWineWorkbook(await file.arrayBuffer())
+    sheet = await parseBarrelWineWorkbook(await file.arrayBuffer(), year)
   } catch {
     return err({ code: "VALIDATION", message: "לא ניתן לקרוא את הקובץ. יש להעלות קובץ אקסל בפורמט xlsx" })
   }
-  if (!rows) return err({ code: "VALIDATION", message: "בקובץ חסרות העמודות מספר חבית ויין" })
+  if (!sheet) return err({ code: "VALIDATION", message: "בקובץ חסרות העמודות מספר חבית ויין" })
+  const { rows } = sheet
 
   const [barrels, blocks, fills] = await Promise.all([
     prisma.barrel.findMany(),
     prisma.vineyardBlock.findMany({ select: { id: true, name: true } }),
     prisma.barrelFill.findMany({ where: { year }, select: { barrelId: true, components: { select: { blockId: true, percent: true } } } }),
   ])
-  const blockByName = new Map(blocks.map((block) => [normalizeHeader(block.name), block.id]))
+  const blockKey = (name: string): string => normalizeHeader(name).toLowerCase()
+  const blockByName = new Map(blocks.map((block) => [blockKey(block.name), block.id]))
   const currentParts = new Map(fills.map((fill) => [fill.barrelId, fill.components]))
-  const inYear = barrels.flatMap((barrel) => {
-    const state = stateInYear({ year: barrel.year, removedOn: barrel.removedAt?.toISOString().slice(0, 10) ?? null }, year)
-    return state ? [{ id: barrel.id, number: barrel.number, state }] : []
-  })
+  const inYear = barrelsInYear(barrels, year)
 
   const errors: BarrelWineImportSummary["errors"] = []
   const seen = new Set<string>()
@@ -68,16 +68,9 @@ export async function importBarrelWineFromExcel(formData: FormData): Promise<Res
   let skippedEmpty = 0
 
   for (const row of rows) {
-    const candidates = inYear.filter((barrel) => barrel.number === row.number)
-    const best = PREFERENCE.find((state) => candidates.some((barrel) => barrel.state === state))
-    const matching = candidates.filter((barrel) => barrel.state === best)
-
-    if (candidates.length === 0) {
-      errors.push({ row: row.row, message: `חבית ${row.number} לא קיימת או לא הייתה בשימוש בשנה ${year}` })
-      continue
-    }
-    if (matching.length > 1) {
-      errors.push({ row: row.row, message: `יש כמה חביות עם המספר ${row.number} בשנה ${year}` })
+    const match = matchBarrel(inYear, row.number, year)
+    if ("error" in match) {
+      errors.push({ row: row.row, message: match.error })
       continue
     }
     if (seen.has(row.number)) {
@@ -95,19 +88,19 @@ export async function importBarrelWineFromExcel(formData: FormData): Promise<Res
       errors.push({ row: row.row, message: parsed.error })
       continue
     }
-    const unknown = parsed.parts.find((part) => !blockByName.has(normalizeHeader(part.name)))
+    const unknown = parsed.parts.find((part) => !blockByName.has(blockKey(part.name)))
     if (unknown) {
       errors.push({ row: row.row, message: `הכרם "${unknown.name}" לא קיים ברשימת הכרמים` })
       continue
     }
-    const parts = parsed.parts.map((part) => ({ blockId: blockByName.get(normalizeHeader(part.name)) as string, percent: Math.round(part.percent * 10) / 10 }))
+    const parts = parsed.parts.map((part) => ({ blockId: blockByName.get(blockKey(part.name)) as string, percent: Math.round(part.percent * 10) / 10 }))
     if (new Set(parts.map((part) => part.blockId)).size !== parts.length) {
       errors.push({ row: row.row, message: "אותו כרם מופיע יותר מפעם אחת" })
       continue
     }
 
-    if (sameWine(currentParts.get(matching[0].id) ?? [], parts)) unchanged += 1
-    else updates.push({ barrelId: matching[0].id, parts })
+    if (sameWine(currentParts.get(match.barrel.id) ?? [], parts)) unchanged += 1
+    else updates.push({ barrelId: match.barrel.id, parts })
   }
 
   try {
@@ -124,5 +117,5 @@ export async function importBarrelWineFromExcel(formData: FormData): Promise<Res
     return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת היין בחביות" })
   }
   revalidatePath("/admin/barrels")
-  return ok({ updated: updates.length, unchanged, skippedEmpty, errors })
+  return ok({ column: sheet.column, updated: updates.length, unchanged, skippedEmpty, errors })
 }

@@ -43,8 +43,8 @@ export function BarrelWineExcelPanel({ year }: { year: number }) {
       <summary className="cursor-pointer text-base font-extrabold text-wine">יין בחביות באקסל, לשנת {year}</summary>
       <div className="mt-3 space-y-3">
         <p className="text-sm text-stone-600">
-          הקובץ כולל שתי עמודות לקריאה: מספר חבית ויין. היין הוא שם הכרם, ואם הוא שילוב של כמה כרמים כותבים כל כרם עם האחוז שלו, למשל{" "}
-          <bdi className="font-bold">SHCF (65%) + PKMR (35%)</bdi>. כרם יחיד אפשר לכתוב בלי אחוז. הכרמים חייבים להיות ברשימת הכרמים, והאחוזים צריכים
+          הקובץ כולל שתי עמודות לקריאה: &quot;מספר חבית&quot; ו&quot;יין&quot;. העמודה שנקראת היא זו שכותרתה בדיוק &quot;יין&quot;, ולא עמודות כמו &quot;יין 2024&quot;. היין הוא שם הכרם, ואם הוא
+          שילוב של כמה כרמים כותבים כל כרם עם האחוז שלו, למשל <bdi className="font-bold">SHCF (65%) + PKMR (35%)</bdi>, ואפשר להפריד בין כרמים גם ב-&amp;. כרם יחיד אפשר לכתוב בלי אחוז. הכרמים חייבים להיות ברשימת הכרמים, והאחוזים צריכים
           להסתכם ב-100. שורה עם יין ריק משאירה את החבית כמו שהיא. הייבוא חל על שנת {year}.
         </p>
         <div className="flex flex-wrap gap-3">
@@ -66,7 +66,7 @@ export function BarrelWineExcelPanel({ year }: { year: number }) {
         {summary && (
           <div className="space-y-2 rounded-lg bg-stone-50 p-3 text-sm">
             <p className="font-bold text-stone-900">
-              עודכנו {summary.updated} חביות, {summary.unchanged} ללא שינוי
+              נקראה העמודה &quot;{summary.column}&quot;. עודכנו {summary.updated} חביות, {summary.unchanged} ללא שינוי
               {summary.skippedEmpty > 0 && `, ${summary.skippedEmpty} שורות עם יין ריק דולגו`}
               {summary.errors.length > 0 && `. ${summary.errors.length} שורות לא נקלטו`}.
             </p>

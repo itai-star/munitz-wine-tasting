@@ -1,6 +1,7 @@
 import { summarizeYear } from "@/lib/barrel-room"
 import { todayKey } from "@/lib/calendar-events"
 import { AddBarrelButton, BarrelEditorProvider } from "@/components/barrels/barrel-editor"
+import { BarrelTestsExcelPanel } from "@/components/barrels/barrel-tests-excel-panel"
 import { BarrelWineExcelPanel } from "@/components/barrels/barrel-wine-excel-panel"
 import { BarrelsExcelPanel } from "@/components/barrels/barrels-excel-panel"
 import { BarrelsList } from "@/components/barrels/barrels-list"
@@ -37,6 +38,7 @@ export default async function BarrelRoomPage({ searchParams }: { searchParams: P
 
         <div className="grid gap-3 lg:grid-cols-2">
           <BarrelWineExcelPanel year={year} />
+          <BarrelTestsExcelPanel year={year} />
           <BarrelsExcelPanel />
         </div>
       </div>
