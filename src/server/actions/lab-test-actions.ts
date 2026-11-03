@@ -5,31 +5,11 @@ import { prisma } from "@/lib/prisma"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 import { z } from "zod"
+import { LabTestFieldsSchema } from "@/lib/lab-test-schema"
 import { requirePermission } from "@/server/auth/guards"
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
-}
-
-const roundedNumber = z
-  .number()
-  .nullable()
-  .transform((value) => (value == null ? null : round2(value)))
-
-const LabTestSchema = z.object({
+const LabTestSchema = LabTestFieldsSchema.extend({
   finishedWineId: z.string().min(1),
-  testDate: z.coerce.date(),
-  lab: z.string().trim().min(1).nullable(),
-  density: roundedNumber,
-  ethanol: roundedNumber,
-  ph: roundedNumber,
-  totalAcid: roundedNumber,
-  volatile: roundedNumber,
-  rsBx: roundedNumber,
-  co2: roundedNumber,
-  malicAcid: roundedNumber,
-  notes: z.string().trim().min(1).nullable(),
-  actionItems: z.string().trim().min(1).nullable(),
 })
 
 export async function createLabTest(

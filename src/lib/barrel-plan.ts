@@ -23,6 +23,9 @@ export type VarietyBarrels = {
   // Liters set aside by hand as fresh wine, which need no barrel, and what was asked for before it was limited to the forecast.
   freshLiters: number
   freshRequestedLiters: number
+  // Wine of the variety that is already in barrels this year. It is taken off before the barrels still needed are worked
+  // out, and it is capped at what is left of the forecast after the fresh liters.
+  inBarrelsLiters: number
   tanks: number
   // Tanks with a measurement after the second racking: their figure is the real final one, not an estimate.
   tanksAtLastStage: number
@@ -56,6 +59,7 @@ export type BarrelPlan = {
   // Fresh wine: the liters of tanks marked fresh, and the liters set aside by hand out of the red varieties.
   freshTankLiters: number
   freshManualLiters: number
+  inBarrelsLiters: number
   pureBarrels: number
   mixedBarrels: number
   totalBarrels: number
@@ -122,6 +126,7 @@ export function planBarrels(
   records: BarrelRecord[],
   combinations: BarrelCombination[],
   freshByVariety: ReadonlyMap<string, number> = new Map(),
+  inBarrelsByVariety: ReadonlyMap<string, number> = new Map(),
 ): BarrelPlan {
   const red = records.filter((record) => record.wineType === "RED")
   const { totals, withoutVariety } = totalsByVariety(red)
@@ -132,12 +137,14 @@ export function planBarrels(
   const varieties: VarietyBarrels[] = Array.from(totals, ([variety, entry]) => {
     const freshRequestedLiters = freshByVariety.get(variety) ?? 0
     const freshLiters = Math.min(freshRequestedLiters, entry.liters)
-    const { barrels, leftover } = barrelsFor(entry.liters - freshLiters)
+    const inBarrelsLiters = Math.min(inBarrelsByVariety.get(variety) ?? 0, entry.liters - freshLiters)
+    const { barrels, leftover } = barrelsFor(entry.liters - freshLiters - inBarrelsLiters)
     return {
       variety,
       liters: entry.liters,
       freshLiters,
       freshRequestedLiters,
+      inBarrelsLiters,
       tanks: entry.tanks,
       tanksAtLastStage: entry.tanksAtLastStage,
       isFinal: entry.tanksAtLastStage === entry.tanks,
@@ -193,6 +200,7 @@ export function planBarrels(
     mixedBarrelList: mixing.barrelList,
     freshTankLiters,
     freshManualLiters: varieties.reduce((sum, entry) => sum + entry.freshLiters, 0),
+    inBarrelsLiters: varieties.reduce((sum, entry) => sum + entry.inBarrelsLiters, 0),
     pureBarrels,
     mixedBarrels,
     totalBarrels: pureBarrels + mixedBarrels,

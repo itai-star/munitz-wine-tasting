@@ -4,6 +4,7 @@ import { CreateVintageForm } from "@/components/vineyard/create-vintage-form"
 import { FinishedWineAverageChart } from "@/components/finished-wine/finished-wine-charts"
 import { FinishedWineVolumes } from "@/components/finished-wine/finished-wine-volumes"
 import { FinishedWineBarrels } from "@/components/finished-wine/finished-wine-barrels"
+import { loadInBarrelsByVariety } from "@/server/barrels-data"
 import { LabTestExcelImport } from "@/components/lab-test/lab-test-excel-import"
 import { calculateWineEfficiency } from "@/lib/wine-efficiency"
 
@@ -41,7 +42,8 @@ export default async function FinishedWinePage({
     orderBy: { createdAt: "desc" },
   })
 
-  const [freshAllocations, combinations, redVarieties] = await Promise.all([
+  const [inBarrelsByVariety, freshAllocations, combinations, redVarieties] = await Promise.all([
+    loadInBarrelsByVariety(selectedVintage.year),
     prisma.freshAllocation.findMany({ where: { vintageId: selectedVintage.id }, orderBy: { variety: "asc" } }),
     prisma.barrelCombination.findMany({ orderBy: { createdAt: "asc" }, include: { varieties: { orderBy: { variety: "asc" } } } }),
     // Only red wine goes into barrels, so a variety is offered once any vintage has a red finished wine of it.
@@ -75,6 +77,7 @@ export default async function FinishedWinePage({
         vintageId={selectedVintage.id}
         vintageYear={selectedVintage.year}
         freshEntries={freshAllocations.map((entry) => ({ id: entry.id, variety: entry.variety, liters: entry.liters }))}
+        inBarrels={Array.from(inBarrelsByVariety, ([variety, liters]) => ({ variety, liters }))}
         records={wines.map((wine) => ({ ...wine, variety: wine.block?.variety ?? null }))}
         combinations={combinations.map((combination) => ({
           id: combination.id,

@@ -3,6 +3,7 @@ import { planBarrels } from "@/lib/barrel-plan"
 import { canUse } from "@/lib/permissions"
 import { getCurrentUser } from "@/server/auth/session"
 import { buildBarrelPlanWorkbook } from "@/server/barrel-plan-excel"
+import { loadInBarrelsByVariety } from "@/server/barrels-data"
 
 export const dynamic = "force-dynamic"
 
@@ -28,7 +29,7 @@ export async function GET(request: Request): Promise<Response> {
     vintageLabel: vintage.label,
     tanks,
     combinations,
-    plan: planBarrels(tanks, combinations, new Map(fresh.map((entry) => [entry.variety, entry.liters]))),
+    plan: planBarrels(tanks, combinations, new Map(fresh.map((entry) => [entry.variety, entry.liters])), await loadInBarrelsByVariety(vintage.year)),
   })
   return new Response(new Uint8Array(workbook), {
     headers: {

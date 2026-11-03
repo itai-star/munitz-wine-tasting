@@ -132,6 +132,7 @@ model VineyardBlock {
   intakes       GrapeIntake[]
   finishedWines FinishedWine[]
   stations      EcowittStation[]
+  barrelParts   BarrelFillBlock[]
 }
 
 model RipenessSample {
@@ -630,4 +631,59 @@ model Barrel {
 
   @@index([removedAt])
   @@index([number])
+
+  fills BarrelFill[]
+}
+
+// What a barrel holds in one year: a wine from one or more vineyard blocks, each with its share. The lab tests of the
+// barrel in that year hang on it, so a barrel used for many years keeps a separate record for each.
+model BarrelFill {
+  id        String   @id @default(cuid())
+  barrelId  String
+  year      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barrel     Barrel            @relation(fields: [barrelId], references: [id], onDelete: Cascade)
+  components BarrelFillBlock[]
+  tests      BarrelLabTest[]
+
+  @@unique([barrelId, year])
+}
+
+// One block of the wine in a barrel and its share of it, in percent. The shares of a barrel add up to 100.
+model BarrelFillBlock {
+  id      String @id @default(cuid())
+  fillId  String
+  blockId String
+  percent Float
+
+  fill  BarrelFill    @relation(fields: [fillId], references: [id], onDelete: Cascade)
+  block VineyardBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@unique([fillId, blockId])
+  @@index([blockId])
+}
+
+// A lab test of a barrel, with the same fields as a lab test of a finished wine.
+model BarrelLabTest {
+  id          String   @id @default(cuid())
+  fillId      String
+  testDate    DateTime
+  lab         String?
+  density     Float?
+  ethanol     Float?
+  ph          Float?
+  totalAcid   Float?
+  volatile    Float?
+  rsBx        Float?
+  co2         Float?
+  malicAcid   Float?
+  notes       String?
+  actionItems String?
+  createdAt   DateTime @default(now())
+
+  fill BarrelFill @relation(fields: [fillId], references: [id], onDelete: Cascade)
+
+  @@index([fillId])
 }

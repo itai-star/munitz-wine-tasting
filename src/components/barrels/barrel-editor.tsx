@@ -9,12 +9,19 @@ import {
   restoreBarrelToStock,
   updateBarrel,
 } from "@/server/actions/barrel-actions"
-import type { BarrelRow } from "@/lib/barrel-room"
+import { BarrelTestsDialog } from "@/components/barrels/barrel-tests-dialog"
+import { BarrelWineDialog } from "@/components/barrels/barrel-wine-dialog"
+import type { BarrelRow, BarrelYearRow, BlockSupply } from "@/lib/barrel-room"
 import type { Result } from "@/types"
 
-type EditorState = { mode: "create" } | { mode: "edit"; barrel: BarrelRow }
+type EditorState = { mode: "create" } | { mode: "edit"; barrel: BarrelRow } | { mode: "wine"; barrelId: string } | { mode: "tests"; barrelId: string }
 
-type EditorApi = { openCreate: () => void; openEdit: (barrel: BarrelRow) => void }
+type EditorApi = {
+  openCreate: () => void
+  openEdit: (barrel: BarrelRow) => void
+  openWine: (barrelId: string) => void
+  openTests: (barrelId: string) => void
+}
 
 const EditorContext = createContext<EditorApi | null>(null)
 
@@ -28,21 +35,42 @@ const inputClass =
   "w-full min-h-11 border border-stone-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-wine/20 focus:border-wine outline-none bg-white"
 const labelClass = "block text-sm font-bold text-stone-800 mb-1"
 
-export function BarrelEditorProvider({ knownTypes, children }: { knownTypes: string[]; children: React.ReactNode }) {
+export function BarrelEditorProvider({
+  knownTypes,
+  supply,
+  year,
+  rows,
+  children,
+}: {
+  knownTypes: string[]
+  supply: BlockSupply[]
+  year: number
+  rows: BarrelYearRow[]
+  children: React.ReactNode
+}) {
   const [state, setState] = useState<EditorState | null>(null)
   const openCreate = useCallback(() => setState({ mode: "create" }), [])
   const openEdit = useCallback((barrel: BarrelRow) => setState({ mode: "edit", barrel }), [])
+  const openWine = useCallback((barrelId: string) => setState({ mode: "wine", barrelId }), [])
+  const openTests = useCallback((barrelId: string) => setState({ mode: "tests", barrelId }), [])
   const close = useCallback(() => setState(null), [])
 
+  // The dialogs for the wine and the tests read the barrel from the page, so they show what was just saved.
+  const row = state && (state.mode === "wine" || state.mode === "tests") ? rows.find((candidate) => candidate.id === state.barrelId) : undefined
+
   return (
-    <EditorContext.Provider value={{ openCreate, openEdit }}>
+    <EditorContext.Provider value={{ openCreate, openEdit, openWine, openTests }}>
       {children}
-      {state && <BarrelDialog key={state.mode === "edit" ? state.barrel.id : "new"} state={state} knownTypes={knownTypes} onClose={close} />}
+      {state && (state.mode === "create" || state.mode === "edit") && (
+        <BarrelDialog key={state.mode === "edit" ? state.barrel.id : "new"} state={state} knownTypes={knownTypes} onClose={close} />
+      )}
+      {state?.mode === "wine" && row && <BarrelWineDialog key={row.id} row={row} year={year} supply={supply} onClose={close} />}
+      {state?.mode === "tests" && row && <BarrelTestsDialog key={row.id} row={row} year={year} onClose={close} />}
     </EditorContext.Provider>
   )
 }
 
-function BarrelDialog({ state, knownTypes, onClose }: { state: EditorState; knownTypes: string[]; onClose: () => void }) {
+function BarrelDialog({ state, knownTypes, onClose }: { state: EditorState & { mode: "create" | "edit" }; knownTypes: string[]; onClose: () => void }) {
   const router = useRouter()
   const existing = state.mode === "edit" ? state.barrel : null
   const firstFieldRef = useRef<HTMLInputElement>(null)

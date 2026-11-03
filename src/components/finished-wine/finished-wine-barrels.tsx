@@ -51,6 +51,11 @@ function VarietyRow({ entry, color }: { entry: VarietyBarrels; color: string }) 
           מתוכם רענן, בלי חבית: <bdi>{litersText(entry.freshLiters)}</bdi>
         </p>
       )}
+      {entry.inBarrelsLiters > 0 && (
+        <p className="mt-1 ms-2 inline-block rounded-full bg-emerald-100 border border-emerald-300 px-3 py-0.5 text-sm font-extrabold text-emerald-900">
+          כבר בחביות: <bdi>{litersText(entry.inBarrelsLiters)}</bdi> (כ-<bdi>{(entry.inBarrelsLiters / LITERS_PER_BARREL_WITH_TOPPING).toFixed(1)}</bdi> חביות)
+        </p>
+      )}
       {entry.barrels > 0 && (
         <div className="mt-3">
           <BarrelRow count={entry.barrels} colors={[color]} />
@@ -126,6 +131,7 @@ export function FinishedWineBarrels({
   combinations,
   allVarieties,
   freshEntries,
+  inBarrels,
 }: {
   vintageId: string
   vintageYear: number
@@ -133,8 +139,14 @@ export function FinishedWineBarrels({
   combinations: BarrelCombination[]
   allVarieties: string[]
   freshEntries: FreshEntry[]
+  inBarrels: { variety: string; liters: number }[]
 }) {
-  const plan = planBarrels(records, combinations, new Map(freshEntries.map((entry) => [entry.variety, entry.liters])))
+  const plan = planBarrels(
+    records,
+    combinations,
+    new Map(freshEntries.map((entry) => [entry.variety, entry.liters])),
+    new Map(inBarrels.map((entry) => [entry.variety, entry.liters])),
+  )
   const colors = colorsByVariety([...allVarieties, ...plan.varieties.map((entry) => entry.variety)])
 
   return (
@@ -184,6 +196,11 @@ export function FinishedWineBarrels({
               </p>
             </div>
             <p className="mt-2 text-sm font-semibold text-stone-700">
+              {plan.inBarrelsLiters > 0 && (
+                <>
+                  כבר בחביות: <bdi>{litersText(plan.inBarrelsLiters)}</bdi> (יורד מהיין שעוד צריך לתכנן) ·{" "}
+                </>
+              )}
               יין שנשאר בלי חבית: <bdi>{litersText(plan.remainderLiters)}</bdi>
               {plan.tanksWithoutVariety > 0 && ` · ${plan.tanksWithoutVariety} מכלים ללא כרם או זן לא נכללו בחישוב`}
             </p>
