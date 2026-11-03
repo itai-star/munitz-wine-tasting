@@ -41,8 +41,8 @@ export function BarrelsExcelPanel() {
       <summary className="cursor-pointer text-base font-extrabold text-wine">ייצוא וייבוא באקסל</summary>
       <div className="mt-3 space-y-3">
         <p className="text-sm text-stone-600">
-          בקובץ שלוש עמודות חובה: מספר חבית, סוג ושנה. מספר חבית חדש נוסף, ומספר שכבר קיים מתעדכן בסוג ובשנה שבקובץ. הקובץ לא מחזיר למלאי חבית
-          שהוצאה ידנית. הייצוא כולל גם את סטטוס החבית (בחדר או הוצאה מהמלאי).
+          בקובץ שלוש עמודות חובה: מספר חבית, סוג ושנה. מספר חבית חדש נוסף, ומספר של חבית שנמצאת בחדר מתעדכן בסוג ובשנה שבקובץ. מספר של חבית
+          שהוצאה מהמלאי אפשר להשתמש בו שוב לחבית חדשה. הקובץ לא מחזיר למלאי חבית שהוצאה ידנית. הייצוא כולל גם את סטטוס החבית (בחדר או הוצאה מהמלאי).
         </p>
         <div className="flex flex-wrap gap-3">
           <a href="/api/barrels/export" download className={linkClass}>

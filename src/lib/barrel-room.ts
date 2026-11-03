@@ -23,8 +23,9 @@ export function isValidBarrelYear(year: number): boolean {
 }
 
 // Numbers such as 2, 10 and 11 sort as numbers, and a number with letters, such as A7, falls into its place.
-export function compareBarrels(a: Pick<BarrelRow, "number">, b: Pick<BarrelRow, "number">): number {
-  return a.number.localeCompare(b.number, "he", { numeric: true })
+// The same number can belong to a barrel in stock and to older ones that left it; the one in stock comes first.
+export function compareBarrels(a: Pick<BarrelRow, "number" | "removed">, b: Pick<BarrelRow, "number" | "removed">): number {
+  return a.number.localeCompare(b.number, "he", { numeric: true }) || Number(a.removed) - Number(b.removed)
 }
 
 export type RoomSummary = {

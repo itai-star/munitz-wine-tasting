@@ -17,7 +17,7 @@ import type { Result } from "@/types"
 
 const PAGE = "/admin/barrels"
 const MAX_NOTE = 200
-const NUMBER_TAKEN = "מספר החבית כבר קיים בחדר החביות, גם אם היא הוצאה מהמלאי"
+const NUMBER_TAKEN = "מספר החבית כבר בשימוש בחבית שנמצאת בחדר. אפשר להשתמש בו רק אחרי שהחבית הזו תוצא מהמלאי"
 
 const BarrelFieldsSchema = z.object({
   number: z
@@ -104,7 +104,8 @@ export async function restoreBarrelToStock(id: string): Promise<Result<void>> {
     await prisma.barrel.update({ where: { id }, data: { removedAt: null, removalNote: null } })
     revalidatePath(PAGE)
     return ok(undefined)
-  } catch {
+  } catch (error) {
+    if (isDuplicate(error)) return err({ code: "DUPLICATE", message: "אי אפשר להחזיר את החבית כי המספר שלה כבר בשימוש בחבית אחרת בחדר" })
     return err({ code: "SERVER_ERROR", message: "שגיאה בהחזרת החבית למלאי" })
   }
 }

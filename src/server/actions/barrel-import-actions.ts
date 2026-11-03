@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { MAX_BARREL_NUMBER_LENGTH, MAX_BARREL_TYPE_LENGTH, isValidBarrelYear } from "@/lib/barrel-room"
 import { requirePermission } from "@/server/auth/guards"
 import { parseBarrelsWorkbook } from "@/server/barrels-excel"
+import type { ParsedBarrelRow } from "@/server/barrels-excel"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 
@@ -17,10 +18,18 @@ export type BarrelsImportSummary = {
   errors: { row: number; message: string }[]
 }
 
-// Reads a list of barrels. A barrel is matched by its number: a new number is added, and a number that is
-// already there gets the type and year of the file when they differ. Whether a barrel is in stock is never
-// changed by the file for a barrel that exists, so a barrel taken out by hand is not put back by loading a list.
-// A row with a problem is reported while the other rows are still saved.
+// Only one barrel in stock can have a number, but several that left the stock can, so rows of barrels that left
+// are told apart by their type and year as well.
+function rowKey(row: ParsedBarrelRow): string {
+  return row.removed ? `${row.number}|left|${row.type}|${row.year}` : `${row.number}|stock`
+}
+
+// Reads a list of barrels. A barrel in stock is matched by its number: a new number is added, and a number that
+// is already in stock gets the type and year of the file when they differ. A number whose barrel left the stock
+// may be used again, so a row for it adds a new barrel. A row marked as removed is matched with a barrel that
+// already left with the same number, type and year, and otherwise is kept as a barrel that left. Loading a list
+// never puts a barrel that was taken out back into stock. A row with a problem is reported while the other rows
+// are still saved.
 export async function importBarrelsFromExcel(formData: FormData): Promise<Result<BarrelsImportSummary>> {
   await requirePermission("BARRELS")
 
@@ -36,7 +45,9 @@ export async function importBarrelsFromExcel(formData: FormData): Promise<Result
   }
   if (!rows) return err({ code: "VALIDATION", message: "בקובץ חסרות העמודות מספר חבית, סוג ושנה" })
 
-  const existing = new Map((await prisma.barrel.findMany({ select: { id: true, number: true, type: true, year: true } })).map((barrel) => [barrel.number, barrel]))
+  const stored = await prisma.barrel.findMany({ select: { id: true, number: true, type: true, year: true, removedAt: true } })
+  const inStock = new Map(stored.filter((barrel) => barrel.removedAt === null).map((barrel) => [barrel.number, barrel]))
+  const left = stored.filter((barrel) => barrel.removedAt !== null)
   const errors: BarrelsImportSummary["errors"] = []
   const seen = new Set<string>()
   const creations: { number: string; type: string; year: number; removedAt: Date | null }[] = []
@@ -49,13 +60,20 @@ export async function importBarrelsFromExcel(formData: FormData): Promise<Result
     else if (!row.type) errors.push({ row: row.row, message: "חסר סוג" })
     else if (row.type.length > MAX_BARREL_TYPE_LENGTH) errors.push({ row: row.row, message: "הסוג ארוך מדי" })
     else if (row.year === null || !isValidBarrelYear(row.year)) errors.push({ row: row.row, message: "השנה חסרה או לא תקינה" })
-    else if (seen.has(row.number)) errors.push({ row: row.row, message: `המספר ${row.number} מופיע בקובץ יותר מפעם אחת` })
-    else {
-      seen.add(row.number)
-      const current = existing.get(row.number)
-      if (!current) creations.push({ number: row.number, type: row.type, year: row.year, removedAt: row.removed ? new Date() : null })
-      else if (current.type !== row.type || current.year !== row.year) updates.push({ id: current.id, type: row.type, year: row.year })
-      else unchanged += 1
+    else if (seen.has(rowKey(row))) {
+      errors.push({ row: row.row, message: row.removed ? "החבית הזו מופיעה בקובץ יותר מפעם אחת" : `המספר ${row.number} מופיע בקובץ יותר מפעם אחת` })
+    } else {
+      seen.add(rowKey(row))
+      if (row.removed) {
+        const known = left.some((barrel) => barrel.number === row.number && barrel.type === row.type && barrel.year === row.year)
+        if (known) unchanged += 1
+        else creations.push({ number: row.number, type: row.type, year: row.year, removedAt: new Date() })
+      } else {
+        const current = inStock.get(row.number)
+        if (!current) creations.push({ number: row.number, type: row.type, year: row.year, removedAt: null })
+        else if (current.type !== row.type || current.year !== row.year) updates.push({ id: current.id, type: row.type, year: row.year })
+        else unchanged += 1
+      }
     }
   }
 

@@ -616,9 +616,11 @@ model FreshAllocation {
 }
 
 // A barrel in the barrel room. Taking one out of stock keeps it, with the date, so the history is not lost.
+// A number is unique among the barrels in stock only, through a partial index in the migration, so the
+// number of a barrel that left the stock can be given to a new one.
 model Barrel {
   id          String    @id @default(cuid())
-  number      String    @unique
+  number      String
   type        String
   year        Int
   removedAt   DateTime?
@@ -627,4 +629,5 @@ model Barrel {
   updatedAt   DateTime  @updatedAt
 
   @@index([removedAt])
+  @@index([number])
 }
