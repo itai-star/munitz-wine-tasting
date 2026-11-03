@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 
 // The year whose barrels are shown. A barrel is used for many years, so the page can be set to any of them.
-export function YearSelect({ year, years }: { year: number; years: number[] }) {
+export function YearSelect({ year, years, basePath = "/admin/barrels" }: { year: number; years: number[]; basePath?: string }) {
   const router = useRouter()
   return (
     <div className="flex items-center gap-2">
@@ -13,7 +13,7 @@ export function YearSelect({ year, years }: { year: number; years: number[] }) {
       <select
         id="barrel-year-filter"
         value={year}
-        onChange={(event) => router.push(`/admin/barrels?year=${event.target.value}`)}
+        onChange={(event) => router.push(`${basePath}?year=${event.target.value}`)}
         className="min-h-11 rounded-lg border border-stone-300 bg-white px-3 text-base font-bold text-stone-900 focus:border-wine focus:ring-2 focus:ring-wine/20 outline-none"
       >
         {years.map((candidate) => (

@@ -63,6 +63,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/admin/grower-payments", "GROWERS"],
   ["/admin/events", "EVENTS"],
   ["/admin/barrels", "BARRELS"],
+  ["/admin/blending", "BARRELS"],
   ["/admin/sessions", "TASTINGS"],
   ["/admin/tastings", "TASTINGS"],
   ["/admin/wines", "INVENTORY"],
@@ -81,6 +82,7 @@ const REQUIREMENTS: [prefix: string, requirement: Requirement][] = [
   ["/api/grower-payments", "GROWERS"],
   ["/api/events", "EVENTS"],
   ["/api/barrels", "BARRELS"],
+  ["/api/blending", "BARRELS"],
   ["/api/upload", "USER"],
   ["/api/auth", "USER"],
 ]

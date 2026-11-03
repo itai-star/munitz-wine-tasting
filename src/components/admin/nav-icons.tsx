@@ -243,6 +243,17 @@ export function BarrelIcon({ className }: IconProps) {
   )
 }
 
+export function BlendIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M7 3h10l-1 5a4 4 0 0 1-8 0L7 3Z" />
+      <path d="M12 12v4" />
+      <path d="M8 21l4-5 4 5" />
+      <path d="M8.5 6h7" />
+    </svg>
+  )
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

@@ -641,12 +641,16 @@ model BarrelFill {
   id        String   @id @default(cuid())
   barrelId  String
   year      Int
+  // The tasting of the barrel in this year: a score from 5 to 10 and the impressions.
+  score        Float?
+  tastingNotes String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   barrel     Barrel            @relation(fields: [barrelId], references: [id], onDelete: Cascade)
   components BarrelFillBlock[]
   tests      BarrelLabTest[]
+  draws      BlendDraw[]
 
   @@unique([barrelId, year])
 }
@@ -685,5 +689,36 @@ model BarrelLabTest {
 
   fill BarrelFill @relation(fields: [fillId], references: [id], onDelete: Cascade)
 
+  @@index([fillId])
+}
+
+// A wine put together in the blending of a year: a tank that barrels of that year are poured into. The name and the
+// description are what the label is made from, and it is finalized once the composition is complete.
+model BlendWine {
+  id          String   @id @default(cuid())
+  year        Int
+  name        String
+  description String?
+  finalized   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  draws BlendDraw[]
+
+  @@index([year])
+}
+
+// Liters taken from a barrel, in its record of the year, into a wine. A barrel holds 225 liters at the start, and what
+// is left of it is what it holds less the draws; it may feed several wines.
+model BlendDraw {
+  id     String @id @default(cuid())
+  wineId String
+  fillId String
+  liters Float
+
+  wine BlendWine  @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  fill BarrelFill @relation(fields: [fillId], references: [id], onDelete: Cascade)
+
+  @@unique([wineId, fillId])
   @@index([fillId])
 }
