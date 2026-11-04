@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { addBarrelToWine, clearBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
+import { addBarrelToWine, clearBlendWine, deleteBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
 import { AddAmountDialog, TastingDialog, WineDialog } from "@/components/blending/blending-dialogs"
 import { BarrelGlyph, NoLabMark, TankBar } from "@/components/blending/blending-parts"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
@@ -45,6 +45,7 @@ function WineTank({
   onAdd,
   onRemove,
   onClear,
+  onDelete,
   onFinalize,
   dropProps,
 }: {
@@ -56,6 +57,7 @@ function WineTank({
   onAdd: () => void
   onRemove: (fillId: string) => void
   onClear: () => void
+  onDelete: () => void
   onFinalize: (finalized: boolean) => void
   dropProps: React.HTMLAttributes<HTMLElement>
 }) {
@@ -154,6 +156,11 @@ function WineTank({
         <button type="button" onClick={onAdd} className="min-h-10 rounded-lg bg-wine px-4 text-sm font-bold text-white hover:bg-wine-dark transition-colors">
           + הוספת כמות מחבית
         </button>
+        {wine.draws.length === 0 && (
+          <button type="button" disabled={busy} onClick={onDelete} className="min-h-10 rounded-lg px-3 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
+            מחיקת המיכל
+          </button>
+        )}
         {wine.draws.length > 0 && (
           <button type="button" disabled={busy} onClick={onClear} className="min-h-10 rounded-lg px-3 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
             איפוס היין
@@ -226,6 +233,9 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
                 onEdit={() => setDialog({ kind: "wine", wineId: wine.id })}
                 onAdd={() => setDialog({ kind: "add", wineId: wine.id })}
                 onRemove={(fillId) => run(() => removeBarrelFromWine({ wineId: wine.id, fillId }))}
+                onDelete={() => {
+                  if (confirm(`אזהרה: למחוק את המיכל "${wine.name}" לצמיתות? המיכל ריק, אבל השם והתיאור שלו יימחקו ואי אפשר יהיה לשחזר אותם.`)) void run(() => deleteBlendWine(wine.id))
+                }}
                 onClear={() => {
                   if (confirm(`לאפס את היין "${wine.name}"? כל החביות שלו יחזרו לערימה, עם כל היין שלקחו ממנו.`)) void run(() => clearBlendWine(wine.id))
                 }}

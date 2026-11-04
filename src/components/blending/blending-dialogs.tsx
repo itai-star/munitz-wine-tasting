@@ -308,7 +308,7 @@ export function WineDialog({ year, wine, onClose }: { year: number; wine: BlendW
               type="button"
               disabled={busy}
               onClick={() => {
-                if (confirm(`למחוק את המיכל "${wine.name}"?`)) void run(() => deleteBlendWine(wine.id))
+                if (confirm(`אזהרה: למחוק את המיכל "${wine.name}" לצמיתות? המיכל ריק, אבל השם והתיאור שלו יימחקו ואי אפשר יהיה לשחזר אותם.`)) void run(() => deleteBlendWine(wine.id))
               }}
               className="ms-auto min-h-11 px-2 text-sm font-bold text-red-700 hover:underline disabled:opacity-50"
             >
