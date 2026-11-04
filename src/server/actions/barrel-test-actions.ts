@@ -4,19 +4,19 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { MAX_BARREL_YEAR, MIN_BARREL_YEAR, stateInYear } from "@/lib/barrel-room"
-import { LabTestFieldsSchema } from "@/lib/lab-test-schema"
+import { BarrelLabFieldsSchema } from "@/lib/lab-test-schema"
 import { requirePermission } from "@/server/auth/guards"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 
 const PAGE = "/admin/barrels"
 
-const CreateBarrelTestSchema = LabTestFieldsSchema.extend({
+const CreateBarrelTestSchema = BarrelLabFieldsSchema.extend({
   barrelId: z.string().min(1),
   year: z.number().int().min(MIN_BARREL_YEAR).max(MAX_BARREL_YEAR),
 })
 
-const UpdateBarrelTestSchema = LabTestFieldsSchema.extend({ id: z.string().min(1) })
+const UpdateBarrelTestSchema = BarrelLabFieldsSchema.extend({ id: z.string().min(1) })
 
 // A test is kept with the barrel's record of the year it was taken for. The record is created when the first test
 // is added to a barrel that has no wine set for that year yet.

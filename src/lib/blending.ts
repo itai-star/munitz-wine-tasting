@@ -33,8 +33,8 @@ export function dominantVariety(parts: WinePart[]): string | null {
   return best
 }
 
-// What the lab tests of a barrel in its year say: its alcohol and its pH from the latest test that has each of them.
-export type BarrelLab = { tests: number; ethanol: number | null; ph: number | null }
+// What the lab tests of a barrel in its year say: its alcohol, its pH and its free bisulfite from the latest test that has each of them.
+export type BarrelLab = { tests: number; ethanol: number | null; ph: number | null; freeBisulfite: number | null }
 
 export type PileBarrel = {
   fillId: string
@@ -110,7 +110,7 @@ export function isValidScore(score: number): boolean {
   return Number.isFinite(score) && score >= MIN_SCORE && score <= MAX_SCORE
 }
 
-type LabTestRow = { testDate: Date; createdAt: Date; ethanol: number | null; ph: number | null }
+type LabTestRow = { testDate: Date; createdAt: Date; ethanol: number | null; ph: number | null; freeBisulfite: number | null }
 
 // The value of the latest test that has one. Tests on the same day are told apart by when they were entered.
 function latestOf(tests: LabTestRow[], pick: (test: LabTestRow) => number | null): number | null {
@@ -123,11 +123,11 @@ function latestOf(tests: LabTestRow[], pick: (test: LabTestRow) => number | null
 }
 
 export function labOf(tests: LabTestRow[]): BarrelLab {
-  return { tests: tests.length, ethanol: latestOf(tests, (test) => test.ethanol), ph: latestOf(tests, (test) => test.ph) }
+  return { tests: tests.length, ethanol: latestOf(tests, (test) => test.ethanol), ph: latestOf(tests, (test) => test.ph), freeBisulfite: latestOf(tests, (test) => test.freeBisulfite) }
 }
 
 export type WineLabValue = { value: number | null; barrels: number }
-export type WineLab = { ethanol: WineLabValue; ph: WineLabValue; totalBarrels: number }
+export type WineLab = { ethanol: WineLabValue; ph: WineLabValue; freeBisulfite: WineLabValue; totalBarrels: number }
 
 function weighted(draws: WineDraw[], pick: (lab: BarrelLab) => number | null): WineLabValue {
   let liters = 0
@@ -143,8 +143,8 @@ function weighted(draws: WineDraw[], pick: (lab: BarrelLab) => number | null): W
   return { value: liters > 0 ? Math.round((sum / liters) * 100) / 100 : null, barrels }
 }
 
-// The alcohol and the pH of a wine, worked out from its barrels: the latest lab test of each barrel, weighted by the
+// The alcohol, the pH and the free bisulfite of a wine, worked out from its barrels: the latest lab test of each barrel, weighted by the
 // liters the barrel gave the wine. A barrel with no test for the value is left out, and the count says how many were used.
 export function wineLabOf(draws: WineDraw[]): WineLab {
-  return { ethanol: weighted(draws, (lab) => lab.ethanol), ph: weighted(draws, (lab) => lab.ph), totalBarrels: draws.length }
+  return { ethanol: weighted(draws, (lab) => lab.ethanol), ph: weighted(draws, (lab) => lab.ph), freeBisulfite: weighted(draws, (lab) => lab.freeBisulfite), totalBarrels: draws.length }
 }

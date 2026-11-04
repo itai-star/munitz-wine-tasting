@@ -122,9 +122,10 @@ function WineTank({
             </ul>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <LabValue label="אלכוהול" unit="%" value={lab.ethanol} total={lab.totalBarrels} />
             <LabValue label="pH" value={lab.ph} total={lab.totalBarrels} />
+            <LabValue label="ביסולפיט חופשי" value={lab.freeBisulfite} total={lab.totalBarrels} />
           </div>
 
           {wine.draws.length > 0 && (

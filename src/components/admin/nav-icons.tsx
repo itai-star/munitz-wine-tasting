@@ -254,6 +254,16 @@ export function BlendIcon({ className }: IconProps) {
   )
 }
 
+export function CartIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M3 4h2l2.4 11h10.2L20 7H6.2" />
+      <circle cx="9" cy="19" r="1.5" />
+      <circle cx="17" cy="19" r="1.5" />
+    </svg>
+  )
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

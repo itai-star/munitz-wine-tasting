@@ -43,6 +43,7 @@ const TABLES: BackupTable[] = [
   { sheet: "כרמים בחביות", load: () => prisma.barrelFillBlock.findMany() },
   { sheet: "יינות בלנדינג", load: () => prisma.blendWine.findMany({ orderBy: [{ year: "asc" }, { createdAt: "asc" }] }) },
   { sheet: "חביות ביינות", load: () => prisma.blendDraw.findMany() },
+  { sheet: "סימוני חביות לפי שנה", load: () => prisma.barrelYearFlag.findMany({ orderBy: [{ year: "asc" }, { barrelId: "asc" }] }) },
   { sheet: "בדיקות חביות", load: () => prisma.barrelLabTest.findMany({ orderBy: { testDate: "asc" } }) },
   { sheet: "טעימות", load: () => prisma.tastingSession.findMany({ orderBy: { date: "asc" } }) },
   { sheet: "יינות בטעימה", load: () => prisma.tastingSessionWine.findMany() },

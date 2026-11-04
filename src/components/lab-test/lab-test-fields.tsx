@@ -15,6 +15,7 @@ export const LabTestFormSchema = z.object({
   rsBx: z.string(),
   co2: z.string(),
   malicAcid: z.string(),
+  freeBisulfite: z.string(),
   notes: z.string(),
   actionItems: z.string(),
 })
@@ -32,6 +33,8 @@ export type EditableLabTest = {
   rsBx: number | null
   co2: number | null
   malicAcid: number | null
+  // Only the tests of barrels have it.
+  freeBisulfite?: number | null
   notes: string | null
   actionItems: string | null
 }
@@ -47,6 +50,7 @@ export type LabTestFields = {
   rsBx: number | null
   co2: number | null
   malicAcid: number | null
+  freeBisulfite: number | null
   notes: string | null
   actionItems: string | null
 }
@@ -68,7 +72,7 @@ function numberToText(value: number | null): string {
 }
 
 export function emptyLabValues(testDate: string = new Date().toISOString().slice(0, 10)): LabTestFormValues {
-  return { testDate, lab: "", density: "", ethanol: "", ph: "", totalAcid: "", volatile: "", rsBx: "", co2: "", malicAcid: "", notes: "", actionItems: "" }
+  return { testDate, lab: "", density: "", ethanol: "", ph: "", totalAcid: "", volatile: "", rsBx: "", co2: "", malicAcid: "", freeBisulfite: "", notes: "", actionItems: "" }
 }
 
 export function labTestToValues(test: EditableLabTest): LabTestFormValues {
@@ -83,6 +87,7 @@ export function labTestToValues(test: EditableLabTest): LabTestFormValues {
     rsBx: numberToText(test.rsBx),
     co2: numberToText(test.co2),
     malicAcid: numberToText(test.malicAcid),
+    freeBisulfite: numberToText(test.freeBisulfite ?? null),
     notes: test.notes ?? "",
     actionItems: test.actionItems ?? "",
   }
@@ -100,6 +105,7 @@ export function labValuesToFields(values: LabTestFormValues): LabTestFields {
     rsBx: toNullableNumber(values.rsBx),
     co2: toNullableNumber(values.co2),
     malicAcid: toNullableNumber(values.malicAcid),
+    freeBisulfite: toNullableNumber(values.freeBisulfite),
     notes: toNullableText(values.notes),
     actionItems: toNullableText(values.actionItems),
   }
@@ -124,9 +130,11 @@ const NUMBER_FIELDS: { name: "density" | "ethanol" | "ph" | "totalAcid" | "volat
 export function LabTestFieldInputs({
   register,
   errors,
+  withBisulfite = false,
 }: {
   register: UseFormRegister<LabTestFormValues>
   errors: FieldErrors<LabTestFormValues>
+  withBisulfite?: boolean
 }) {
   return (
     <>
@@ -149,6 +157,12 @@ export function LabTestFieldInputs({
             <input type="number" step="any" inputMode="decimal" className={inputClass} {...register(field.name)} />
           </div>
         ))}
+        {withBisulfite && (
+          <div>
+            <label className={labelClass}>ביסולפיט חופשי</label>
+            <input type="number" step="any" inputMode="decimal" className={inputClass} {...register("freeBisulfite")} />
+          </div>
+        )}
       </div>
 
       <div>

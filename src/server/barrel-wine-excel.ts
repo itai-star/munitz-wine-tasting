@@ -63,9 +63,9 @@ export async function buildBarrelWineWorkbook(rows: BarrelYearRow[], blocks: Blo
   for (const block of blocks) list.addRow([block.name, block.variety])
 
   const tests = workbook.addWorksheet(TESTS_SHEET, { views: [{ rightToLeft: true, state: "frozen", ySplit: 1 }] })
-  tests.columns = [14, 14, 18, 10, 10, 8, 10, 10, 10, 8, 10, 32, 32].map((width) => ({ width }))
+  tests.columns = [14, 14, 18, 10, 10, 8, 10, 10, 10, 8, 10, 14, 32, 32].map((width) => ({ width }))
   styleHeader(
-    tests.addRow(["מספר חבית", "תאריך", "מעבדה", "Density", "Ethanol", "pH", "Total Acid", "Volatile", "RS/Bx", "CO2", "Malic Acid", "הערות", "פעולות לביצוע"]),
+    tests.addRow(["מספר חבית", "תאריך", "מעבדה", "Density", "Ethanol", "pH", "Total Acid", "Volatile", "RS/Bx", "CO2", "Malic Acid", "ביסולפיט חופשי", "הערות", "פעולות לביצוע"]),
   )
   for (const row of rows) {
     for (const test of row.tests) {
@@ -81,6 +81,7 @@ export async function buildBarrelWineWorkbook(rows: BarrelYearRow[], blocks: Blo
         test.rsBx,
         test.co2,
         test.malicAcid,
+        test.freeBisulfite,
         test.notes,
         test.actionItems,
       ])

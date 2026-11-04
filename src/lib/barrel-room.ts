@@ -55,6 +55,7 @@ export type BarrelTestRow = {
   rsBx: number | null
   co2: number | null
   malicAcid: number | null
+  freeBisulfite: number | null
   notes: string | null
   actionItems: string | null
 }
@@ -64,6 +65,9 @@ export type BarrelYearRow = BarrelRow & {
   state: YearState
   parts: WinePart[]
   tests: BarrelTestRow[]
+  // The marks of the barrel for the year; see the procurement rules.
+  includeInBottling: boolean
+  lastRound: boolean
 }
 
 export type BlockOption = { id: string; name: string; variety: string }

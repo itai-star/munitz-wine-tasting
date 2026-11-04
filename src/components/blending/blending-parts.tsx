@@ -26,7 +26,7 @@ export function NoLabMark({ className }: { className?: string }) {
   return (
     <span
       className={`inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[11px] font-extrabold leading-none text-stone-900 ring-1 ring-amber-700/50 ${className ?? ""}`}
-      title="אין בדיקות מעבדה לחבית הזו, ולכן היא לא נספרת בחישוב האלכוהול וה-pH"
+      title="אין בדיקות מעבדה לחבית הזו, ולכן היא לא נספרת בחישוב ערכי המעבדה של היין"
       role="img"
       aria-label="אין בדיקות מעבדה לחבית"
     >

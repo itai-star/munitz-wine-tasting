@@ -2,6 +2,7 @@ import {
   BarrelIcon,
   BlendIcon,
   CalendarIcon,
+  CartIcon,
   CellarControllerIcon,
   CreditIcon,
   FermentationIcon,
@@ -87,6 +88,7 @@ export const adminAreas: AdminArea[] = [
       { href: "/admin/wines", label: "יינות", title: "ניהול יינות", icon: WineIcon },
       { href: "/admin/barrels", label: "חדר חביות", title: "חדר חביות", icon: BarrelIcon, permission: "BARRELS" },
       { href: "/admin/blending", label: "בלנדינג", title: "בלנדינג", icon: BlendIcon, permission: "BARRELS" },
+      { href: "/admin/procurement", label: "רכש", title: "רכש", icon: CartIcon, permission: "PROCUREMENT" },
     ],
   },
   {

@@ -410,6 +410,7 @@ enum Permission {
   SALES
   GROWERS
   EVENTS
+  PROCUREMENT
   BARRELS
 }
 
@@ -633,6 +634,21 @@ model Barrel {
   @@index([number])
 
   fills BarrelFill[]
+  yearFlags BarrelYearFlag[]
+}
+
+// What is set for a barrel in one year, kept apart from its wine so it can be set before any wine is entered. A barrel with no
+// row has the defaults: it counts for the bottles and corks, and it is not in its last round.
+model BarrelYearFlag {
+  id                String  @id @default(cuid())
+  barrelId          String
+  year              Int
+  includeInBottling Boolean @default(true)
+  lastRound         Boolean @default(false)
+
+  barrel Barrel @relation(fields: [barrelId], references: [id], onDelete: Cascade)
+
+  @@unique([barrelId, year])
 }
 
 // What a barrel holds in one year: a wine from one or more vineyard blocks, each with its share. The lab tests of the
@@ -683,6 +699,7 @@ model BarrelLabTest {
   rsBx        Float?
   co2         Float?
   malicAcid   Float?
+  freeBisulfite Float?
   notes       String?
   actionItems String?
   createdAt   DateTime @default(now())

@@ -14,14 +14,15 @@ export const NOTES_HEADER = "הערות"
 export const ACTIONS_HEADER = "פעולות לביצוע"
 
 export const MEASURES = [
-  { key: "density", header: "Density" },
-  { key: "ethanol", header: "Ethanol" },
-  { key: "ph", header: "pH" },
-  { key: "totalAcid", header: "Total Acid" },
-  { key: "volatile", header: "Volatile" },
-  { key: "rsBx", header: "RS/Bx" },
-  { key: "co2", header: "CO2" },
-  { key: "malicAcid", header: "Malic Acid" },
+  { key: "density", header: "Density", aliases: [] },
+  { key: "ethanol", header: "Ethanol", aliases: [] },
+  { key: "ph", header: "pH", aliases: [] },
+  { key: "totalAcid", header: "Total Acid", aliases: [] },
+  { key: "volatile", header: "Volatile", aliases: [] },
+  { key: "rsBx", header: "RS/Bx", aliases: [] },
+  { key: "co2", header: "CO2", aliases: [] },
+  { key: "malicAcid", header: "Malic Acid", aliases: [] },
+  { key: "freeBisulfite", header: "ביסולפיט חופשי", aliases: ["Free Bisulfite", "Free SO2"] },
 ] as const
 
 export type MeasureKey = (typeof MEASURES)[number]["key"]
@@ -43,7 +44,7 @@ function styleHeader(row: ExcelJS.Row): void {
 export async function buildBarrelTestsWorkbook(rows: BarrelYearRow[], template: boolean): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet(TESTS_SHEET, { views: [{ rightToLeft: true, state: "frozen", ySplit: 1 }] })
-  sheet.columns = [14, 14, 18, 10, 10, 8, 10, 10, 10, 8, 10, 32, 32].map((width) => ({ width }))
+  sheet.columns = [14, 14, 18, 10, 10, 8, 10, 10, 10, 8, 10, 14, 32, 32].map((width) => ({ width }))
   styleHeader(sheet.addRow([NUMBER_HEADER, DATE_HEADER, LAB_HEADER, ...MEASURES.map((measure) => measure.header), NOTES_HEADER, ACTIONS_HEADER]))
 
   for (const row of rows) {
@@ -64,6 +65,7 @@ export async function buildBarrelTestsWorkbook(rows: BarrelYearRow[], template: 
         test.rsBx,
         test.co2,
         test.malicAcid,
+        test.freeBisulfite,
         test.notes,
         test.actionItems,
       ])
@@ -147,7 +149,8 @@ export async function parseBarrelTestsWorkbook(buffer: ArrayBuffer): Promise<Par
 
     const values: ParsedTestRow["values"] = {}
     for (const measure of MEASURES) {
-      const value = numberOf(cell(measure.header))
+      const headers: readonly string[] = [measure.header, ...measure.aliases]
+      const value = numberOf(cell(headers.find((header) => column(header)) ?? measure.header))
       if (value !== null) values[measure.key] = value
     }
     const parsed: ParsedTestRow = {

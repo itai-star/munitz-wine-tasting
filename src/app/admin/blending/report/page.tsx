@@ -51,12 +51,14 @@ export default async function BlendingReportPage({ searchParams }: { searchParam
               </span>
             </div>
             {wine.description && <p className="mt-2 whitespace-pre-line text-base text-stone-700">{wine.description}</p>}
-            {(lab.ethanol.value !== null || lab.ph.value !== null) && (
+            {(lab.ethanol.value !== null || lab.ph.value !== null || lab.freeBisulfite.value !== null) && (
               <p className="mt-2 text-base font-bold text-stone-800">
                 {lab.ethanol.value !== null && <>אלכוהול <bdi>{lab.ethanol.value}%</bdi></>}
                 {lab.ethanol.value !== null && lab.ph.value !== null && " · "}
                 {lab.ph.value !== null && <>pH <bdi>{lab.ph.value}</bdi></>}
-                {(lab.ethanol.barrels < lab.totalBarrels || lab.ph.barrels < lab.totalBarrels) && <span className="text-sm font-semibold text-stone-500"> (לא כל החביות נבדקו)</span>}
+                {lab.freeBisulfite.value !== null && (lab.ethanol.value !== null || lab.ph.value !== null) && " · "}
+                {lab.freeBisulfite.value !== null && <>ביסולפיט חופשי <bdi>{lab.freeBisulfite.value}</bdi></>}
+                {(lab.ethanol.barrels < lab.totalBarrels || lab.ph.barrels < lab.totalBarrels || lab.freeBisulfite.barrels < lab.totalBarrels) && <span className="text-sm font-semibold text-stone-500"> (לא כל החביות נבדקו)</span>}
               </p>
             )}
             <div className="mt-4">

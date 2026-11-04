@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { removeBarrelFromStock } from "@/server/actions/barrel-actions"
+import { BarrelFlagToggles } from "@/components/barrels/barrel-flag-toggles"
 import { useBarrelEditor } from "@/components/barrels/barrel-editor"
 import { formatPercent } from "@/lib/barrel-wine"
 import type { BarrelTestRow, BarrelYearRow } from "@/lib/barrel-room"
@@ -165,6 +166,10 @@ export function BarrelsList({ rows, year }: { rows: BarrelYearRow[]; year: numbe
                     "אין בדיקות מעבדה"
                   )}
                 </p>
+
+                <div className="mt-2">
+                  <BarrelFlagToggles barrelId={row.id} year={year} includeInBottling={row.includeInBottling} lastRound={row.lastRound} />
+                </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={() => openWine(row.id)} className="min-h-10 rounded-lg bg-wine px-4 text-sm font-bold text-white hover:bg-wine-dark transition-colors">

@@ -15,7 +15,7 @@ import {
 import type { LabTestFormValues } from "@/components/lab-test/lab-test-fields"
 import type { BarrelTestRow, BarrelYearRow } from "@/lib/barrel-room"
 
-const MEASURES: { key: "density" | "ethanol" | "ph" | "totalAcid" | "volatile" | "rsBx" | "co2" | "malicAcid"; label: string }[] = [
+const MEASURES: { key: "density" | "ethanol" | "ph" | "totalAcid" | "volatile" | "rsBx" | "co2" | "malicAcid" | "freeBisulfite"; label: string }[] = [
   { key: "density", label: "Density" },
   { key: "ethanol", label: "Ethanol" },
   { key: "ph", label: "pH" },
@@ -24,6 +24,7 @@ const MEASURES: { key: "density" | "ethanol" | "ph" | "totalAcid" | "volatile" |
   { key: "rsBx", label: "RS/Bx" },
   { key: "co2", label: "CO2" },
   { key: "malicAcid", label: "Malic Acid" },
+  { key: "freeBisulfite", label: "ביסולפיט חופשי" },
 ]
 
 function dateText(day: string): string {
@@ -68,7 +69,7 @@ function TestForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
       <p className="text-base font-extrabold text-stone-900">{editing ? "עריכת בדיקה" : "בדיקת מעבדה חדשה"}</p>
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-      <LabTestFieldInputs register={register} errors={errors} />
+      <LabTestFieldInputs register={register} errors={errors} withBisulfite />
       <div className="flex gap-2">
         <button
           type="submit"

@@ -36,12 +36,17 @@ export async function loadBarrelYear(year: number, barrels?: BarrelRow[]): Promi
     },
   })
   const fillOf = new Map(fills.map((fill) => [fill.barrelId, fill]))
+  const flags = await prisma.barrelYearFlag.findMany({ where: { year, barrelId: { in: inYear.map((entry) => entry.barrel.id) } } })
+  const flagsOf = new Map(flags.map((flag) => [flag.barrelId, flag]))
 
   return inYear.map(({ barrel, state }): BarrelYearRow => {
     const fill = fillOf.get(barrel.id)
+    const flag = flagsOf.get(barrel.id)
     return {
       ...barrel,
       state,
+      includeInBottling: flag?.includeInBottling ?? true,
+      lastRound: flag?.lastRound ?? false,
       parts: (fill?.components ?? [])
         .map((part) => ({ blockId: part.blockId, blockName: part.block.name, variety: part.block.variety, percent: part.percent }))
         .sort((a, b) => b.percent - a.percent || a.blockName.localeCompare(b.blockName, "he")),
@@ -57,6 +62,7 @@ export async function loadBarrelYear(year: number, barrels?: BarrelRow[]): Promi
         rsBx: test.rsBx,
         co2: test.co2,
         malicAcid: test.malicAcid,
+        freeBisulfite: test.freeBisulfite,
         notes: test.notes,
         actionItems: test.actionItems,
       })),

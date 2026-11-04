@@ -24,3 +24,6 @@ export const LabTestFieldsSchema = z.object({
   notes: z.string().trim().min(1).nullable(),
   actionItems: z.string().trim().min(1).nullable(),
 })
+
+// A barrel's test also has the free bisulfite, which the finished wine does not record.
+export const BarrelLabFieldsSchema = LabTestFieldsSchema.extend({ freeBisulfite: roundedNumber })
