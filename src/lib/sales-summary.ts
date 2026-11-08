@@ -90,3 +90,54 @@ export function allocateRevenue(
     return { wine: item.wine, bottles: item.bottles, revenueAgorot: share }
   })
 }
+
+export type MonthTotals = { month: number; bottles: number; wineRevenueAgorot: number }
+
+export type Compared = { current: number; previous: number; changePercent: number | null }
+
+// A year against the year before it, on the months both have. A year still in progress is therefore set against the same
+// months of the year before, and not against its whole.
+export type YearComparison = {
+  previousYear: number
+  months: number[]
+  isPartial: boolean
+  bottles: Compared
+  revenueAgorot: Compared
+  revenueNetAgorot: Compared
+  avgPriceNetAgorot: Compared
+}
+
+function compared(current: number, previous: number): Compared {
+  return { current, previous, changePercent: changePercent(current, previous) }
+}
+
+export function compareYears(year: number, current: MonthTotals[], previous: MonthTotals[]): YearComparison | null {
+  const before = new Map(previous.map((entry) => [entry.month, entry]))
+  const common = current.filter((entry) => before.has(entry.month)).sort((a, b) => a.month - b.month)
+  if (common.length === 0) return null
+
+  const sum = (rows: MonthTotals[], pick: (row: MonthTotals) => number): number => rows.reduce((total, row) => total + pick(row), 0)
+  const other = common.map((entry) => before.get(entry.month) as MonthTotals)
+  const bottles = { current: sum(common, (row) => row.bottles), previous: sum(other, (row) => row.bottles) }
+  const revenue = { current: sum(common, (row) => row.wineRevenueAgorot), previous: sum(other, (row) => row.wineRevenueAgorot) }
+  const net = { current: sum(common, (row) => beforeVat(row.wineRevenueAgorot, year)), previous: sum(other, (row) => beforeVat(row.wineRevenueAgorot, year - 1)) }
+  const avgPrice = (netAgorot: number, count: number): number => (count > 0 ? Math.round(netAgorot / count) : 0)
+
+  return {
+    previousYear: year - 1,
+    months: common.map((entry) => entry.month),
+    isPartial: common.length < 12,
+    bottles: compared(bottles.current, bottles.previous),
+    revenueAgorot: compared(revenue.current, revenue.previous),
+    revenueNetAgorot: compared(net.current, net.previous),
+    avgPriceNetAgorot: compared(avgPrice(net.current, bottles.current), avgPrice(net.previous, bottles.previous)),
+  }
+}
+
+// "ינואר עד אוקטובר" for months that follow each other, a count of months otherwise.
+export function monthsRangeText(months: number[]): string {
+  const sorted = [...months].sort((a, b) => a - b)
+  if (sorted.length === 1) return HEBREW_MONTHS[sorted[0] - 1]
+  const contiguous = sorted.every((month, index) => index === 0 || month === sorted[index - 1] + 1)
+  return contiguous ? `${HEBREW_MONTHS[sorted[0] - 1]} עד ${HEBREW_MONTHS[sorted[sorted.length - 1] - 1]}` : `${sorted.length} חודשים`
+}

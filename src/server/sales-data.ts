@@ -5,12 +5,14 @@ import {
   UNCLASSIFIED_LABEL,
   beforeVat,
   changePercent,
+  compareYears,
   formatPercent,
   isCustomerType,
+  monthsRangeText,
   percentOf,
   wineKey,
 } from "@/lib/sales-summary"
-import type { CustomerTypeKey } from "@/lib/sales-summary"
+import type { CustomerTypeKey, MonthTotals, YearComparison } from "@/lib/sales-summary"
 
 export type TypeKey = CustomerTypeKey | "UNCLASSIFIED"
 export const TYPE_KEYS: TypeKey[] = ["PRIVATE", "WHOLESALE", "UNCLASSIFIED"]
@@ -40,6 +42,10 @@ export type MonthSummary = {
   previousLabel: string | null
   revenueChangePercent: number | null
   bottlesChangePercent: number | null
+  // The same month of the year before, when it was imported.
+  lastYearLabel: string | null
+  revenueChangeYearPercent: number | null
+  bottlesChangeYearPercent: number | null
   insights: string[]
 }
 
@@ -53,6 +59,9 @@ export type YearMonthRow = {
   avgPriceNetAgorot: number
   cumulativeNetAgorot: number
   byType: TypeSplit
+  // The same month of the year before.
+  lastYear: { bottles: number; revenueAgorot: number; revenueNetAgorot: number } | null
+  changeYearPercent: number | null
 }
 
 export type YearSummary = {
@@ -67,6 +76,7 @@ export type YearSummary = {
   types: TypeRow[]
   wines: WineRow[]
   topCustomers: CustomerRow[]
+  comparison: YearComparison | null
   insights: string[]
 }
 
@@ -173,6 +183,12 @@ function monthInsights(summary: Omit<MonthSummary, "insights">): string[] {
       `הכנסות היין לפני מע"מ ${direction} ב-${formatPercent(Math.abs(summary.revenueChangePercent))} לעומת ${summary.previousLabel}`
     )
   }
+  if (summary.revenueChangeYearPercent !== null && summary.lastYearLabel) {
+    const direction = summary.revenueChangeYearPercent >= 0 ? "עלו" : "ירדו"
+    insights.push(
+      `הכנסות היין לפני מע"מ ${direction} ב-${formatPercent(Math.abs(summary.revenueChangeYearPercent))} לעומת ${summary.lastYearLabel}`
+    )
+  }
   const wholesale = summary.types.find((row) => row.key === "WHOLESALE")
   const privateSales = summary.types.find((row) => row.key === "PRIVATE")
   if (wholesale && privateSales) {
@@ -192,11 +208,13 @@ function monthInsights(summary: Omit<MonthSummary, "insights">): string[] {
 function buildMonthSummary(
   month: LoadedMonth,
   byVintage: boolean,
-  previous: { year: number; month: number; bottles: number; wineRevenueAgorot: number } | null
+  previous: { year: number; month: number; bottles: number; wineRevenueAgorot: number } | null,
+  lastYear: { year: number; month: number; bottles: number; wineRevenueAgorot: number } | null
 ): MonthSummary {
   const net = beforeVat(month.wineRevenueAgorot, month.year)
   const sales = month.sales.filter((sale) => sale.bottles > 0).length
   const previousNet = previous ? beforeVat(previous.wineRevenueAgorot, previous.year) : 0
+  const lastYearNet = lastYear ? beforeVat(lastYear.wineRevenueAgorot, lastYear.year) : 0
 
   const base = {
     year: month.year,
@@ -214,14 +232,27 @@ function buildMonthSummary(
     previousLabel: previous ? hebrewMonthName(previous.month) : null,
     revenueChangePercent: previous ? changePercent(net, previousNet) : null,
     bottlesChangePercent: previous ? changePercent(month.bottles, previous.bottles) : null,
+    lastYearLabel: lastYear ? `${hebrewMonthName(lastYear.month)} ${lastYear.year}` : null,
+    revenueChangeYearPercent: lastYear ? changePercent(net, lastYearNet) : null,
+    bottlesChangeYearPercent: lastYear ? changePercent(month.bottles, lastYear.bottles) : null,
   }
   return { ...base, insights: monthInsights(base) }
 }
 
-function yearInsights(rows: YearMonthRow[], summary: Pick<YearSummary, "wines" | "types" | "topCustomers" | "avgMonthlyNetAgorot">): string[] {
+function yearInsights(
+  rows: YearMonthRow[],
+  summary: Pick<YearSummary, "wines" | "types" | "topCustomers" | "avgMonthlyNetAgorot" | "comparison">,
+): string[] {
   const withData = rows.filter((row) => row.hasData)
   if (withData.length === 0) return []
   const insights: string[] = []
+
+  const comparison = summary.comparison
+  if (comparison && comparison.revenueNetAgorot.changePercent !== null) {
+    const change = comparison.revenueNetAgorot.changePercent
+    const basis = comparison.isPartial ? `אותם חודשים ב-${comparison.previousYear} (${monthsRangeText(comparison.months)})` : `${comparison.previousYear}`
+    insights.push(`ההכנסות לפני מע"מ ${change >= 0 ? "עלו" : "ירדו"} ב-${formatPercent(Math.abs(change))} לעומת ${basis}`)
+  }
 
   const best = withData.reduce((a, b) => (b.revenueNetAgorot > a.revenueNetAgorot ? b : a))
   const worst = withData.reduce((a, b) => (b.revenueNetAgorot < a.revenueNetAgorot ? b : a))
@@ -255,8 +286,9 @@ function yearInsights(rows: YearMonthRow[], summary: Pick<YearSummary, "wines" |
   return insights
 }
 
-function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolean): YearSummary {
+function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolean, previousMonths: MonthTotals[]): YearSummary {
   const byMonth = new Map(months.map((month) => [month.month, month]))
+  const lastYearOf = new Map(previousMonths.map((month) => [month.month, month]))
   let cumulative = 0
 
   const rows: YearMonthRow[] = Array.from({ length: 12 }, (_, index) => {
@@ -265,6 +297,8 @@ function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolea
     const net = data ? beforeVat(data.wineRevenueAgorot, year) : 0
     cumulative += net
     const byType = emptySplit()
+    const lastYearMonth = lastYearOf.get(number)
+    const lastYearNet = lastYearMonth ? beforeVat(lastYearMonth.wineRevenueAgorot, year - 1) : 0
     for (const sale of data?.sales ?? []) {
       byType[typeKeyOf(sale)].bottles += sale.bottles
       byType[typeKeyOf(sale)].revenueAgorot += sale.revenueAgorot
@@ -279,6 +313,8 @@ function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolea
       avgPriceNetAgorot: data && data.bottles > 0 ? Math.round(net / data.bottles) : 0,
       cumulativeNetAgorot: cumulative,
       byType,
+      lastYear: lastYearMonth ? { bottles: lastYearMonth.bottles, revenueAgorot: lastYearMonth.wineRevenueAgorot, revenueNetAgorot: lastYearNet } : null,
+      changeYearPercent: data && lastYearMonth ? changePercent(net, lastYearNet) : null,
     }
   })
 
@@ -292,6 +328,7 @@ function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolea
   const types = typeRows(sales, revenue)
   const wines = wineRows(sales, revenue, byVintage)
   const topCustomers = customerRows(sales, revenue, YEAR_TOP_CUSTOMERS)
+  const comparison = compareYears(year, months, previousMonths)
 
   return {
     year,
@@ -305,7 +342,8 @@ function buildYearSummary(year: number, months: LoadedMonth[], byVintage: boolea
     types,
     wines,
     topCustomers,
-    insights: yearInsights(rows, { wines, types, topCustomers, avgMonthlyNetAgorot }),
+    comparison,
+    insights: yearInsights(rows, { wines, types, topCustomers, avgMonthlyNetAgorot, comparison }),
   }
 }
 
@@ -338,7 +376,10 @@ export async function loadSalesOverview(params: {
   const year = pickYear(params.year, years)
   const byVintage = params.vintages === "1"
 
-  const months = await loadYearRows(year)
+  const [months, previousMonths] = await Promise.all([
+    loadYearRows(year),
+    prisma.salesMonth.findMany({ where: { year: year - 1 }, select: { year: true, month: true, bottles: true, wineRevenueAgorot: true } }),
+  ])
   const monthsWithData = months.map((month) => month.month)
   const requestedMonth = Number(params.month)
   const selectedMonth = monthsWithData.includes(requestedMonth)
@@ -352,7 +393,7 @@ export async function loadSalesOverview(params: {
       where: { year_month: { year: selected.month === 1 ? year - 1 : year, month: selected.month === 1 ? 12 : selected.month - 1 } },
       select: { year: true, month: true, bottles: true, wineRevenueAgorot: true },
     })
-    monthSummary = buildMonthSummary(selected, byVintage, previous)
+    monthSummary = buildMonthSummary(selected, byVintage, previous, previousMonths.find((month) => month.month === selected.month) ?? null)
   }
 
   return {
@@ -361,7 +402,7 @@ export async function loadSalesOverview(params: {
     byVintage,
     monthsWithData,
     selectedMonth,
-    yearSummary: buildYearSummary(year, months, byVintage),
+    yearSummary: buildYearSummary(year, months, byVintage, previousMonths),
     monthSummary,
     unclassified: unclassifiedCustomers(months),
   }

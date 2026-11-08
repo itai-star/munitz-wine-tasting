@@ -26,14 +26,16 @@ export function Card({ title, note, children }: { title?: string; note?: string;
   )
 }
 
+// A figure with the comparisons it can have, each a change in percent and what it is against. A comparison with nothing to
+// compare with is left out.
 export function Kpi({
   label,
   value,
-  change,
+  changes = [],
 }: {
   label: string
   value: string
-  change?: number | null
+  changes?: { value: number | null | undefined; label: string }[]
 }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-stone-200 border-s-4 border-s-wine p-3.5 sm:p-4">
@@ -41,10 +43,14 @@ export function Kpi({
       <p className="mt-1 text-xl sm:text-2xl font-extrabold text-stone-900 leading-tight">
         <bdi>{value}</bdi>
       </p>
-      {change !== null && change !== undefined && (
-        <p className={`mt-1 text-sm font-bold ${change >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-          <bdi>{formatSignedPercent(change)}</bdi> <span className="font-medium">לעומת החודש הקודם</span>
-        </p>
+      {changes.map(
+        (change) =>
+          change.value !== null &&
+          change.value !== undefined && (
+            <p key={change.label} className={`mt-1 text-sm font-bold ${change.value >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+              <bdi>{formatSignedPercent(change.value)}</bdi> <span className="font-medium">{change.label}</span>
+            </p>
+          ),
       )}
     </div>
   )
