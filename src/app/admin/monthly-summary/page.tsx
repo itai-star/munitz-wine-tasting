@@ -34,7 +34,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
       <details open={!hasData} className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
         <summary className="cursor-pointer text-base font-bold text-wine">ייבוא נתוני מכירות מאקסל</summary>
         <div className="mt-3">
-          <SalesImportPanel year={overview.year} />
+          <SalesImportPanel key={overview.year} year={overview.year} />
         </div>
       </details>
 
