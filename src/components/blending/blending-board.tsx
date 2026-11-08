@@ -3,14 +3,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { addBarrelToWine, clearBlendWine, deleteBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
-import { AddAmountDialog, TastingDialog, WineDialog } from "@/components/blending/blending-dialogs"
+import { AddAmountDialog, BarrelInfoDialog, TastingDialog, WineDialog } from "@/components/blending/blending-dialogs"
 import { BarrelGlyph, NoLabMark, TankBar } from "@/components/blending/blending-parts"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
 import { compositionOf, wineLabOf } from "@/lib/blending"
 import type { BlendWineView, PileBarrel, WineLabValue } from "@/lib/blending"
 import type { Result } from "@/types"
 
-type Dialog = { kind: "tasting"; fillId: string } | { kind: "add"; wineId: string } | { kind: "wine"; wineId: string | null } | null
+type Dialog = { kind: "tasting"; fillId: string } | { kind: "info"; wineId: string; fillId: string } | { kind: "add"; wineId: string } | { kind: "wine"; wineId: string | null } | null
 
 const smallButton = "min-h-10 rounded-lg border border-stone-300 px-3 text-sm font-bold text-stone-800 hover:bg-stone-50 transition-colors disabled:opacity-50"
 
@@ -44,6 +44,7 @@ function WineTank({
   onEdit,
   onAdd,
   onRemove,
+  onInfo,
   onClear,
   onDelete,
   onFinalize,
@@ -56,6 +57,7 @@ function WineTank({
   onEdit: () => void
   onAdd: () => void
   onRemove: (fillId: string) => void
+  onInfo: (fillId: string) => void
   onClear: () => void
   onDelete: () => void
   onFinalize: (finalized: boolean) => void
@@ -135,7 +137,9 @@ function WineTank({
               {wine.draws.map((draw) => (
                 <li key={draw.fillId} className="flex items-center gap-1.5 rounded-full bg-stone-100 ps-3 pe-1 py-1 text-sm font-bold text-stone-800">
                   {draw.lab.tests === 0 && <NoLabMark />}
-                  חבית <bdi>{draw.number}</bdi> · <bdi>{draw.liters}</bdi> ל׳
+                  <button type="button" onClick={() => onInfo(draw.fillId)} className="rounded-full px-0.5 text-start hover:underline" title="פרטי החבית ובדיקות המעבדה שלה">
+                    חבית <bdi>{draw.number}</bdi> · {draw.type} · <bdi>{draw.liters}</bdi> ל׳
+                  </button>
                   <button
                     type="button"
                     disabled={busy}
@@ -200,6 +204,8 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
 
   const closeDialog = (): void => setDialog(null)
   const tasting = dialog?.kind === "tasting" ? pile.find((barrel) => barrel.fillId === dialog.fillId) : undefined
+  const infoWine = dialog?.kind === "info" ? wines.find((wine) => wine.id === dialog.wineId) : undefined
+  const info = infoWine && dialog?.kind === "info" ? infoWine.draws.find((draw) => draw.fillId === dialog.fillId) : undefined
   const adding = dialog?.kind === "add" ? wines.find((wine) => wine.id === dialog.wineId) : undefined
   const editing = dialog?.kind === "wine" && dialog.wineId ? wines.find((wine) => wine.id === dialog.wineId) ?? null : null
 
@@ -233,6 +239,7 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
                 onEdit={() => setDialog({ kind: "wine", wineId: wine.id })}
                 onAdd={() => setDialog({ kind: "add", wineId: wine.id })}
                 onRemove={(fillId) => run(() => removeBarrelFromWine({ wineId: wine.id, fillId }))}
+                onInfo={(fillId) => setDialog({ kind: "info", wineId: wine.id, fillId })}
                 onDelete={() => {
                   if (confirm(`אזהרה: למחוק את המיכל "${wine.name}" לצמיתות? המיכל ריק, אבל השם והתיאור שלו יימחקו ואי אפשר יהיה לשחזר אותם.`)) void run(() => deleteBlendWine(wine.id))
                 }}
@@ -302,7 +309,7 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
                       aria-label={`חבית ${barrel.number}, ${barrel.variety}`}
                       className={`cursor-grab rounded-lg p-1 hover:bg-white active:cursor-grabbing ${dragging === barrel.fillId ? "opacity-40" : ""}`}
                     >
-                      <BarrelGlyph number={barrel.number} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
+                      <BarrelGlyph number={barrel.number} type={barrel.type} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
                     </button>
                   </li>
                 ))}
@@ -313,6 +320,7 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
       </div>
 
       {tasting && <TastingDialog key={tasting.fillId} barrel={tasting} wines={wines} colors={colors} onClose={closeDialog} />}
+      {info && infoWine && <BarrelInfoDialog key={info.fillId} draw={info} wineName={infoWine.name} colors={colors} onClose={closeDialog} />}
       {adding && <AddAmountDialog key={adding.id} wine={adding} pile={pile} onClose={closeDialog} />}
       {dialog?.kind === "wine" && (dialog.wineId === null || editing) && <WineDialog key={dialog.wineId ?? "new"} year={year} wine={editing} onClose={closeDialog} />}
     </div>

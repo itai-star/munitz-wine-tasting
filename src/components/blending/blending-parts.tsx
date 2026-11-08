@@ -1,6 +1,7 @@
 import { BARREL_LITERS } from "@/lib/barrel-plan"
 import type { WinePart } from "@/lib/barrel-wine"
-import type { VarietyShare } from "@/lib/blending"
+import { LAB_MEASURES } from "@/lib/blending"
+import type { BarrelLab, VarietyShare } from "@/lib/blending"
 
 const NEUTRAL = "#a8a29e"
 
@@ -39,6 +40,7 @@ export function NoLabMark({ className }: { className?: string }) {
 // that gave part of its wine away shows lower. The number is under it, and a score, when there is one, on its corner.
 export function BarrelGlyph({
   number,
+  type,
   remaining,
   parts,
   colors,
@@ -47,6 +49,7 @@ export function BarrelGlyph({
   noLab,
 }: {
   number: string
+  type?: string
   remaining: number
   parts: WinePart[]
   colors: Map<string, string>
@@ -56,7 +59,7 @@ export function BarrelGlyph({
 }) {
   const level = Math.max(0, Math.min(100, (remaining / BARREL_LITERS) * 100))
   return (
-    <span className="relative inline-flex w-14 flex-col items-center gap-0.5">
+    <span className="relative inline-flex w-16 flex-col items-center gap-0.5">
       <span className={`relative block h-[4.25rem] w-12 overflow-hidden rounded-[42%/14%] bg-stone-200 ring-2 ${selected ? "ring-wine" : "ring-black/25"}`} aria-hidden="true">
         <span className="absolute inset-x-0 bottom-0 transition-[height] duration-300" style={{ height: `${level}%`, background: stripesOf(parts, colors) }} />
         <span className="absolute inset-x-0 top-[22%] h-[2px] bg-black/25" />
@@ -71,12 +74,33 @@ export function BarrelGlyph({
       <span className="text-sm font-extrabold leading-none text-stone-900">
         <bdi>{number}</bdi>
       </span>
+      {type && (
+        <span className="max-w-full truncate text-[10px] font-semibold leading-none text-stone-600" title={type}>
+          {type}
+        </span>
+      )}
       {remaining < BARREL_LITERS && (
         <span className="text-[11px] font-bold leading-none text-stone-600">
           <bdi>{remaining}</bdi> ל׳
         </span>
       )}
     </span>
+  )
+}
+
+// Every measurement of the lab tests of a barrel, with a dash for one that was never measured.
+export function LabGrid({ lab }: { lab: BarrelLab }) {
+  return (
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
+      {LAB_MEASURES.map((measure) => (
+        <div key={measure.key} className="flex justify-between gap-2">
+          <dt className="font-semibold text-stone-600">{measure.label}</dt>
+          <dd className="font-extrabold text-stone-900">
+            <bdi>{lab[measure.key] ?? "—"}</bdi>
+          </dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 

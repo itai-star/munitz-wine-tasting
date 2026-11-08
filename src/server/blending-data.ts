@@ -3,6 +3,20 @@ import { dominantVariety, labOf, remainingLiters, roundLiters } from "@/lib/blen
 import type { BlendWineView, PileBarrel } from "@/lib/blending"
 import type { WinePart } from "@/lib/barrel-wine"
 
+const LAB_SELECT = {
+  testDate: true,
+  createdAt: true,
+  density: true,
+  ethanol: true,
+  ph: true,
+  totalAcid: true,
+  volatile: true,
+  rsBx: true,
+  co2: true,
+  malicAcid: true,
+  freeBisulfite: true,
+} as const
+
 export type BlendingYear = {
   wines: BlendWineView[]
   // Barrels with wine in the year that still hold some, grouped on screen by variety.
@@ -23,13 +37,13 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
         barrel: { select: { number: true, type: true } },
         components: { include: { block: { select: { name: true, variety: true } } } },
         draws: { select: { liters: true } },
-        tests: { select: { testDate: true, createdAt: true, ethanol: true, ph: true, freeBisulfite: true } },
+        tests: { select: LAB_SELECT },
       },
     }),
     prisma.blendWine.findMany({
       where: { year },
       orderBy: { createdAt: "asc" },
-      include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: { testDate: true, createdAt: true, ethanol: true, ph: true, freeBisulfite: true } } } } } } },
+      include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: LAB_SELECT } } } } } },
     }),
   ])
 

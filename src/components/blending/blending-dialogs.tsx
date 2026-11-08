@@ -9,10 +9,10 @@ import {
   setBarrelTasting,
   updateBlendWine,
 } from "@/server/actions/blending-actions"
-import { BarrelGlyph } from "@/components/blending/blending-parts"
+import { BarrelGlyph, LabGrid } from "@/components/blending/blending-parts"
 import { formatPercent } from "@/lib/barrel-wine"
 import { MAX_SCORE, MIN_SCORE } from "@/lib/blending"
-import type { BlendWineView, PileBarrel } from "@/lib/blending"
+import type { BarrelLab, BlendWineView, PileBarrel, WineDraw } from "@/lib/blending"
 import type { Result } from "@/types"
 
 const inputClass =
@@ -105,7 +105,7 @@ export function TastingDialog({
   return (
     <Shell title={`חבית ${barrel.number}`} subtitle={`${barrel.type} · נשארו ${barrel.remaining} ליטר`} onClose={onClose}>
       <div className="flex items-center gap-4">
-        <BarrelGlyph number={barrel.number} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
+        <BarrelGlyph number={barrel.number} type={barrel.type} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
         <ul className="space-y-0.5 text-sm font-bold text-stone-800">
           {barrel.parts.map((part) => (
             <li key={part.blockId}>
@@ -116,16 +116,7 @@ export function TastingDialog({
         </ul>
       </div>
 
-      <p className="text-sm font-bold text-stone-700">
-        {barrel.lab.tests === 0 ? (
-          "אין עדיין בדיקות מעבדה לחבית הזו"
-        ) : (
-          <>
-            מהבדיקה האחרונה ({barrel.lab.tests === 1 ? "בדיקה אחת בחבית" : `${barrel.lab.tests} בדיקות בחבית`}): אלכוהול <bdi>{barrel.lab.ethanol === null ? "אין נתון" : `${barrel.lab.ethanol}%`}</bdi> · pH{" "}
-            <bdi>{barrel.lab.ph === null ? "אין נתון" : barrel.lab.ph}</bdi> · ביסולפיט חופשי <bdi>{barrel.lab.freeBisulfite === null ? "אין נתון" : barrel.lab.freeBisulfite}</bdi>
-          </>
-        )}
-      </p>
+      <LabSummary lab={barrel.lab} />
 
       <ErrorLine message={error} />
 
@@ -264,6 +255,52 @@ export function AddAmountDialog({ wine, pile, onClose }: { wine: BlendWineView; 
           </button>
         </form>
       )}
+    </Shell>
+  )
+}
+
+function dayText(day: string): string {
+  return day.split("-").reverse().join(".")
+}
+
+// The lab tests of a barrel as they stand: how many there are, the day of the latest, and the latest value of each measurement.
+function LabSummary({ lab }: { lab: BarrelLab }) {
+  return (
+    <section className="space-y-2" aria-label="בדיקות מעבדה של החבית">
+      <h3 className="text-base font-extrabold text-stone-900">בדיקות מעבדה</h3>
+      {lab.tests === 0 ? (
+        <p className="text-sm font-bold text-stone-600">אין עדיין בדיקות מעבדה לחבית הזו</p>
+      ) : (
+        <>
+          <p className="text-sm font-semibold text-stone-600">
+            {lab.tests === 1 ? "בדיקה אחת" : `${lab.tests} בדיקות`}, האחרונה ב-<bdi>{lab.latestDate ? dayText(lab.latestDate) : ""}</bdi>. מוצג הערך האחרון שנמדד בכל מדד.
+          </p>
+          <LabGrid lab={lab} />
+        </>
+      )}
+    </section>
+  )
+}
+
+// A barrel that is already in a wine, for reading: what it is, what it gave the wine, and its lab tests.
+export function BarrelInfoDialog({ draw, wineName, colors, onClose }: { draw: WineDraw; wineName: string; colors: Map<string, string>; onClose: () => void }) {
+  return (
+    <Shell title={`חבית ${draw.number}`} subtitle={`${draw.type} · ${draw.liters} ליטר ביין ${wineName}`} onClose={onClose}>
+      <div className="flex items-center gap-4">
+        <BarrelGlyph number={draw.number} type={draw.type} remaining={225} parts={draw.parts} colors={colors} score={draw.score} noLab={draw.lab.tests === 0} />
+        <ul className="space-y-0.5 text-sm font-bold text-stone-800">
+          {draw.parts.map((part) => (
+            <li key={part.blockId}>
+              {part.blockName} · {part.variety}
+              {draw.parts.length > 1 && <span className="text-wine"> · {formatPercent(part.percent)}</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <LabSummary lab={draw.lab} />
+      <button type="button" onClick={onClose} className={quietButton}>
+        סגירה
+      </button>
     </Shell>
   )
 }

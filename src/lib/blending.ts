@@ -33,8 +33,24 @@ export function dominantVariety(parts: WinePart[]): string | null {
   return best
 }
 
-// What the lab tests of a barrel in its year say: its alcohol, its pH and its free bisulfite from the latest test that has each of them.
-export type BarrelLab = { tests: number; ethanol: number | null; ph: number | null; freeBisulfite: number | null }
+// Every measurement a barrel's lab tests can hold. The labels are the ones of the barrel room.
+export const LAB_MEASURES = [
+  { key: "density", label: "Density" },
+  { key: "ethanol", label: "Ethanol" },
+  { key: "ph", label: "pH" },
+  { key: "totalAcid", label: "Total Acid" },
+  { key: "volatile", label: "Volatile" },
+  { key: "rsBx", label: "RS/Bx" },
+  { key: "co2", label: "CO2" },
+  { key: "malicAcid", label: "Malic Acid" },
+  { key: "freeBisulfite", label: "ביסולפיט חופשי" },
+] as const
+
+export type LabMeasureKey = (typeof LAB_MEASURES)[number]["key"]
+
+// What the lab tests of a barrel in its year say: for each measurement, the value from the latest test that has it, and the
+// day of the latest test of all.
+export type BarrelLab = Record<LabMeasureKey, number | null> & { tests: number; latestDate: string | null }
 
 export type PileBarrel = {
   fillId: string
@@ -110,20 +126,26 @@ export function isValidScore(score: number): boolean {
   return Number.isFinite(score) && score >= MIN_SCORE && score <= MAX_SCORE
 }
 
-type LabTestRow = { testDate: Date; createdAt: Date; ethanol: number | null; ph: number | null; freeBisulfite: number | null }
+type LabTestRow = { testDate: Date; createdAt: Date } & Record<LabMeasureKey, number | null>
+
+function isLater(test: { testDate: Date; createdAt: Date }, than: { testDate: Date; createdAt: Date }): boolean {
+  return test.testDate > than.testDate || (test.testDate.getTime() === than.testDate.getTime() && test.createdAt > than.createdAt)
+}
 
 // The value of the latest test that has one. Tests on the same day are told apart by when they were entered.
-function latestOf(tests: LabTestRow[], pick: (test: LabTestRow) => number | null): number | null {
+function latestOf(tests: LabTestRow[], key: LabMeasureKey): number | null {
   let latest: LabTestRow | null = null
   for (const test of tests) {
-    if (pick(test) === null) continue
-    if (latest === null || test.testDate > latest.testDate || (test.testDate.getTime() === latest.testDate.getTime() && test.createdAt > latest.createdAt)) latest = test
+    if (test[key] === null) continue
+    if (latest === null || isLater(test, latest)) latest = test
   }
-  return latest === null ? null : pick(latest)
+  return latest === null ? null : latest[key]
 }
 
 export function labOf(tests: LabTestRow[]): BarrelLab {
-  return { tests: tests.length, ethanol: latestOf(tests, (test) => test.ethanol), ph: latestOf(tests, (test) => test.ph), freeBisulfite: latestOf(tests, (test) => test.freeBisulfite) }
+  const latest = tests.reduce<LabTestRow | null>((best, test) => (best === null || isLater(test, best) ? test : best), null)
+  const values = Object.fromEntries(LAB_MEASURES.map((measure) => [measure.key, latestOf(tests, measure.key)])) as Record<LabMeasureKey, number | null>
+  return { ...values, tests: tests.length, latestDate: latest ? latest.testDate.toISOString().slice(0, 10) : null }
 }
 
 export type WineLabValue = { value: number | null; barrels: number }
