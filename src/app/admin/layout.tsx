@@ -23,7 +23,7 @@ export default async function AdminLayout({
         <AdminHeader username={user.username} />
         <div className="flex-1 flex">
           <AdminSidebar />
-          <main className="flex-1 min-w-0 max-w-5xl mx-auto w-full px-4 py-6 pb-32 md:pb-8 md:px-8 print:p-0">
+          <main className="flex-1 min-w-0 max-w-5xl mx-auto w-full px-4 py-6 pb-20 md:pb-8 md:px-8 print:p-0">
             {children}
           </main>
         </div>

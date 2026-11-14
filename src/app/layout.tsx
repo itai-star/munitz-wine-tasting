@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import { DeveloperCredit } from "@/components/layout/developer-credit"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="he" dir="rtl" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-stone-50 text-stone-900 print:bg-white">
         {children}
+        <DeveloperCredit />
       </body>
     </html>
   )
