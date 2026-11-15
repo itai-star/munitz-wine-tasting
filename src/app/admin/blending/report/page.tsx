@@ -1,10 +1,12 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { compositionOf, wineLabOf } from "@/lib/blending"
 import { todayKey } from "@/lib/calendar-events"
 import { AutoPrint } from "@/components/blending/auto-print"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
 import { PrintButton } from "@/components/season-summary/print-button"
 import { SalesPie } from "@/components/sales/sales-pie"
+import { getCurrentUser } from "@/server/auth/session"
 import { loadBlending } from "@/server/blending-data"
 
 export const dynamic = "force-dynamic"
@@ -14,7 +16,9 @@ export const dynamic = "force-dynamic"
 export default async function BlendingReportPage({ searchParams }: { searchParams: Promise<{ year?: string; print?: string }> }) {
   const params = await searchParams
   const year = Number(params.year) || Number(todayKey().slice(0, 4))
-  const { wines, pile } = await loadBlending(year)
+  const user = await getCurrentUser()
+  if (!user) redirect("/login")
+  const { wines, pile } = await loadBlending(year, user)
   const colors = colorsByVariety(wines.flatMap((wine) => wine.draws.flatMap((draw) => draw.parts.map((part) => part.variety))))
 
   return (

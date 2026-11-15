@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { addBarrelToWine, clearBlendWine, deleteBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
 import { AddAmountDialog, BarrelInfoDialog, TastingDialog, WineDialog } from "@/components/blending/blending-dialogs"
 import { BarrelGlyph, NoLabMark, TankBar } from "@/components/blending/blending-parts"
+import { tastingScore } from "@/components/blending/tasting-results"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
 import { compositionOf, wineLabOf } from "@/lib/blending"
 import type { BlendWineView, PileBarrel, WineLabValue } from "@/lib/blending"
@@ -179,7 +180,7 @@ function WineTank({
   )
 }
 
-export function BlendingBoard({ year, wines, pile }: { year: number; wines: BlendWineView[]; pile: PileBarrel[] }) {
+export function BlendingBoard({ year, wines, pile, isAdmin }: { year: number; wines: BlendWineView[]; pile: PileBarrel[]; isAdmin: boolean }) {
   const router = useRouter()
   const [dialog, setDialog] = useState<Dialog>(null)
   const [dragging, setDragging] = useState<string | null>(null)
@@ -309,7 +310,7 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
                       aria-label={`חבית ${barrel.number}, ${barrel.variety}`}
                       className={`cursor-grab rounded-lg p-1 hover:bg-white active:cursor-grabbing ${dragging === barrel.fillId ? "opacity-40" : ""}`}
                     >
-                      <BarrelGlyph number={barrel.number} type={barrel.type} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
+                      <BarrelGlyph number={barrel.number} type={barrel.type} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={tastingScore(barrel.tasting)} noLab={barrel.lab.tests === 0} />
                     </button>
                   </li>
                 ))}
@@ -319,8 +320,8 @@ export function BlendingBoard({ year, wines, pile }: { year: number; wines: Blen
         </aside>
       </div>
 
-      {tasting && <TastingDialog key={tasting.fillId} barrel={tasting} wines={wines} colors={colors} onClose={closeDialog} />}
-      {info && infoWine && <BarrelInfoDialog key={info.fillId} draw={info} wineName={infoWine.name} colors={colors} onClose={closeDialog} />}
+      {tasting && <TastingDialog key={tasting.fillId} barrel={tasting} wines={wines} colors={colors} year={year} isAdmin={isAdmin} onClose={closeDialog} />}
+      {info && infoWine && <BarrelInfoDialog key={info.fillId} draw={info} wineName={infoWine.name} colors={colors} year={year} isAdmin={isAdmin} onClose={closeDialog} />}
       {adding && <AddAmountDialog key={adding.id} wine={adding} pile={pile} onClose={closeDialog} />}
       {dialog?.kind === "wine" && (dialog.wineId === null || editing) && <WineDialog key={dialog.wineId ?? "new"} year={year} wine={editing} onClose={closeDialog} />}
     </div>

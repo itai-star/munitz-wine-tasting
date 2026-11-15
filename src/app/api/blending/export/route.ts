@@ -15,7 +15,7 @@ export async function GET(request: Request): Promise<Response> {
   const year = Number(new URL(request.url).searchParams.get("year"))
   if (!Number.isInteger(year) || year < MIN_BARREL_YEAR || year > MAX_BARREL_YEAR) return Response.json({ error: "השנה אינה תקינה" }, { status: 400 })
 
-  const { wines, pile } = await loadBlending(year)
+  const { wines, pile } = await loadBlending(year, user)
   const workbook = await buildBlendingWorkbook(year, wines, pile)
   return new Response(new Uint8Array(workbook), {
     headers: {

@@ -430,6 +430,8 @@ model AppUser {
 
   sessions       UserSession[]
   resetRequests  PasswordResetRequest[]
+  blendTasters   BlendTaster[]
+  barrelRatings  BarrelRating[]
 }
 
 model UserSession {
@@ -667,6 +669,7 @@ model BarrelFill {
   components BarrelFillBlock[]
   tests      BarrelLabTest[]
   draws      BlendDraw[]
+  ratings    BarrelRating[]
 
   @@unique([barrelId, year])
 }
@@ -738,4 +741,45 @@ model BlendDraw {
 
   @@unique([wineId, fillId])
   @@index([fillId])
+}
+
+// The people who taste the barrels of a year for its blending, chosen by an administrator.
+model BlendTaster {
+  id        String   @id @default(cuid())
+  year      Int
+  userId    String
+  createdAt DateTime @default(now())
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([year, userId])
+}
+
+// One taster's form for one barrel of a year: the level, from 1 to 5, chosen for each of the ten parameters of the red wine
+// tasting form. The points of a level are worked out from the form itself, so they are not stored.
+model BarrelRating {
+  id                String   @id @default(cuid())
+  fillId            String
+  userId            String
+  appearanceQuality Int
+  colorIntensity    Int
+  aromaIntensity    Int
+  aromaOriginality  Int
+  aromaQuality      Int
+  tasteIntensity    Int
+  tasteOriginality  Int
+  tasteQuality      Int
+  finish            Int
+  overall           Int
+  // A note for a parameter, by the parameter's name.
+  paramNotes        Json?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  fill BarrelFill @relation(fields: [fillId], references: [id], onDelete: Cascade)
+  user AppUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fillId, userId])
+  @@index([userId])
 }

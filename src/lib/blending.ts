@@ -1,16 +1,9 @@
 import { BARREL_LITERS } from "@/lib/barrel-plan"
+import type { BarrelTastingView } from "@/lib/barrel-rating"
 import type { WinePart } from "@/lib/barrel-wine"
-
-export const MIN_SCORE = 5
-export const MAX_SCORE = 10
 
 export function roundLiters(value: number): number {
   return Math.round(value * 10) / 10
-}
-
-// A score is kept to a tenth.
-export function roundScore(score: number): number {
-  return Math.round(score * 10) / 10
 }
 
 // What is left of a barrel after what was taken from it into wines. A barrel holds 225 liters at the start of the year.
@@ -59,7 +52,8 @@ export type PileBarrel = {
   parts: WinePart[]
   variety: string
   remaining: number
-  score: number | null
+  tasting: BarrelTastingView
+  // The administrator's general note on the barrel.
   tastingNotes: string | null
   lab: BarrelLab
 }
@@ -70,7 +64,7 @@ export type WineDraw = {
   type: string
   liters: number
   parts: WinePart[]
-  score: number | null
+  tasting: BarrelTastingView
   lab: BarrelLab
 }
 
@@ -122,9 +116,6 @@ export function compositionOf(draws: WineDraw[]): Composition {
   return { totalLiters: roundLiters(total), byVariety }
 }
 
-export function isValidScore(score: number): boolean {
-  return Number.isFinite(score) && score >= MIN_SCORE && score <= MAX_SCORE
-}
 
 type LabTestRow = { testDate: Date; createdAt: Date } & Record<LabMeasureKey, number | null>
 

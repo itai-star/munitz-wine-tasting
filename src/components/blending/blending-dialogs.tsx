@@ -6,12 +6,12 @@ import {
   addBarrelToWine,
   createBlendWine,
   deleteBlendWine,
-  setBarrelTasting,
+  setBarrelNotes,
   updateBlendWine,
 } from "@/server/actions/blending-actions"
 import { BarrelGlyph, LabGrid } from "@/components/blending/blending-parts"
+import { TastingResults, tastingScore } from "@/components/blending/tasting-results"
 import { formatPercent } from "@/lib/barrel-wine"
-import { MAX_SCORE, MIN_SCORE } from "@/lib/blending"
 import type { BarrelLab, BlendWineView, PileBarrel, WineDraw } from "@/lib/blending"
 import type { Result } from "@/types"
 
@@ -84,20 +84,23 @@ function ErrorLine({ message }: { message: string }) {
 const primaryButton = "min-h-11 rounded-lg bg-wine px-6 text-base font-bold text-white hover:bg-wine-dark transition-colors disabled:opacity-50"
 const quietButton = "min-h-11 px-3 text-base font-bold text-stone-600 hover:underline"
 
-// A barrel of the pile: its tasting, with a score from 5 to 10 and the impressions, and a way to pour it into a wine.
+// A barrel of the pile: its tasting, its lab tests, the administrator's general note, and a way to pour it into a wine.
 export function TastingDialog({
   barrel,
   wines,
   colors,
+  year,
+  isAdmin,
   onClose,
 }: {
   barrel: PileBarrel
   wines: BlendWineView[]
   colors: Map<string, string>
+  year: number
+  isAdmin: boolean
   onClose: () => void
 }) {
   const { busy, error, run } = useDialog(onClose)
-  const [score, setScore] = useState(barrel.score === null ? "" : String(barrel.score))
   const [notes, setNotes] = useState(barrel.tastingNotes ?? "")
   const [wineId, setWineId] = useState(wines[0]?.id ?? "")
   const [liters, setLiters] = useState(String(barrel.remaining))
@@ -105,7 +108,7 @@ export function TastingDialog({
   return (
     <Shell title={`חבית ${barrel.number}`} subtitle={`${barrel.type} · נשארו ${barrel.remaining} ליטר`} onClose={onClose}>
       <div className="flex items-center gap-4">
-        <BarrelGlyph number={barrel.number} type={barrel.type} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={barrel.score} noLab={barrel.lab.tests === 0} />
+        <BarrelGlyph number={barrel.number} type={barrel.type} remaining={barrel.remaining} parts={barrel.parts} colors={colors} score={tastingScore(barrel.tasting)} noLab={barrel.lab.tests === 0} />
         <ul className="space-y-0.5 text-sm font-bold text-stone-800">
           {barrel.parts.map((part) => (
             <li key={part.blockId}>
@@ -116,44 +119,36 @@ export function TastingDialog({
         </ul>
       </div>
 
+      <TastingResults fillId={barrel.fillId} year={year} tasting={barrel.tasting} isAdmin={isAdmin} />
+
       <LabSummary lab={barrel.lab} />
 
       <ErrorLine message={error} />
 
-      <form
-        className="space-y-3"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void run(() => setBarrelTasting({ fillId: barrel.fillId, score: score.trim() === "" ? null : Number(score), notes }))
-        }}
-      >
-        <h3 className="text-base font-extrabold text-stone-900">רשמי טעימה וציון</h3>
-        <div>
-          <label className={labelClass} htmlFor="tasting-score">
-            ציון ({MIN_SCORE} עד {MAX_SCORE})
+      {isAdmin ? (
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void run(() => setBarrelNotes({ fillId: barrel.fillId, notes }), false)
+          }}
+        >
+          <label className="block text-base font-extrabold text-stone-900" htmlFor="barrel-notes">
+            הערה כללית
           </label>
-          <input
-            id="tasting-score"
-            type="number"
-            inputMode="decimal"
-            step="0.1"
-            min={MIN_SCORE}
-            max={MAX_SCORE}
-            className={inputClass}
-            value={score}
-            onChange={(event) => setScore(event.target.value)}
-          />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="tasting-notes">
-            רשמי טעימה
-          </label>
-          <textarea id="tasting-notes" rows={4} className={inputClass} value={notes} maxLength={2000} onChange={(event) => setNotes(event.target.value)} />
-        </div>
-        <button type="submit" disabled={busy} className={primaryButton}>
-          {busy ? "שומר..." : "שמירה"}
-        </button>
-      </form>
+          <textarea id="barrel-notes" rows={3} className={inputClass} value={notes} maxLength={2000} onChange={(event) => setNotes(event.target.value)} />
+          <button type="submit" disabled={busy} className={primaryButton}>
+            {busy ? "שומר..." : "שמירת ההערה"}
+          </button>
+        </form>
+      ) : (
+        barrel.tastingNotes && (
+          <section className="space-y-1" aria-label="הערה כללית">
+            <h3 className="text-base font-extrabold text-stone-900">הערה כללית</h3>
+            <p className="whitespace-pre-line text-sm text-stone-700">{barrel.tastingNotes}</p>
+          </section>
+        )
+      )}
 
       {wines.length > 0 && (
         <form
@@ -283,11 +278,25 @@ function LabSummary({ lab }: { lab: BarrelLab }) {
 }
 
 // A barrel that is already in a wine, for reading: what it is, what it gave the wine, and its lab tests.
-export function BarrelInfoDialog({ draw, wineName, colors, onClose }: { draw: WineDraw; wineName: string; colors: Map<string, string>; onClose: () => void }) {
+export function BarrelInfoDialog({
+  draw,
+  wineName,
+  colors,
+  year,
+  isAdmin,
+  onClose,
+}: {
+  draw: WineDraw
+  wineName: string
+  colors: Map<string, string>
+  year: number
+  isAdmin: boolean
+  onClose: () => void
+}) {
   return (
     <Shell title={`חבית ${draw.number}`} subtitle={`${draw.type} · ${draw.liters} ליטר ביין ${wineName}`} onClose={onClose}>
       <div className="flex items-center gap-4">
-        <BarrelGlyph number={draw.number} type={draw.type} remaining={225} parts={draw.parts} colors={colors} score={draw.score} noLab={draw.lab.tests === 0} />
+        <BarrelGlyph number={draw.number} type={draw.type} remaining={225} parts={draw.parts} colors={colors} score={tastingScore(draw.tasting)} noLab={draw.lab.tests === 0} />
         <ul className="space-y-0.5 text-sm font-bold text-stone-800">
           {draw.parts.map((part) => (
             <li key={part.blockId}>
@@ -297,6 +306,7 @@ export function BarrelInfoDialog({ draw, wineName, colors, onClose }: { draw: Wi
           ))}
         </ul>
       </div>
+      <TastingResults fillId={draw.fillId} year={year} tasting={draw.tasting} isAdmin={isAdmin} />
       <LabSummary lab={draw.lab} />
       <button type="button" onClick={onClose} className={quietButton}>
         סגירה

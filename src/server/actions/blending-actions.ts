@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { MAX_BARREL_YEAR, MIN_BARREL_YEAR, normalizeText } from "@/lib/barrel-room"
-import { MAX_SCORE, MIN_SCORE, remainingLiters, roundLiters, roundScore } from "@/lib/blending"
-import { requirePermission } from "@/server/auth/guards"
+import { remainingLiters, roundLiters } from "@/lib/blending"
+import { requireAdmin, requirePermission } from "@/server/auth/guards"
 import { ok, err } from "@/types"
 import type { Result } from "@/types"
 
@@ -26,13 +26,12 @@ const WineFieldsSchema = z.object({
 const CreateWineSchema = WineFieldsSchema.extend({ year: z.number().int().min(MIN_BARREL_YEAR).max(MAX_BARREL_YEAR) })
 const UpdateWineSchema = WineFieldsSchema.extend({ id: z.string().min(1), finalized: z.boolean() })
 const MoveSchema = z.object({ wineId: z.string().min(1), fillId: z.string().min(1), liters: z.number().positive("הכמות צריכה להיות גדולה מאפס").optional() })
-const TastingSchema = z.object({
+const NotesSchema = z.object({
   fillId: z.string().min(1),
-  score: z.number().min(MIN_SCORE, `הציון צריך להיות בין ${MIN_SCORE} ל-${MAX_SCORE}`).max(MAX_SCORE, `הציון צריך להיות בין ${MIN_SCORE} ל-${MAX_SCORE}`).nullable(),
   notes: z
     .string()
     .trim()
-    .max(MAX_NOTES, "הרשמים ארוכים מדי")
+    .max(MAX_NOTES, "ההערה ארוכה מדי")
     .transform((value) => value || null),
 })
 
@@ -143,21 +142,17 @@ export async function clearBlendWine(wineId: string): Promise<Result<void>> {
   }
 }
 
-// The tasting of a barrel in its year: a score from 5 to 10 and the impressions, kept with its record of that year.
-export async function setBarrelTasting(input: z.input<typeof TastingSchema>): Promise<Result<void>> {
-  await requirePermission("BARRELS")
-  const parsed = TastingSchema.safeParse(input)
+// The administrator's general note on a barrel in its year, kept with its record of that year.
+export async function setBarrelNotes(input: z.input<typeof NotesSchema>): Promise<Result<void>> {
+  await requireAdmin()
+  const parsed = NotesSchema.safeParse(input)
   if (!parsed.success) return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
 
   try {
-    await prisma.barrelFill.update({
-      where: { id: parsed.data.fillId },
-      data: { score: parsed.data.score === null ? null : roundScore(parsed.data.score), tastingNotes: parsed.data.notes },
-    })
+    await prisma.barrelFill.update({ where: { id: parsed.data.fillId }, data: { tastingNotes: parsed.data.notes } })
     revalidatePath(PAGE)
-    revalidatePath("/admin/barrels")
     return ok(undefined)
   } catch {
-    return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת רשמי הטעימה" })
+    return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת ההערה" })
   }
 }

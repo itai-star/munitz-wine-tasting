@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma"
 import { dominantVariety, labOf, remainingLiters, roundLiters } from "@/lib/blending"
 import type { BlendWineView, PileBarrel } from "@/lib/blending"
 import type { WinePart } from "@/lib/barrel-wine"
+import type { SessionUser } from "@/lib/permissions"
+import { loadTastingViews } from "@/server/barrel-rating-data"
 
 const LAB_SELECT = {
   testDate: true,
@@ -29,8 +31,9 @@ function partsOf(components: { blockId: string; percent: number; block: { name: 
     .sort((a, b) => b.percent - a.percent || a.blockName.localeCompare(b.blockName, "he"))
 }
 
-export async function loadBlending(year: number): Promise<BlendingYear> {
-  const [fills, wines] = await Promise.all([
+// The tasting of each barrel is shown as the viewer may see it, see the tasting rules.
+export async function loadBlending(year: number, viewer: SessionUser): Promise<BlendingYear> {
+  const [fills, wines, tastingOf] = await Promise.all([
     prisma.barrelFill.findMany({
       where: { year, components: { some: {} } },
       include: {
@@ -45,6 +48,7 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
       orderBy: { createdAt: "asc" },
       include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: LAB_SELECT } } } } } },
     }),
+    loadTastingViews(year, viewer),
   ])
 
   const pile = fills
@@ -57,7 +61,7 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
         parts,
         variety: dominantVariety(parts) ?? "",
         remaining: remainingLiters(fill.draws.reduce((sum, draw) => sum + draw.liters, 0)),
-        score: fill.score,
+        tasting: tastingOf(fill.id),
         tastingNotes: fill.tastingNotes,
         lab: labOf(fill.tests),
       }
@@ -81,7 +85,7 @@ export async function loadBlending(year: number): Promise<BlendingYear> {
             type: draw.fill.barrel.type,
             liters: roundLiters(draw.liters),
             parts: partsOf(draw.fill.components),
-            score: draw.fill.score,
+            tasting: tastingOf(draw.fillId),
             lab: labOf(draw.fill.tests),
           }))
           .sort((a, b) => a.number.localeCompare(b.number, "he", { numeric: true })),
