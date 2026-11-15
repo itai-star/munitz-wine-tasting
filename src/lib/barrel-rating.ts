@@ -81,8 +81,13 @@ export type ActiveTasting = {
   waiting: Rater[]
 }
 
-// A new barrel can be chosen when none is being tasted, when every taster saved a form for the one that is, or when nobody did
-// yet, so a barrel chosen by mistake can be replaced.
+// Only one barrel is tasted at a time: a new one can be chosen when none is being tasted, or once every taster saved a form for
+// the one that is. A barrel chosen by mistake is cancelled first, see canCancel.
 export function canMoveOn(active: ActiveTasting): boolean {
-  return active.activeFillId === null || active.waiting.length === 0 || active.saved.length === 0
+  return active.activeFillId === null || active.waiting.length === 0
+}
+
+// The barrel being tasted can be cancelled as long as no form at all was saved for it.
+export function canCancel(active: ActiveTasting, formsOnActive: number): boolean {
+  return active.activeFillId !== null && formsOnActive === 0
 }

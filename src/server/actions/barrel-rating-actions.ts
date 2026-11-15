@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { MAX_BARREL_YEAR, MIN_BARREL_YEAR } from "@/lib/barrel-room"
-import { LEVEL_COUNT, MAX_PARAM_NOTE, MAX_RATING_NOTES, RATING_KEYS, canMoveOn } from "@/lib/barrel-rating"
+import { LEVEL_COUNT, MAX_PARAM_NOTE, MAX_RATING_NOTES, RATING_KEYS, canCancel, canMoveOn } from "@/lib/barrel-rating"
 import type { RatingKey } from "@/lib/barrel-rating"
 import { requireAdmin, requirePermission } from "@/server/auth/guards"
 import { loadActiveTasting, loadTasterCandidates, loadTasters } from "@/server/barrel-rating-data"
@@ -112,7 +112,7 @@ export async function deleteBarrelRatings(input: z.input<typeof DeleteSchema>): 
 const ActiveSchema = z.object({ year: z.number().int().min(MIN_BARREL_YEAR).max(MAX_BARREL_YEAR), fillId: z.string().min(1) })
 
 // Chooses the barrel the tasters of a year taste now. It is refused while some tasters have not saved a form for the barrel
-// being tasted, unless nobody did yet.
+// being tasted.
 export async function setActiveBarrel(input: z.input<typeof ActiveSchema>): Promise<Result<void>> {
   await requireAdmin()
   const parsed = ActiveSchema.safeParse(input)
@@ -136,5 +136,27 @@ export async function setActiveBarrel(input: z.input<typeof ActiveSchema>): Prom
     return ok(undefined)
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בבחירת החבית" })
+  }
+}
+
+const YearSchema = z.object({ year: z.number().int().min(MIN_BARREL_YEAR).max(MAX_BARREL_YEAR) })
+
+// Cancels the barrel being tasted, for a barrel chosen by mistake. It is refused once anyone saved a form for it.
+export async function cancelActiveBarrel(input: z.input<typeof YearSchema>): Promise<Result<void>> {
+  await requireAdmin()
+  const parsed = YearSchema.safeParse(input)
+  if (!parsed.success) return err({ code: "VALIDATION", message: "השנה אינה תקינה" })
+
+  const { year } = parsed.data
+  try {
+    const active = await loadActiveTasting(year)
+    const forms = active.activeFillId ? await prisma.barrelRating.count({ where: { fillId: active.activeFillId } }) : 0
+    if (!canCancel(active, forms)) return err({ code: "VALIDATION", message: active.activeFillId ? "כבר נשמרו טפסים לחבית הזו, ולכן אי אפשר לבטל את הבחירה" : "אין חבית בטעימה" })
+
+    await prisma.blendTastingState.update({ where: { year }, data: { activeFillId: null, activatedAt: null } })
+    revalidate()
+    return ok(undefined)
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בביטול הבחירה" })
   }
 }
