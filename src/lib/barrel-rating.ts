@@ -106,23 +106,25 @@ function flagsOf(key: RatingKey, forms: RatedForm[]): RatingFlag[] {
 // The average points of every parameter over the forms of a barrel and their sum, which is the average score of the barrel, the
 // ratings that stand out, and the final score once an administrator's choices replace some of the averages.
 export function summarizeRatings(forms: RatedForm[], decision: RatingDecision = {}): RatingSummary {
+  // The final score is summed from the exact averages, so a barrel without decisions scores exactly its average.
+  let finalSum: number | null = 0
   const params = RATING_PARAMS.map((param): RatingParamSummary => {
-    const average = forms.length === 0 ? null : roundTenth(mean(forms.map((form) => pointsOf(param.key, form.levels[param.key]))))
+    const exact = forms.length === 0 ? null : mean(forms.map((form) => pointsOf(param.key, form.levels[param.key])))
     const decided = decision[param.key]
     const decidedLevel = isLevel(decided) ? decided : null
+    const finalExact = decidedLevel !== null ? pointsOf(param.key, decidedLevel) : exact
+    finalSum = finalSum === null || finalExact === null ? null : finalSum + finalExact
     return {
       key: param.key,
-      average,
+      average: exact === null ? null : roundTenth(exact),
       max: maxPointsOf(param.key),
       flags: flagsOf(param.key, forms),
       decidedLevel,
-      final: decidedLevel !== null ? pointsOf(param.key, decidedLevel) : average,
+      final: finalExact === null ? null : roundTenth(finalExact),
     }
   })
   const total = forms.length === 0 ? null : roundTenth(mean(forms.map((form) => totalOf(form.levels))))
-  const finals = params.map((param) => param.final)
-  const finalTotal = finals.every((value): value is number => value !== null) ? roundTenth(finals.reduce((sum, value) => sum + value, 0)) : null
-  return { count: forms.length, params, total, finalTotal, hasDecision: params.some((param) => param.decidedLevel !== null) }
+  return { count: forms.length, params, total, finalTotal: finalSum === null ? null : roundTenth(finalSum), hasDecision: params.some((param) => param.decidedLevel !== null) }
 }
 
 // A decision is kept as an object; anything in it that is not a level of a known parameter is left out.

@@ -46,6 +46,9 @@ export default async function BlendingTastingPage({ searchParams }: { searchPara
         <h1 className="text-2xl font-bold text-stone-800">טופס טעימה, בציר {year}</h1>
         <div className="flex flex-wrap items-center gap-3">
           <YearSelect year={year} years={years} basePath="/admin/blending/tasting" />
+          <Link href={`/admin/blending/results?year=${year}`} className="inline-flex min-h-10 items-center rounded-lg border border-stone-300 px-4 text-sm font-bold text-stone-800 hover:bg-stone-50">
+            תוצאות הטעימה
+          </Link>
           <Link href={`/admin/blending?year=${year}`} className="inline-flex min-h-10 items-center rounded-lg border border-stone-300 px-4 text-sm font-bold text-stone-800 hover:bg-stone-50">
             חזרה לבלנדינג
           </Link>
