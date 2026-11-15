@@ -670,6 +670,7 @@ model BarrelFill {
   tests      BarrelLabTest[]
   draws      BlendDraw[]
   ratings    BarrelRating[]
+  activeIn   BlendTastingState[]
 
   @@unique([barrelId, year])
 }
@@ -782,4 +783,14 @@ model BarrelRating {
 
   @@unique([fillId, userId])
   @@index([userId])
+}
+
+// The barrel the tasters of a year are tasting now. A new form can be filled only for it, and an administrator moves on to
+// another barrel once every taster saved theirs.
+model BlendTastingState {
+  year         Int       @id
+  activeFillId String?
+  activatedAt  DateTime?
+
+  activeFill BarrelFill? @relation(fields: [activeFillId], references: [id], onDelete: SetNull)
 }

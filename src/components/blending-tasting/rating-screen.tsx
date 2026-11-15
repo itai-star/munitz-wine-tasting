@@ -6,30 +6,33 @@ import { saveBarrelRating } from "@/server/actions/barrel-rating-actions"
 import { RatingParamRow } from "@/components/blending-tasting/rating-param-row"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
 import { MAX_RATING_NOTES, RATING_PARAMS, totalOf } from "@/lib/barrel-rating"
-import type { RatingKey } from "@/lib/barrel-rating"
+import type { Rater, RatingKey } from "@/lib/barrel-rating"
 import { formatPercent } from "@/lib/barrel-wine"
 import type { MyRating, RatingBarrel } from "@/server/barrel-rating-data"
 
-type PickerBarrel = { fillId: string; number: string; variety: string; rated: boolean }
+type PickerBarrel = { fillId: string; number: string; variety: string; rated: boolean; isActive: boolean }
 
 // The columns of the paper form: a form rated all in one column adds up to the number above it.
 const COLUMN_TOTALS = [40, 56, 72, 86, 100]
 const GROUPS = Array.from(new Set(RATING_PARAMS.map((param) => param.group)))
 
-// The tasting form of one barrel, with the barrels of the year above it to move between. Saving goes on to the next barrel the
-// taster has not rated yet; moving away with changes not saved asks first.
+// The tasting form of one barrel, with the barrels of the year above it. A new form can be filled only for the barrel being
+// tasted now; a barrel the taster already rated can be opened again to change the form. Moving away with changes not saved
+// asks first.
 export function RatingScreen({
   year,
   barrels,
   barrel,
   initial,
-  nextFillId,
+  isActive,
+  waiting,
 }: {
   year: number
   barrels: PickerBarrel[]
   barrel: RatingBarrel
   initial: MyRating | null
-  nextFillId: string | null
+  isActive: boolean
+  waiting: Rater[]
 }) {
   const router = useRouter()
   const [levels, setLevels] = useState<Partial<Record<RatingKey, number>>>(initial?.levels ?? {})
@@ -39,23 +42,22 @@ export function RatingScreen({
   const [isDirty, setIsDirty] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  const [savedAll, setSavedAll] = useState(false)
+  const [hasSaved, setHasSaved] = useState(initial !== null)
 
   const colors = colorsByVariety(barrels.map((candidate) => candidate.variety))
   const missing = RATING_PARAMS.filter((param) => !levels[param.key]).length
   const ratedCount = barrels.filter((candidate) => candidate.rated).length
 
-  function go(fillId: string): void {
-    if (fillId === barrel.fillId) return
+  function go(candidate: PickerBarrel): void {
+    if (candidate.fillId === barrel.fillId) return
     if (isDirty && !confirm("יש בטופס שינויים שלא נשמרו. לעבור לחבית אחרת בלי לשמור?")) return
-    router.push(`/admin/blending/tasting?year=${year}&barrel=${fillId}`)
+    router.push(candidate.isActive ? `/admin/blending/tasting?year=${year}` : `/admin/blending/tasting?year=${year}&barrel=${candidate.fillId}`)
   }
 
   function change<T>(update: (value: T) => void): (value: T) => void {
     return (value) => {
       update(value)
       setIsDirty(true)
-      setSavedAll(false)
     }
   }
 
@@ -78,11 +80,8 @@ export function RatingScreen({
       return
     }
     setIsDirty(false)
-    if (nextFillId) router.push(`/admin/blending/tasting?year=${year}&barrel=${nextFillId}`)
-    else {
-      setSavedAll(true)
-      router.refresh()
-    }
+    setHasSaved(true)
+    router.refresh()
   }
 
   return (
@@ -98,12 +97,14 @@ export function RatingScreen({
               <li key={candidate.fillId}>
                 <button
                   type="button"
-                  onClick={() => go(candidate.fillId)}
+                  onClick={() => go(candidate)}
+                  disabled={!candidate.rated && !candidate.isActive}
                   aria-current={isCurrent ? "true" : undefined}
-                  aria-label={`חבית ${candidate.number}${candidate.rated ? ", דורגה" : ""}`}
-                  className={`flex min-h-10 min-w-12 items-center justify-center gap-1 rounded-lg border-2 px-2 text-sm font-extrabold ${
+                  aria-label={`חבית ${candidate.number}${candidate.isActive ? ", בטעימה עכשיו" : ""}${candidate.rated ? ", דורגה" : ""}`}
+                  title={!candidate.rated && !candidate.isActive ? "אפשר לדרג רק את החבית שבטעימה" : undefined}
+                  className={`flex min-h-10 min-w-12 items-center justify-center gap-1 rounded-lg border-2 px-2 text-sm font-extrabold disabled:cursor-not-allowed disabled:opacity-40 ${
                     isCurrent ? "border-wine bg-wine/10 text-wine" : candidate.rated ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-stone-200 bg-white text-stone-800"
-                  }`}
+                  } ${candidate.isActive ? "ring-2 ring-wine ring-offset-1" : ""}`}
                 >
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.get(candidate.variety) }} aria-hidden="true" />
                   <bdi>{candidate.number}</bdi>
@@ -119,6 +120,7 @@ export function RatingScreen({
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-2xl font-extrabold text-stone-900">
             חבית <bdi>{barrel.number}</bdi>
+            {isActive && <span className="ms-2 align-middle rounded-full bg-wine px-2.5 py-0.5 text-sm font-bold text-white">בטעימה עכשיו</span>}
           </h2>
           <span className="text-sm font-semibold text-stone-600">{barrel.type}</span>
         </div>
@@ -196,7 +198,7 @@ export function RatingScreen({
             onClick={() => void save()}
             className="min-h-12 rounded-xl bg-wine px-6 text-base font-bold text-white hover:bg-wine-dark transition-colors disabled:opacity-50"
           >
-            {busy ? "שומר..." : nextFillId ? "שמירה ומעבר לחבית הבאה" : "שמירה"}
+            {busy ? "שומר..." : hasSaved ? "שמירת שינויים" : "שמירת הטופס"}
           </button>
         </div>
         {error && (
@@ -204,7 +206,12 @@ export function RatingScreen({
             {error}
           </p>
         )}
-        {savedAll && <p className="mt-2 text-sm font-bold text-emerald-700">נשמר. דירגת את כל החביות של {year}, ואפשר לחזור לכל חבית ולשנות.</p>}
+        {hasSaved && !isDirty && (
+          <p className="mt-2 text-sm font-bold text-emerald-700">
+            הטופס שמור, ואפשר לשנות ולשמור שוב.
+            {isActive && (waiting.length > 0 ? ` ממתינים ל: ${waiting.map((taster) => taster.username).join(", ")}.` : " כל המשתתפים שמרו, וממתינים לבחירת החבית הבאה.")}
+          </p>
+        )}
       </div>
     </div>
   )

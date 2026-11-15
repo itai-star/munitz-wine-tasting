@@ -73,3 +73,16 @@ export type BarrelTastingView = {
   // Tasters of the year who did not rate the barrel yet.
   pending: Rater[]
 }
+
+// The barrel being tasted now in a year, who of the tasters saved a form for it and who has not yet.
+export type ActiveTasting = {
+  activeFillId: string | null
+  saved: Rater[]
+  waiting: Rater[]
+}
+
+// A new barrel can be chosen when none is being tasted, when every taster saved a form for the one that is, or when nobody did
+// yet, so a barrel chosen by mistake can be replaced.
+export function canMoveOn(active: ActiveTasting): boolean {
+  return active.activeFillId === null || active.waiting.length === 0 || active.saved.length === 0
+}

@@ -24,7 +24,8 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  const rateLink = `/admin/blending/tasting?year=${year}&barrel=${fillId}`
+  // A taster opens their own form of the barrel; otherwise the tasting screen, which shows the barrel being tasted now.
+  const rateLink = tasting.ratedByMe ? `/admin/blending/tasting?year=${year}&barrel=${fillId}` : `/admin/blending/tasting?year=${year}`
 
   async function remove(rater: Rater | null): Promise<void> {
     const question = rater ? `למחוק את הדירוג של ${rater.username} לחבית הזו?` : "למחוק את כל הדירוגים של החבית הזו? אי אפשר לשחזר אותם."
@@ -39,7 +40,7 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
 
   const link = (
     <Link href={rateLink} className="inline-flex min-h-10 items-center rounded-lg border border-wine px-4 text-sm font-bold text-wine hover:bg-wine/5">
-      {tasting.ratedByMe ? "עריכת הדירוג שלי" : "דירוג החבית"}
+      {tasting.ratedByMe ? "עריכת הדירוג שלי" : "לטופס הטעימה"}
     </Link>
   )
 
@@ -47,7 +48,7 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
     return (
       <section className="space-y-2" aria-label="טעימה">
         <h3 className="text-base font-extrabold text-stone-900">טעימה</h3>
-        <p className="text-sm font-semibold text-stone-600">התוצאות של החבית יוצגו אחרי שתדרג אותה, כדי שהדירוגים של האחרים לא ישפיעו עליך.</p>
+        <p className="text-sm font-semibold text-stone-600">התוצאות של החבית יוצגו אחרי שתדרג אותה, כדי שהדירוגים של האחרים לא ישפיעו עליך. מדרגים חבית כשהיא בטעימה.</p>
         {link}
       </section>
     )

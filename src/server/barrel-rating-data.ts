@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { RATING_KEYS, summarizeRatings } from "@/lib/barrel-rating"
-import type { BarrelTastingView, Rater, RatingKey, RatingLevels } from "@/lib/barrel-rating"
+import type { ActiveTasting, BarrelTastingView, Rater, RatingKey, RatingLevels } from "@/lib/barrel-rating"
 import type { SessionUser } from "@/lib/permissions"
 
 export type MyRating = { levels: RatingLevels; paramNotes: Partial<Record<RatingKey, string>>; notes: string | null }
@@ -88,4 +88,24 @@ export async function loadRatingBarrels(year: number): Promise<RatingBarrel[]> {
       return { fillId: fill.id, number: fill.barrel.number, type: fill.barrel.type, parts, variety: parts[0]?.variety ?? "" }
     })
     .sort((a, b) => a.number.localeCompare(b.number, "he", { numeric: true }))
+}
+
+// The barrel being tasted in a year and who saved a form for it. Only the tasters of the year count.
+export async function loadActiveTasting(year: number): Promise<ActiveTasting> {
+  const [state, tasters] = await Promise.all([prisma.blendTastingState.findUnique({ where: { year } }), loadTasters(year)])
+  const activeFillId = state?.activeFillId ?? null
+  if (!activeFillId) return { activeFillId: null, saved: [], waiting: [] }
+
+  const rated = new Set((await prisma.barrelRating.findMany({ where: { fillId: activeFillId }, select: { userId: true } })).map((row) => row.userId))
+  return {
+    activeFillId,
+    saved: tasters.filter((taster) => rated.has(taster.userId)),
+    waiting: tasters.filter((taster) => !rated.has(taster.userId)),
+  }
+}
+
+// How many forms every barrel of a year has, so an administrator sees which barrels were tasted already.
+export async function loadFormCounts(year: number): Promise<Map<string, number>> {
+  const rows = await prisma.barrelRating.groupBy({ by: ["fillId"], where: { fill: { year } }, _count: { _all: true } })
+  return new Map(rows.map((row) => [row.fillId, row._count._all]))
 }
