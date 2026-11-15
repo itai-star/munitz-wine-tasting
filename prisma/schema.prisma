@@ -432,6 +432,7 @@ model AppUser {
   resetRequests  PasswordResetRequest[]
   blendTasters   BlendTaster[]
   barrelRatings  BarrelRating[]
+  ratingDecisions BarrelRatingDecision[]
 }
 
 model UserSession {
@@ -671,6 +672,7 @@ model BarrelFill {
   draws      BlendDraw[]
   ratings    BarrelRating[]
   activeIn   BlendTastingState[]
+  decision   BarrelRatingDecision?
 
   @@unique([barrelId, year])
 }
@@ -793,4 +795,16 @@ model BlendTastingState {
   activatedAt  DateTime?
 
   activeFill BarrelFill? @relation(fields: [activeFillId], references: [id], onDelete: SetNull)
+}
+
+// An administrator's final say on the tasting of a barrel: the level chosen for some of the parameters, by the parameter's
+// name, in place of the average of the forms. The parameters not in it keep their average.
+model BarrelRatingDecision {
+  fillId      String   @id
+  levels      Json
+  decidedById String?
+  updatedAt   DateTime @updatedAt
+
+  fill      BarrelFill @relation(fields: [fillId], references: [id], onDelete: Cascade)
+  decidedBy AppUser?   @relation(fields: [decidedById], references: [id], onDelete: SetNull)
 }

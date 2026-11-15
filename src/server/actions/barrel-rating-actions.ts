@@ -94,14 +94,17 @@ export async function saveBarrelRating(input: z.input<typeof RatingSchema>): Pro
 
 const DeleteSchema = z.object({ fillId: z.string().min(1), userId: z.string().min(1).optional() })
 
-// Removes the forms of a barrel: one taster's when a taster is given, otherwise everyone's.
+// Removes the forms of a barrel: one taster's when a taster is given, otherwise everyone's, together with the administrator's
+// decision on the barrel, so the barrel starts over.
 export async function deleteBarrelRatings(input: z.input<typeof DeleteSchema>): Promise<Result<void>> {
   await requireAdmin()
   const parsed = DeleteSchema.safeParse(input)
   if (!parsed.success) return err({ code: "VALIDATION", message: "הבחירה אינה תקינה" })
 
   try {
-    await prisma.barrelRating.deleteMany({ where: { fillId: parsed.data.fillId, ...(parsed.data.userId ? { userId: parsed.data.userId } : {}) } })
+    const { fillId, userId } = parsed.data
+    if (userId) await prisma.barrelRating.deleteMany({ where: { fillId, userId } })
+    else await prisma.$transaction([prisma.barrelRating.deleteMany({ where: { fillId } }), prisma.barrelRatingDecision.deleteMany({ where: { fillId } })])
     revalidate()
     return ok(undefined)
   } catch {
@@ -158,5 +161,39 @@ export async function cancelActiveBarrel(input: z.input<typeof YearSchema>): Pro
     return ok(undefined)
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בביטול הבחירה" })
+  }
+}
+
+const DecisionSchema = z.object({
+  fillId: z.string().min(1),
+  // The level chosen for a parameter, or null to go back to the average.
+  levels: z.record(z.string(), z.number().int().min(1).max(LEVEL_COUNT).nullable()),
+})
+
+// An administrator's final say on the parameters of a barrel. The decision is saved as a whole: a parameter without a level
+// keeps its average, and a decision without any level is removed.
+export async function setRatingDecision(input: z.input<typeof DecisionSchema>): Promise<Result<void>> {
+  const user = await requireAdmin()
+  const parsed = DecisionSchema.safeParse(input)
+  if (!parsed.success) return err({ code: "VALIDATION", message: "הבחירה אינה תקינה" })
+
+  const { fillId } = parsed.data
+  const levels = Object.fromEntries(Object.entries(parsed.data.levels).filter(([key, level]) => level !== null && (RATING_KEYS as string[]).includes(key)))
+  try {
+    const fill = await prisma.barrelFill.findUnique({ where: { id: fillId }, select: { id: true } })
+    if (!fill) return err({ code: "NOT_FOUND", message: "החבית לא נמצאה" })
+
+    if (Object.keys(levels).length === 0) await prisma.barrelRatingDecision.deleteMany({ where: { fillId } })
+    else {
+      await prisma.barrelRatingDecision.upsert({
+        where: { fillId },
+        create: { fillId, levels, decidedById: user.id },
+        update: { levels, decidedById: user.id },
+      })
+    }
+    revalidate()
+    return ok(undefined)
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת ההחלטה" })
   }
 }

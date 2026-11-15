@@ -46,6 +46,7 @@ const TABLES: BackupTable[] = [
   { sheet: "סימוני חביות לפי שנה", load: () => prisma.barrelYearFlag.findMany({ orderBy: [{ year: "asc" }, { barrelId: "asc" }] }) },
   { sheet: "משתתפי טעימה", load: () => prisma.blendTaster.findMany({ orderBy: [{ year: "asc" }, { userId: "asc" }] }) },
   { sheet: "חבית בטעימה", load: () => prisma.blendTastingState.findMany({ orderBy: { year: "asc" } }) },
+  { sheet: "החלטות טעימה", load: () => prisma.barrelRatingDecision.findMany() },
   { sheet: "טופסי טעימה", load: () => prisma.barrelRating.findMany({ orderBy: { createdAt: "asc" } }) },
   { sheet: "בדיקות חביות", load: () => prisma.barrelLabTest.findMany({ orderBy: { testDate: "asc" } }) },
   { sheet: "טעימות", load: () => prisma.tastingSession.findMany({ orderBy: { date: "asc" } }) },

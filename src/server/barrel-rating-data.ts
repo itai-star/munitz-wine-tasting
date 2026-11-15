@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { RATING_KEYS, summarizeRatings } from "@/lib/barrel-rating"
+import { RATING_KEYS, decisionOf, summarizeRatings } from "@/lib/barrel-rating"
 import type { ActiveTasting, BarrelTastingView, Rater, RatingKey, RatingLevels } from "@/lib/barrel-rating"
 import type { SessionUser } from "@/lib/permissions"
 
@@ -37,10 +37,12 @@ export async function loadTasterCandidates(): Promise<Rater[]> {
 
 // The tasting of the barrels of a year as one viewer may see it, as a lookup by the barrel's record of the year.
 export async function loadTastingViews(year: number, viewer: SessionUser): Promise<(fillId: string) => BarrelTastingView> {
-  const [ratings, tasters] = await Promise.all([
+  const [ratings, tasters, decisions] = await Promise.all([
     prisma.barrelRating.findMany({ where: { fill: { year } }, include: { user: { select: { id: true, username: true } } } }),
     loadTasters(year),
+    prisma.barrelRatingDecision.findMany({ where: { fill: { year } } }),
   ])
+  const decisionOfFill = new Map(decisions.map((decision) => [decision.fillId, decisionOf(decision.levels)]))
   const byFill = new Map<string, typeof ratings>()
   for (const rating of ratings) byFill.set(rating.fillId, [...(byFill.get(rating.fillId) ?? []), rating])
   const isAdmin = viewer.role === "ADMIN"
@@ -53,7 +55,10 @@ export async function loadTastingViews(year: number, viewer: SessionUser): Promi
     return {
       visible,
       ratedByMe,
-      summary: summarizeRatings(rows.map(levelsOf)),
+      summary: summarizeRatings(
+        rows.map((row) => ({ rater: { userId: row.user.id, username: row.user.username }, levels: levelsOf(row) })),
+        decisionOfFill.get(fillId),
+      ),
       raters: rows.map((row) => ({ userId: row.user.id, username: row.user.username })).sort((x, y) => x.username.localeCompare(y.username, "he")),
       pending: tasters.filter((taster) => !rows.some((row) => row.userId === taster.userId)),
     }

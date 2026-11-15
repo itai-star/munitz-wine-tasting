@@ -3,39 +3,48 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { deleteBarrelRatings } from "@/server/actions/barrel-rating-actions"
+import { deleteBarrelRatings, setRatingDecision } from "@/server/actions/barrel-rating-actions"
+import { TastingResultRow } from "@/components/blending/tasting-result-row"
 import { RATING_PARAMS } from "@/lib/barrel-rating"
-import type { BarrelTastingView, Rater } from "@/lib/barrel-rating"
+import type { BarrelTastingView, Rater, RatingKey } from "@/lib/barrel-rating"
+import type { Result } from "@/types"
 
-// The score shown on a barrel: the average of its tasting forms, rounded, when the viewer may see it.
+// The score shown on a barrel: its final score, which is the average unless an administrator decided some parameters, rounded,
+// when the viewer may see it.
 export function tastingScore(tasting: BarrelTastingView): number | null {
-  const total = tasting.summary?.total
-  return total == null ? null : Math.round(total)
+  const score = tasting.summary?.finalTotal ?? tasting.summary?.total
+  return score == null ? null : Math.round(score)
 }
 
 function names(raters: Rater[]): string {
   return raters.map((rater) => rater.username).join(", ")
 }
 
-// The tasting of a barrel: the average points of each parameter of the form and the average score out of 100, who rated it and
-// who has not yet. A taster who has not rated the barrel sees none of it, only the way to rate it. An administrator can remove
-// one taster's form, or all of them.
+// The tasting of a barrel: the points of each parameter of the form and the score out of 100, the ratings that stand out, who
+// rated it and who has not yet. A taster who has not rated the barrel sees none of it, only the way to the tasting. An
+// administrator can decide the level of any parameter instead of its average, and remove one taster's form or all of them.
 export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: string; year: number; tasting: BarrelTastingView; isAdmin: boolean }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState<Partial<Record<RatingKey, number | null>>>({})
   // A taster opens their own form of the barrel; otherwise the tasting screen, which shows the barrel being tasted now.
   const rateLink = tasting.ratedByMe ? `/admin/blending/tasting?year=${year}&barrel=${fillId}` : `/admin/blending/tasting?year=${year}`
 
-  async function remove(rater: Rater | null): Promise<void> {
-    const question = rater ? `למחוק את הדירוג של ${rater.username} לחבית הזו?` : "למחוק את כל הדירוגים של החבית הזו? אי אפשר לשחזר אותם."
-    if (!confirm(question)) return
+  async function run(action: () => Promise<Result<void>>): Promise<boolean> {
     setBusy(true)
     setError("")
-    const result = await deleteBarrelRatings({ fillId, userId: rater?.userId })
+    const result = await action()
     setBusy(false)
     if (result.success) router.refresh()
     else setError(result.error.message)
+    return result.success
+  }
+
+  function remove(rater: Rater | null): void {
+    const question = rater ? `למחוק את הדירוג של ${rater.username} לחבית הזו?` : "למחוק את כל הדירוגים של החבית הזו, וגם את ההחלטות שלך עליה? אי אפשר לשחזר אותם."
+    if (confirm(question)) void run(() => deleteBarrelRatings({ fillId, userId: rater?.userId }))
   }
 
   const link = (
@@ -55,42 +64,62 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
   }
 
   const summary = tasting.summary
+  const startEditing = (): void => {
+    setDraft(Object.fromEntries(summary.params.map((param) => [param.key, param.decidedLevel])))
+    setEditing(true)
+  }
+  const saveDecision = async (): Promise<void> => {
+    if (await run(() => setRatingDecision({ fillId, levels: draft }))) setEditing(false)
+  }
+  const showRows = summary.count > 0 || summary.hasDecision || editing
+
   return (
     <section className="space-y-3" aria-label="טעימה">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-base font-extrabold text-stone-900">טעימה</h3>
         <p className="text-base font-extrabold text-stone-900">
-          {summary.total === null ? (
+          {summary.hasDecision ? (
+            <>
+              ציון סופי <bdi>{summary.finalTotal ?? "—"}</bdi> מתוך 100
+              {summary.total !== null && (
+                <span className="text-sm font-semibold text-stone-500">
+                  {" "}
+                  · ממוצע <bdi>{summary.total}</bdi>
+                </span>
+              )}
+            </>
+          ) : summary.total === null ? (
             <span className="text-stone-500">עדיין אין דירוגים</span>
           ) : (
             <>
-              ממוצע <bdi>{summary.total}</bdi> מתוך 100 · <bdi>{summary.count}</bdi> {summary.count === 1 ? "טועם" : "טועמים"}
+              ממוצע <bdi>{summary.total}</bdi> מתוך 100
             </>
+          )}
+          {summary.count > 0 && (
+            <span className="text-sm font-semibold text-stone-500">
+              {" "}
+              · <bdi>{summary.count}</bdi> {summary.count === 1 ? "טועם" : "טועמים"}
+            </span>
           )}
         </p>
       </div>
+      {summary.hasDecision && !editing && <p className="text-xs font-bold text-indigo-900">פרמטרים שמסומנים &quot;הוחלט&quot; נקבעו על ידי מנהל, ואינם הממוצע.</p>}
 
-      {summary.count > 0 && (
-        <ul className="space-y-1.5">
+      {showRows && (
+        <ul className="space-y-2">
           {RATING_PARAMS.map((param) => {
             const row = summary.params.find((candidate) => candidate.key === param.key)
-            const average = row?.average ?? 0
-            const lowest = param.points[0]
-            const share = row ? Math.max(0, Math.min(100, ((average - lowest) / (row.max - lowest)) * 100)) : 0
+            if (!row) return null
             return (
-              <li key={param.key} className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-2 text-sm">
-                <span className="font-semibold text-stone-700">
-                  {param.group !== param.label && <span className="text-stone-500">{param.group}, </span>}
-                  {param.label}
-                </span>
-                <span className="h-2 rounded-full bg-stone-100 overflow-hidden" aria-hidden="true">
-                  <span className="block h-full rounded-full bg-wine" style={{ width: `${share}%` }} />
-                </span>
-                <span className="whitespace-nowrap font-extrabold text-stone-900">
-                  <bdi>{average}</bdi>
-                  <span className="font-semibold text-stone-500"> / {row?.max}</span>
-                </span>
-              </li>
+              <TastingResultRow
+                key={param.key}
+                label={param.group !== param.label ? `${param.group}, ${param.label}` : param.label}
+                points={param.points}
+                row={row}
+                editing={editing}
+                draftLevel={draft[param.key] ?? null}
+                onDraft={(level) => setDraft((current) => ({ ...current, [param.key]: level }))}
+              />
             )
           })}
         </ul>
@@ -108,7 +137,7 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => void remove(rater)}
+                      onClick={() => remove(rater)}
                       aria-label={`מחיקת הדירוג של ${rater.username}`}
                       className="ms-0.5 rounded px-1 text-red-700 hover:bg-red-50 disabled:opacity-50"
                     >
@@ -128,14 +157,35 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {link}
-        {isAdmin && summary.count > 0 && (
-          <button type="button" disabled={busy} onClick={() => void remove(null)} className="min-h-10 rounded-lg px-3 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
-            מחיקת כל הדירוגים
+      {editing ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void saveDecision()}
+            className="min-h-10 rounded-lg bg-indigo-600 px-4 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {busy ? "שומר..." : "שמירת ההחלטה"}
           </button>
-        )}
-      </div>
+          <button type="button" onClick={() => setEditing(false)} className="min-h-10 px-3 text-sm font-bold text-stone-600 hover:underline">
+            ביטול
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {link}
+          {isAdmin && (
+            <button type="button" onClick={startEditing} className="min-h-10 rounded-lg border border-indigo-300 px-4 text-sm font-bold text-indigo-900 hover:bg-indigo-50">
+              {summary.hasDecision ? "עריכת ההחלטה" : "החלטה ידנית על פרמטרים"}
+            </button>
+          )}
+          {isAdmin && (summary.count > 0 || summary.hasDecision) && (
+            <button type="button" disabled={busy} onClick={() => remove(null)} className="min-h-10 rounded-lg px-3 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
+              מחיקת כל הדירוגים
+            </button>
+          )}
+        </div>
+      )}
     </section>
   )
 }

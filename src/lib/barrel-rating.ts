@@ -48,20 +48,93 @@ function roundTenth(value: number): number {
   return Math.round(value * 10) / 10
 }
 
-export type RatingParamSummary = { key: RatingKey; average: number | null; max: number }
-export type RatingSummary = { count: number; params: RatingParamSummary[]; total: number | null }
+export type Rater = { userId: string; username: string }
 
-// The average points of every parameter over the forms of a barrel, and their sum, which is the average score of the barrel.
-export function summarizeRatings(ratings: RatingLevels[]): RatingSummary {
-  const params = RATING_PARAMS.map((param): RatingParamSummary => {
-    const average = ratings.length === 0 ? null : ratings.reduce((sum, rating) => sum + pointsOf(param.key, rating[param.key]), 0) / ratings.length
-    return { key: param.key, average: average === null ? null : roundTenth(average), max: maxPointsOf(param.key) }
-  })
-  const total = ratings.length === 0 ? null : roundTenth(ratings.reduce((sum, rating) => sum + totalOf(rating), 0) / ratings.length)
-  return { count: ratings.length, params, total }
+// A rating that stands out. With three tasters or more, a rating two levels or more away from the average of the other tasters
+// is an outlier; leaving the rating itself out of that average keeps it from hiding itself in a small group. With two tasters
+// there is no telling which one stands out, so two ratings two levels or more apart are both marked as a gap.
+export const OUTLIER_LEVEL_GAP = 2
+export const MIN_TASTERS_FOR_OUTLIERS = 3
+
+export type RatingFlag = { kind: "outlier" | "gap"; rater: Rater; points: number; othersAverage: number }
+
+export type RatingParamSummary = {
+  key: RatingKey
+  average: number | null
+  max: number
+  flags: RatingFlag[]
+  // The level an administrator chose instead of the average, and the points the parameter finally counts for.
+  decidedLevel: number | null
+  final: number | null
 }
 
-export type Rater = { userId: string; username: string }
+export type RatingSummary = {
+  count: number
+  params: RatingParamSummary[]
+  total: number | null
+  // The average with the administrator's choices in place of the averages they replace; null while a parameter has neither.
+  finalTotal: number | null
+  hasDecision: boolean
+}
+
+export type RatedForm = { rater: Rater; levels: RatingLevels }
+export type RatingDecision = Partial<Record<RatingKey, number>>
+
+function mean(values: number[]): number {
+  return values.reduce((sum, value) => sum + value, 0) / values.length
+}
+
+function flagsOf(key: RatingKey, forms: RatedForm[]): RatingFlag[] {
+  if (forms.length < 2) return []
+  const flag = (kind: RatingFlag["kind"], form: RatedForm, others: RatedForm[]): RatingFlag => ({
+    kind,
+    rater: form.rater,
+    points: pointsOf(key, form.levels[key]),
+    othersAverage: roundTenth(mean(others.map((other) => pointsOf(key, other.levels[key])))),
+  })
+  if (forms.length < MIN_TASTERS_FOR_OUTLIERS) {
+    const [first, second] = forms
+    if (Math.abs(first.levels[key] - second.levels[key]) < OUTLIER_LEVEL_GAP) return []
+    return [flag("gap", first, [second]), flag("gap", second, [first])]
+  }
+  return forms.flatMap((form) => {
+    const others = forms.filter((other) => other !== form)
+    return Math.abs(form.levels[key] - mean(others.map((other) => other.levels[key]))) >= OUTLIER_LEVEL_GAP ? [flag("outlier", form, others)] : []
+  })
+}
+
+// The average points of every parameter over the forms of a barrel and their sum, which is the average score of the barrel, the
+// ratings that stand out, and the final score once an administrator's choices replace some of the averages.
+export function summarizeRatings(forms: RatedForm[], decision: RatingDecision = {}): RatingSummary {
+  const params = RATING_PARAMS.map((param): RatingParamSummary => {
+    const average = forms.length === 0 ? null : roundTenth(mean(forms.map((form) => pointsOf(param.key, form.levels[param.key]))))
+    const decided = decision[param.key]
+    const decidedLevel = isLevel(decided) ? decided : null
+    return {
+      key: param.key,
+      average,
+      max: maxPointsOf(param.key),
+      flags: flagsOf(param.key, forms),
+      decidedLevel,
+      final: decidedLevel !== null ? pointsOf(param.key, decidedLevel) : average,
+    }
+  })
+  const total = forms.length === 0 ? null : roundTenth(mean(forms.map((form) => totalOf(form.levels))))
+  const finals = params.map((param) => param.final)
+  const finalTotal = finals.every((value): value is number => value !== null) ? roundTenth(finals.reduce((sum, value) => sum + value, 0)) : null
+  return { count: forms.length, params, total, finalTotal, hasDecision: params.some((param) => param.decidedLevel !== null) }
+}
+
+// A decision is kept as an object; anything in it that is not a level of a known parameter is left out.
+export function decisionOf(value: unknown): RatingDecision {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return {}
+  const decision: RatingDecision = {}
+  for (const key of RATING_KEYS) {
+    const level = (value as Record<string, unknown>)[key]
+    if (isLevel(level)) decision[key] = level
+  }
+  return decision
+}
 
 // What one viewer may see of the tasting of a barrel. A taster sees the results only once they rated the barrel themselves, so
 // the others do not sway them; an administrator always sees them. Whatever is hidden is not sent to the page at all.

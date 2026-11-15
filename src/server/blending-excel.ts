@@ -62,18 +62,18 @@ export async function buildBlendingWorkbook(year: number, wines: BlendWineView[]
   const measureHeaders = LAB_MEASURES.map((measure) => `${measure.label} (בדיקה אחרונה)`)
   const measureWidths = LAB_MEASURES.map(() => 14)
 
-  const barrels = addSheet(workbook, "חביות ביינות", [28, 12, 22, 14, 60, 14, 10, ...measureWidths, 10], ["יין", "מספר חבית", "סוג חבית", "ליטרים שנלקחו", "הרכב החבית", "ציון טעימה ממוצע (מתוך 100)", "מספר טועמים", ...measureHeaders, "מספר בדיקות"])
+  const barrels = addSheet(workbook, "חביות ביינות", [28, 12, 22, 14, 60, 14, 14, 10, ...measureWidths, 10], ["יין", "מספר חבית", "סוג חבית", "ליטרים שנלקחו", "הרכב החבית", "ציון טעימה סופי (מתוך 100)", "ציון טעימה ממוצע", "מספר טועמים", ...measureHeaders, "מספר בדיקות"])
   for (const { wine } of compositions) {
-    for (const draw of wine.draws) barrels.addRow([wine.name, draw.number, draw.type, draw.liters, partsText(draw.parts), draw.tasting.summary?.total ?? null, draw.tasting.summary?.count ?? null, ...LAB_MEASURES.map((measure) => draw.lab[measure.key]), draw.lab.tests])
+    for (const draw of wine.draws) barrels.addRow([wine.name, draw.number, draw.type, draw.liters, partsText(draw.parts), draw.tasting.summary?.finalTotal ?? null, draw.tasting.summary?.total ?? null, draw.tasting.summary?.count ?? null, ...LAB_MEASURES.map((measure) => draw.lab[measure.key]), draw.lab.tests])
   }
   barrels.getColumn(2).numFmt = "@"
   barrels.getColumn(4).numFmt = LITERS_FORMAT
 
-  const unused = addSheet(workbook, "חביות לא משובצות", [12, 22, 14, 14, 60, 14, 10, 60, ...measureWidths, 10], ["מספר חבית", "סוג חבית", "נשארו ליטרים", "זן עיקרי", "הרכב החבית", "ציון טעימה ממוצע (מתוך 100)", "מספר טועמים", "הערה כללית", ...measureHeaders, "מספר בדיקות"])
-  for (const barrel of pile) unused.addRow([barrel.number, barrel.type, barrel.remaining, barrel.variety, partsText(barrel.parts), barrel.tasting.summary?.total ?? null, barrel.tasting.summary?.count ?? null, barrel.tastingNotes, ...LAB_MEASURES.map((measure) => barrel.lab[measure.key]), barrel.lab.tests])
+  const unused = addSheet(workbook, "חביות לא משובצות", [12, 22, 14, 14, 60, 14, 14, 10, 60, ...measureWidths, 10], ["מספר חבית", "סוג חבית", "נשארו ליטרים", "זן עיקרי", "הרכב החבית", "ציון טעימה סופי (מתוך 100)", "ציון טעימה ממוצע", "מספר טועמים", "הערה כללית", ...measureHeaders, "מספר בדיקות"])
+  for (const barrel of pile) unused.addRow([barrel.number, barrel.type, barrel.remaining, barrel.variety, partsText(barrel.parts), barrel.tasting.summary?.finalTotal ?? null, barrel.tasting.summary?.total ?? null, barrel.tasting.summary?.count ?? null, barrel.tastingNotes, ...LAB_MEASURES.map((measure) => barrel.lab[measure.key]), barrel.lab.tests])
   unused.getColumn(1).numFmt = "@"
   unused.getColumn(3).numFmt = LITERS_FORMAT
-  unused.getColumn(8).alignment = { wrapText: true, vertical: "top" }
+  unused.getColumn(9).alignment = { wrapText: true, vertical: "top" }
 
   workbook.creator = `מערכת הניהול של יקב מוניץ, בלנדינג ${year}`
   return Buffer.from(await workbook.xlsx.writeBuffer())
