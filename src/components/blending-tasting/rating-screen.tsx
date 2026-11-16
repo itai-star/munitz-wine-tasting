@@ -15,7 +15,7 @@ type PickerBarrel = { fillId: string; number: string; variety: string; rated: bo
 // The columns of the paper form: a form rated all in one column adds up to the number above it.
 const COLUMN_TOTALS = [40, 56, 72, 86, 100]
 const GROUPS = Array.from(new Set(RATING_PARAMS.map((param) => param.group)))
-// The groups with several parameters are numbered from 1, and their parameters 1.1, 1.2 and so on; the general assessment stands alone.
+// The groups with several parameters are numbered from 1, and their parameters 1.1, 1.2 and so on, the group number without a dot; the general assessment stands alone.
 const NUMBERED_GROUPS = GROUPS.filter((group) => RATING_PARAMS.filter((param) => param.group === group).length > 1)
 
 // The tasting form of one barrel, with the barrels of the year above it. A new form can be filled only for the barrel being
@@ -148,7 +148,7 @@ export function RatingScreen({
             <fieldset key={group} className="mt-5">
               {!isSingle && (
                 <legend className="mb-1 text-2xl font-extrabold text-wine">
-                  <bdi>{groupNumber}.</bdi> {group}
+                  <bdi>{groupNumber}</bdi> {group}
                 </legend>
               )}
               {params.map((param, index) => (
