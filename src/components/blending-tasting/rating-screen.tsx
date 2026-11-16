@@ -15,6 +15,8 @@ type PickerBarrel = { fillId: string; number: string; variety: string; rated: bo
 // The columns of the paper form: a form rated all in one column adds up to the number above it.
 const COLUMN_TOTALS = [40, 56, 72, 86, 100]
 const GROUPS = Array.from(new Set(RATING_PARAMS.map((param) => param.group)))
+// The groups with several parameters are numbered from 1, and their parameters 1.1, 1.2 and so on; the general assessment stands alone.
+const NUMBERED_GROUPS = GROUPS.filter((group) => RATING_PARAMS.filter((param) => param.group === group).length > 1)
 
 // The tasting form of one barrel, with the barrels of the year above it. A new form can be filled only for the barrel being
 // tasted now; a barrel the taster already rated can be opened again to change the form. Moving away with changes not saved
@@ -141,13 +143,18 @@ export function RatingScreen({
         {GROUPS.map((group) => {
           const params = RATING_PARAMS.filter((param) => param.group === group)
           const isSingle = params.length === 1 && params[0].label === group
+          const groupNumber = NUMBERED_GROUPS.indexOf(group) + 1
           return (
-            <fieldset key={group} className="mt-3">
-              {!isSingle && <legend className="text-sm font-extrabold uppercase tracking-wide text-wine">{group}</legend>}
-              {params.map((param) => (
+            <fieldset key={group} className="mt-5">
+              {!isSingle && (
+                <legend className="mb-1 text-2xl font-extrabold text-wine">
+                  <bdi>{groupNumber}.</bdi> {group}
+                </legend>
+              )}
+              {params.map((param, index) => (
                 <RatingParamRow
                   key={param.key}
-                  label={param.label}
+                  label={isSingle ? param.label : `${groupNumber}.${index + 1} ${param.label}`}
                   points={param.points}
                   level={levels[param.key]}
                   note={paramNotes[param.key] ?? ""}
