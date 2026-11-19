@@ -94,8 +94,9 @@ export async function saveBarrelRating(input: z.input<typeof RatingSchema>): Pro
 
 const DeleteSchema = z.object({ fillId: z.string().min(1), userId: z.string().min(1).optional() })
 
-// Removes the forms of a barrel: one taster's when a taster is given, otherwise everyone's, together with the administrator's
-// decision on the barrel, so the barrel starts over.
+// Removes the forms of a barrel: one taster's when a taster is given. Without a taster this resets the tasting of the barrel:
+// everyone's forms and the administrator's decision go, and the barrel stops being the one tasted now if it was, so it starts over
+// and can be chosen for a tasting again.
 export async function deleteBarrelRatings(input: z.input<typeof DeleteSchema>): Promise<Result<void>> {
   await requireAdmin()
   const parsed = DeleteSchema.safeParse(input)
@@ -104,7 +105,13 @@ export async function deleteBarrelRatings(input: z.input<typeof DeleteSchema>): 
   try {
     const { fillId, userId } = parsed.data
     if (userId) await prisma.barrelRating.deleteMany({ where: { fillId, userId } })
-    else await prisma.$transaction([prisma.barrelRating.deleteMany({ where: { fillId } }), prisma.barrelRatingDecision.deleteMany({ where: { fillId } })])
+    else {
+      await prisma.$transaction([
+        prisma.barrelRating.deleteMany({ where: { fillId } }),
+        prisma.barrelRatingDecision.deleteMany({ where: { fillId } }),
+        prisma.blendTastingState.updateMany({ where: { activeFillId: fillId }, data: { activeFillId: null, activatedAt: null } }),
+      ])
+    }
     revalidate()
     return ok(undefined)
   } catch {
@@ -130,6 +137,9 @@ export async function setActiveBarrel(input: z.input<typeof ActiveSchema>): Prom
     ])
     if (!fill || fill.year !== year || fill._count.components === 0) return err({ code: "NOT_FOUND", message: "החבית לא נמצאה ביין של השנה הזו" })
     if (tasters.length === 0) return err({ code: "VALIDATION", message: "יש לבחור קודם את משתתפי הטעימה" })
+    if ((await prisma.barrelRating.count({ where: { fillId } })) > 0) {
+      return err({ code: "VALIDATION", message: "לחבית הזו כבר יש טפסי טעימה. כדי לטעום אותה שוב, קודם מאפסים את התוצאות שלה" })
+    }
     if (!canMoveOn(active)) {
       return err({ code: "VALIDATION", message: `עוד לא כל המשתתפים שמרו את הטופס: ${active.waiting.map((taster) => taster.username).join(", ")}` })
     }

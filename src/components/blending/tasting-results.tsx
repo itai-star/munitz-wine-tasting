@@ -43,7 +43,9 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
   }
 
   function remove(rater: Rater | null): void {
-    const question = rater ? `למחוק את הדירוג של ${rater.username} לחבית הזו?` : "למחוק את כל הדירוגים של החבית הזו, וגם את ההחלטות שלך עליה? אי אפשר לשחזר אותם."
+    const question = rater
+      ? `למחוק את הדירוג של ${rater.username} לחבית הזו?`
+      : "לאפס את הטעימה של החבית הזו? כל הדירוגים וההחלטות שלך עליה יימחקו ואי אפשר לשחזר אותם. אחרי האיפוס אפשר לבחור אותה שוב לטעימה."
     if (confirm(question)) void run(() => deleteBarrelRatings({ fillId, userId: rater?.userId }))
   }
 
@@ -181,7 +183,7 @@ export function TastingResults({ fillId, year, tasting, isAdmin }: { fillId: str
           )}
           {isAdmin && (summary.count > 0 || summary.hasDecision) && (
             <button type="button" disabled={busy} onClick={() => remove(null)} className="min-h-10 rounded-lg px-3 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
-              מחיקת כל הדירוגים
+              איפוס הטעימה של החבית
             </button>
           )}
         </div>
