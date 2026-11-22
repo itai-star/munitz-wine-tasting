@@ -30,6 +30,7 @@ export default async function TastingResultsPage({ searchParams }: { searchParam
     fillId: barrel.fillId,
     number: barrel.number,
     type: barrel.type,
+    year: barrel.year,
     variety: barrel.variety,
     composition: barrel.parts.map((part) => part.variety).filter((variety, index, all) => all.indexOf(variety) === index).join(" + "),
     tasting: tastingOf(barrel.fillId),

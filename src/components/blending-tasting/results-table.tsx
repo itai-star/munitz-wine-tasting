@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { NotesPopup } from "@/components/blending-tasting/notes-popup"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
 import type { BarrelTastingView } from "@/lib/barrel-rating"
 
@@ -8,6 +9,8 @@ export type ResultRow = {
   fillId: string
   number: string
   type: string
+  // The year of the barrel itself, not of the wine it holds.
+  year: number
   variety: string
   composition: string
   tasting: BarrelTastingView
@@ -94,7 +97,7 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
-        <table className="w-full min-w-[42rem] text-sm">
+        <table className="w-full min-w-[48rem] text-sm">
           <thead className="bg-stone-50">
             <tr>
               {COLUMNS.map((column) => (
@@ -104,6 +107,9 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
                   </button>
                 </th>
               ))}
+              <th scope="col" className="px-3 py-2 text-start font-extrabold text-stone-700">
+                הערות הטועמים
+              </th>
               <th scope="col" className="px-3 py-2 text-start font-extrabold text-stone-700">
                 מצב החבית
               </th>
@@ -119,7 +125,9 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
                     <span className="text-base font-extrabold text-stone-900">
                       <bdi>{row.number}</bdi>
                     </span>
-                    <span className="block text-xs font-semibold text-stone-500">{row.type}</span>
+                    <span className="block text-xs font-semibold text-stone-500">
+                      {row.type} · שנת חבית <bdi>{row.year}</bdi>
+                    </span>
                   </td>
                   <td className="px-3 py-2.5">
                     <span className="inline-flex items-center gap-1.5 font-bold text-stone-800">
@@ -157,6 +165,7 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
                       התוצאות יוצגו אחרי שתדרג את החבית
                     </td>
                   )}
+                  <td className="px-3 py-2.5">{row.tasting.visible ? <NotesPopup number={row.number} notes={row.tasting.notes} /> : <span className="text-stone-400">—</span>}</td>
                   <td className="px-3 py-2.5 text-sm font-semibold text-stone-700">
                     {row.wines.length > 0 && <span className="block">ביין: {row.wines.join(", ")}</span>}
                     {row.remaining > 0 ? (

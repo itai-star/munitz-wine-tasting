@@ -138,13 +138,18 @@ export function decisionOf(value: unknown): RatingDecision {
   return decision
 }
 
+// The notes one taster wrote on a barrel: the general note of the form and the note of each parameter that has one.
+export type RatingNote = { rater: Rater; general: string | null; params: { key: RatingKey; note: string }[] }
+
 // What one viewer may see of the tasting of a barrel. A taster sees the results only once they rated the barrel themselves, so
-// the others do not sway them; an administrator always sees them. Whatever is hidden is not sent to the page at all.
+// the others do not sway them; an administrator always sees them. Whatever is hidden is not sent to the page at all, and the
+// notes of the tasters follow the same rule.
 export type BarrelTastingView = {
   visible: boolean
   ratedByMe: boolean
   summary: RatingSummary | null
   raters: Rater[]
+  notes: RatingNote[]
   // Tasters of the year who did not rate the barrel yet.
   pending: Rater[]
 }
