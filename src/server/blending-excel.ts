@@ -78,3 +78,45 @@ export async function buildBlendingWorkbook(year: number, wines: BlendWineView[]
   workbook.creator = `מערכת הניהול של יקב מוניץ, בלנדינג ${year}`
   return Buffer.from(await workbook.xlsx.writeBuffer())
 }
+
+function averageNote(value: { barrels: number }, total: number): string {
+  return value.barrels < total ? `${value.barrels} מתוך ${total} חביות` : ""
+}
+
+// One row per wine, for the label and the back label: its varieties with their shares, the alcohol and the pH worked out from its
+// barrels, the description written by hand, and the numbers of its barrels. A note says when a value is worked out from only some
+// of the barrels, because the others have no lab test.
+export async function buildWinesWorkbook(year: number, wines: BlendWineView[]): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook()
+  const sheet = addSheet(
+    workbook,
+    `יינות ${year}`,
+    [28, 40, 12, 10, 60, 30, 28],
+    ["שם היין", "הרכב זני", "אלכוהול %", "pH", "תיאור לתווית האחורית", "מספרי החביות", "הערות חישוב"],
+  )
+
+  for (const wine of wines) {
+    const composition = compositionOf(wine.draws)
+    const lab = wineLabOf(wine.draws)
+    const notes = [
+      lab.ethanol.value !== null && averageNote(lab.ethanol, lab.totalBarrels) ? `אלכוהול: ${averageNote(lab.ethanol, lab.totalBarrels)}` : "",
+      lab.ph.value !== null && averageNote(lab.ph, lab.totalBarrels) ? `pH: ${averageNote(lab.ph, lab.totalBarrels)}` : "",
+    ].filter((note) => note !== "")
+    const row = sheet.addRow([
+      wine.name,
+      composition.byVariety.map((share) => `${share.variety} ${formatPercent(share.percent)}`).join(", "),
+      lab.ethanol.value,
+      lab.ph.value,
+      wine.description,
+      wine.draws.map((draw) => draw.number).join(", "),
+      notes.join(" · "),
+    ])
+    row.alignment = { vertical: "top", wrapText: true }
+  }
+  sheet.getColumn(3).numFmt = "0.0"
+  sheet.getColumn(4).numFmt = "0.00"
+  sheet.getColumn(6).numFmt = "@"
+
+  workbook.creator = `מערכת הניהול של יקב מוניץ, יינות הבלנדינג ${year}`
+  return Buffer.from(await workbook.xlsx.writeBuffer())
+}

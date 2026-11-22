@@ -41,8 +41,11 @@ export default async function BlendingPage({ searchParams }: { searchParams: Pro
             תוצאות הטעימה
           </Link>
           {isAdmin && <TastersButton key={year} year={year} candidates={candidates} tasters={tasters} />}
+          <a href={`/api/blending/wines?year=${year}`} download className={linkClass}>
+            ייצוא יינות
+          </a>
           <a href={`/api/blending/export?year=${year}`} download className={linkClass}>
-            ייצוא לאקסל
+            ייצוא מלא לאקסל
           </a>
           <Link href={`/admin/blending/report?year=${year}&print=1`} className={linkClass}>
             ייצוא PDF

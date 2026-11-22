@@ -339,7 +339,7 @@ export function WineDialog({ year, wine, onClose }: { year: number; wine: BlendW
         </div>
         <div>
           <label className={labelClass} htmlFor="wine-description">
-            תיאור היין, לתווית
+            תיאור היין לתווית האחורית
           </label>
           <textarea id="wine-description" rows={5} className={inputClass} value={description} maxLength={2000} onChange={(event) => setDescription(event.target.value)} />
         </div>

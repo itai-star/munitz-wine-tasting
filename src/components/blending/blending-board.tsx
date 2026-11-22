@@ -78,10 +78,13 @@ function WineTank({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-2xl font-extrabold text-stone-900 break-words">{wine.name}</h3>
+          <p className="mt-2 text-xs font-bold text-stone-500">תיאור לתווית האחורית</p>
           {wine.description ? (
-            <p className="mt-1 whitespace-pre-line text-base text-stone-700">{wine.description}</p>
+            <p className="whitespace-pre-line text-base text-stone-700">{wine.description}</p>
           ) : (
-            <p className="mt-1 text-sm font-semibold text-stone-400">אין עדיין תיאור ליין</p>
+            <button type="button" onClick={onEdit} className="text-sm font-bold text-wine hover:underline">
+              + הוספת תיאור ליין
+            </button>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
