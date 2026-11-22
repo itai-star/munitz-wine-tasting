@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { RATING_KEYS, decisionOf, summarizeRatings } from "@/lib/barrel-rating"
+import { LAB_MEASURES, labOf } from "@/lib/blending"
+import type { BarrelLab, LabMeasureKey } from "@/lib/blending"
 import type { ActiveTasting, BarrelTastingView, Rater, RatingKey, RatingLevels } from "@/lib/barrel-rating"
 import type { SessionUser } from "@/lib/permissions"
 
@@ -71,26 +73,63 @@ export async function loadMyRatings(year: number, userId: string): Promise<Map<s
   return new Map(rows.map((row) => [row.fillId, { levels: levelsOf(row), paramNotes: paramNotesOf(row.paramNotes), notes: row.notes }]))
 }
 
+// One lab test of a barrel, as the tasting form shows it.
+export type RatingLabTest = {
+  id: string
+  // The day of the test, "YYYY-MM-DD".
+  date: string
+  lab: string | null
+  values: Partial<Record<LabMeasureKey, number>>
+  notes: string | null
+  actionItems: string | null
+}
+
 export type RatingBarrel = {
   fillId: string
   number: string
   type: string
+  // The year of the barrel itself, not of the wine it holds.
+  year: number
   parts: { blockName: string; variety: string; percent: number }[]
   variety: string
+  lab: BarrelLab
+  tests: RatingLabTest[]
 }
 
 // The barrels of a year that hold wine, in the order of their numbers, for the tasting screen.
 export async function loadRatingBarrels(year: number): Promise<RatingBarrel[]> {
   const fills = await prisma.barrelFill.findMany({
     where: { year, components: { some: {} } },
-    include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } } },
+    include: {
+      barrel: { select: { number: true, type: true, year: true } },
+      components: { include: { block: { select: { name: true, variety: true } } } },
+      tests: { orderBy: [{ testDate: "desc" }, { createdAt: "desc" }] },
+    },
   })
   return fills
     .map((fill) => {
       const parts = fill.components
         .map((part) => ({ blockName: part.block.name, variety: part.block.variety, percent: part.percent }))
         .sort((a, b) => b.percent - a.percent || a.blockName.localeCompare(b.blockName, "he"))
-      return { fillId: fill.id, number: fill.barrel.number, type: fill.barrel.type, parts, variety: parts[0]?.variety ?? "" }
+      return {
+        fillId: fill.id,
+        number: fill.barrel.number,
+        type: fill.barrel.type,
+        year: fill.barrel.year,
+        parts,
+        variety: parts[0]?.variety ?? "",
+        lab: labOf(fill.tests),
+        tests: fill.tests.map(
+          (test): RatingLabTest => ({
+            id: test.id,
+            date: test.testDate.toISOString().slice(0, 10),
+            lab: test.lab,
+            values: Object.fromEntries(LAB_MEASURES.flatMap((measure) => (test[measure.key] === null ? [] : [[measure.key, test[measure.key]]]))),
+            notes: test.notes,
+            actionItems: test.actionItems,
+          }),
+        ),
+      }
     })
     .sort((a, b) => a.number.localeCompare(b.number, "he", { numeric: true }))
 }

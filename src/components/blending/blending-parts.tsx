@@ -66,7 +66,7 @@ export function BarrelGlyph({
         <span className="absolute inset-x-0 bottom-[22%] h-[2px] bg-black/25" />
       </span>
       {score != null && (
-        <span className="absolute -top-1.5 -end-1 rounded-full bg-white px-1.5 py-px text-[11px] font-extrabold leading-tight text-wine ring-1 ring-wine/40">
+        <span className="absolute -top-3 -end-3 z-10 rounded-full bg-white px-2.5 py-0.5 text-[17px] font-extrabold leading-tight text-wine shadow-sm ring-2 ring-wine/50">
           <bdi>{score}</bdi>
         </span>
       )}

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { saveBarrelRating } from "@/server/actions/barrel-rating-actions"
+import { LabPopup } from "@/components/blending-tasting/lab-popup"
 import { RatingParamRow } from "@/components/blending-tasting/rating-param-row"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
 import { MAX_RATING_NOTES, RATING_PARAMS, totalOf } from "@/lib/barrel-rating"
@@ -124,7 +125,12 @@ export function RatingScreen({
             חבית <bdi>{barrel.number}</bdi>
             {isActive && <span className="ms-2 align-middle rounded-full bg-wine px-2.5 py-0.5 text-sm font-bold text-white">בטעימה עכשיו</span>}
           </h2>
-          <span className="text-sm font-semibold text-stone-600">{barrel.type}</span>
+          <span className="text-sm font-semibold text-stone-600">
+            {barrel.type} · שנת חבית <bdi>{barrel.year}</bdi>
+          </span>
+        </div>
+        <div className="mt-2">
+          <LabPopup number={barrel.number} lab={barrel.lab} tests={barrel.tests} />
         </div>
         <p className="mt-1 text-sm font-bold text-stone-700">
           {barrel.parts.map((part) => `${part.blockName} · ${part.variety}${barrel.parts.length > 1 ? ` ${formatPercent(part.percent)}` : ""}`).join(" + ")}
