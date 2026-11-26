@@ -45,7 +45,7 @@ export async function loadBlending(year: number, viewer: SessionUser): Promise<B
     }),
     prisma.blendWine.findMany({
       where: { year },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       include: { draws: { include: { fill: { include: { barrel: { select: { number: true, type: true } }, components: { include: { block: { select: { name: true, variety: true } } } }, tests: { select: LAB_SELECT } } } } } },
     }),
     loadTastingViews(year, viewer),

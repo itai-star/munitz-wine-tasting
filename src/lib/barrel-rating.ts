@@ -55,6 +55,9 @@ export type Rater = { userId: string; username: string }
 // there is no telling which one stands out, so two ratings two levels or more apart are both marked as a gap.
 export const OUTLIER_LEVEL_GAP = 2
 export const MIN_TASTERS_FOR_OUTLIERS = 3
+// The whole score of a barrel stands out when it is this many points or more away from the average score of the other tasters,
+// out of 100; with two tasters, scores this far apart are marked as a gap.
+export const OUTLIER_TOTAL_GAP = 4
 
 export type RatingFlag = { kind: "outlier" | "gap"; rater: Rater; points: number; othersAverage: number }
 
@@ -72,6 +75,8 @@ export type RatingSummary = {
   count: number
   params: RatingParamSummary[]
   total: number | null
+  // The whole scores that stand out among the tasters of the barrel.
+  totalFlags: RatingFlag[]
   // The average with the administrator's choices in place of the averages they replace; null while a parameter has neither.
   finalTotal: number | null
   hasDecision: boolean
@@ -105,6 +110,20 @@ function flagsOf(key: RatingKey, forms: RatedForm[]): RatingFlag[] {
 
 // The average points of every parameter over the forms of a barrel and their sum, which is the average score of the barrel, the
 // ratings that stand out, and the final score once an administrator's choices replace some of the averages.
+function totalFlagsOf(forms: RatedForm[]): RatingFlag[] {
+  if (forms.length < 2) return []
+  const scores = forms.map((form) => totalOf(form.levels))
+  const flag = (kind: RatingFlag["kind"], index: number): RatingFlag => ({
+    kind,
+    rater: forms[index].rater,
+    points: scores[index],
+    othersAverage: roundTenth(mean(scores.filter((_, other) => other !== index))),
+  })
+  const standsOut = (index: number): boolean => Math.abs(scores[index] - mean(scores.filter((_, other) => other !== index))) >= OUTLIER_TOTAL_GAP
+  if (forms.length < MIN_TASTERS_FOR_OUTLIERS) return standsOut(0) ? [flag("gap", 0), flag("gap", 1)] : []
+  return forms.flatMap((_, index) => (standsOut(index) ? [flag("outlier", index)] : []))
+}
+
 export function summarizeRatings(forms: RatedForm[], decision: RatingDecision = {}): RatingSummary {
   // The final score is summed from the exact averages, so a barrel without decisions scores exactly its average.
   let finalSum: number | null = 0
@@ -124,7 +143,7 @@ export function summarizeRatings(forms: RatedForm[], decision: RatingDecision = 
     }
   })
   const total = forms.length === 0 ? null : roundTenth(mean(forms.map((form) => totalOf(form.levels))))
-  return { count: forms.length, params, total, finalTotal: finalSum === null ? null : roundTenth(finalSum), hasDecision: params.some((param) => param.decidedLevel !== null) }
+  return { count: forms.length, params, total, totalFlags: totalFlagsOf(forms), finalTotal: finalSum === null ? null : roundTenth(finalSum), hasDecision: params.some((param) => param.decidedLevel !== null) }
 }
 
 // A decision is kept as an object; anything in it that is not a level of a known parameter is left out.
@@ -138,8 +157,15 @@ export function decisionOf(value: unknown): RatingDecision {
   return decision
 }
 
-// The notes one taster wrote on a barrel: the general note of the form and the note of each parameter that has one.
-export type RatingNote = { rater: Rater; general: string | null; params: { key: RatingKey; note: string }[] }
+// One taster's form of a barrel as the results show it: the whole score, the points of every parameter, the general note and the
+// note of each parameter that has one.
+export type RaterForm = {
+  rater: Rater
+  total: number
+  points: Record<RatingKey, number>
+  general: string | null
+  notes: Partial<Record<RatingKey, string>>
+}
 
 // What one viewer may see of the tasting of a barrel. A taster sees the results only once they rated the barrel themselves, so
 // the others do not sway them; an administrator always sees them. Whatever is hidden is not sent to the page at all, and the
@@ -149,7 +175,7 @@ export type BarrelTastingView = {
   ratedByMe: boolean
   summary: RatingSummary | null
   raters: Rater[]
-  notes: RatingNote[]
+  forms: RaterForm[]
   // Tasters of the year who did not rate the barrel yet.
   pending: Rater[]
 }

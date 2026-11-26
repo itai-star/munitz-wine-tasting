@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { NotesPopup } from "@/components/blending-tasting/notes-popup"
+import { RatersPopup, totalFlagText } from "@/components/blending-tasting/raters-popup"
 import { colorsByVariety } from "@/components/finished-wine/barrel-parts"
+import { OUTLIER_TOTAL_GAP } from "@/lib/barrel-rating"
 import type { BarrelTastingView } from "@/lib/barrel-rating"
 
 export type ResultRow = {
@@ -24,6 +25,11 @@ type SortKey = "number" | "final" | "average" | "tasters" | "flags" | "variety"
 // The number of parameters with a rating that stands out.
 function flagCount(row: ResultRow): number {
   return row.tasting.summary?.params.filter((param) => param.flags.length > 0).length ?? 0
+}
+
+// How many notes the tasters wrote on a barrel: notes on parameters and the general notes of the forms.
+function noteCount(row: ResultRow): number {
+  return row.tasting.forms.reduce((sum, form) => sum + Object.keys(form.notes).length + (form.general ? 1 : 0), 0)
 }
 
 function finalOf(row: ResultRow): number | null {
@@ -49,7 +55,8 @@ function compare(a: ResultRow, b: ResultRow, key: SortKey): number {
     case "tasters":
       return numeric((row) => (row.tasting.visible ? (row.tasting.summary?.count ?? 0) : null))
     case "flags":
-      return numeric((row) => (row.tasting.visible ? flagCount(row) : null))
+      // Barrels where a whole score stands out come first, then those with more parameters that do.
+      return numeric((row) => (row.tasting.visible ? ((row.tasting.summary?.totalFlags.length ?? 0) > 0 ? 100 : 0) + flagCount(row) : null))
     case "variety":
       return a.variety.localeCompare(b.variety, "he") || byNumber
     default:
@@ -63,7 +70,7 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: "final", label: "ציון סופי" },
   { key: "average", label: "ממוצע" },
   { key: "tasters", label: "טועמים" },
-  { key: "flags", label: "חריגים" },
+  { key: "flags", label: "חריגים בפרמטרים" },
 ]
 
 // The barrels of a year with their tasting, sortable by any of the figures and filtered by variety. The best barrels come first
@@ -71,6 +78,8 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterCount: number }) {
   const [sortKey, setSortKey] = useState<SortKey>("final")
   const [variety, setVariety] = useState<string | null>(null)
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const detail = rows.find((row) => row.fillId === detailId && row.tasting.visible)
   const colors = colorsByVariety(rows.map((row) => row.variety))
   const varieties = Array.from(new Set(rows.map((row) => row.variety))).sort((a, b) => a.localeCompare(b, "he"))
   const visible = rows.filter((row) => variety === null || row.variety === variety).sort((a, b) => compare(a, b, sortKey))
@@ -108,9 +117,6 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
                 </th>
               ))}
               <th scope="col" className="px-3 py-2 text-start font-extrabold text-stone-700">
-                הערות הטועמים
-              </th>
-              <th scope="col" className="px-3 py-2 text-start font-extrabold text-stone-700">
                 מצב החבית
               </th>
             </tr>
@@ -142,6 +148,25 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
                           <bdi>{finalOf(row) ?? "—"}</bdi>
                         </span>
                         {summary.hasDecision && <span className="ms-1.5 rounded-full bg-indigo-100 px-1.5 py-px text-[11px] font-extrabold text-indigo-900">הוחלט</span>}
+                        {summary.totalFlags.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setDetailId(row.fillId)}
+                            title={summary.totalFlags.map(totalFlagText).join(" · ")}
+                            className="ms-1.5 rounded-full bg-amber-300 px-2 py-0.5 text-[11px] font-extrabold text-stone-900 hover:bg-amber-400"
+                          >
+                            ! {summary.totalFlags[0].kind === "gap" ? "פער בציון" : "ציון חריג"}
+                          </button>
+                        )}
+                        {summary.count > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setDetailId(row.fillId)}
+                            className="mt-1 flex min-h-9 items-center whitespace-nowrap rounded-lg border border-stone-300 bg-white px-2.5 text-xs font-bold text-stone-800 hover:bg-stone-50"
+                          >
+                            פירוט טועמים{noteCount(row) > 0 ? ` · ${noteCount(row)} הערות` : ""}
+                          </button>
+                        )}
                       </td>
                       <td className="px-3 py-2.5 font-semibold text-stone-700">
                         <bdi>{summary.total ?? "—"}</bdi>
@@ -165,7 +190,6 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
                       התוצאות יוצגו אחרי שתדרג את החבית
                     </td>
                   )}
-                  <td className="px-3 py-2.5">{row.tasting.visible ? <NotesPopup number={row.number} notes={row.tasting.notes} /> : <span className="text-stone-400">—</span>}</td>
                   <td className="px-3 py-2.5 text-sm font-semibold text-stone-700">
                     {row.wines.length > 0 && <span className="block">ביין: {row.wines.join(", ")}</span>}
                     {row.remaining > 0 ? (
@@ -182,7 +206,10 @@ export function ResultsTable({ rows, tasterCount }: { rows: ResultRow[]; tasterC
           </tbody>
         </table>
       </div>
-      <p className="text-xs font-semibold text-stone-500">לחיצה על כותרת של עמודה ממיינת לפיה. בציון, בטועמים ובחריגים הגבוה ראשון. ציון סופי כולל את החלטות המנהל, כשיש.</p>
+      <p className="text-xs font-semibold text-stone-500">
+        לחיצה על כותרת של עמודה ממיינת לפיה. בציון, בטועמים ובחריגים הגבוה ראשון. ציון סופי כולל את החלטות המנהל, כשיש. ציון חריג הוא ציון כולל של טועם שרחוק ב-{OUTLIER_TOTAL_GAP} נקודות או יותר מממוצע שאר הטועמים. עם שני טועמים, פער כזה ביניהם מסומן כפער.
+      </p>
+      {detail?.tasting.summary && <RatersPopup number={detail.number} summary={detail.tasting.summary} forms={detail.tasting.forms} onClose={() => setDetailId(null)} />}
     </div>
   )
 }

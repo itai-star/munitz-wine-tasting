@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { addBarrelToWine, clearBlendWine, deleteBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
+import { addBarrelToWine, clearBlendWine, deleteBlendWine, moveBlendWine, removeBarrelFromWine, updateBlendWine } from "@/server/actions/blending-actions"
 import { AddAmountDialog, BarrelInfoDialog, TastingDialog, WineDialog } from "@/components/blending/blending-dialogs"
 import { BarrelGlyph, NoLabMark, TankBar } from "@/components/blending/blending-parts"
 import { tastingScore } from "@/components/blending/tasting-results"
@@ -41,6 +41,11 @@ function WineTank({
   wine,
   colors,
   isOver,
+  isOpen,
+  isFirst,
+  isLast,
+  onToggle,
+  onMove,
   busy,
   onEdit,
   onAdd,
@@ -54,6 +59,11 @@ function WineTank({
   wine: BlendWineView
   colors: Map<string, string>
   isOver: boolean
+  isOpen: boolean
+  isFirst: boolean
+  isLast: boolean
+  onToggle: () => void
+  onMove: (direction: "up" | "down") => void
   busy: boolean
   onEdit: () => void
   onAdd: () => void
@@ -76,9 +86,47 @@ function WineTank({
       aria-label={`יין ${wine.name}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
+        <button type="button" onClick={onToggle} aria-expanded={isOpen} className="flex min-w-0 flex-1 basis-48 items-start gap-2 text-start">
+          <span className="mt-1 text-lg font-extrabold text-wine" aria-hidden="true">
+            {isOpen ? "▼" : "◀"}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-2xl font-extrabold text-stone-900 break-words">{wine.name}</span>
+            {!isOpen && (
+              <span className="block text-sm font-semibold text-stone-600">
+                <bdi>{composition.totalLiters.toLocaleString("he-IL")}</bdi> ליטר · {barrelsText(wine.draws.length)}
+                {lab.ethanol.value !== null && (
+                  <>
+                    {" "}
+                    · אלכוהול <bdi>{lab.ethanol.value}%</bdi>
+                  </>
+                )}
+                {lab.ph.value !== null && (
+                  <>
+                    {" "}
+                    · pH <bdi>{lab.ph.value}</bdi>
+                  </>
+                )}
+              </span>
+            )}
+          </span>
+        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {wine.finalized && <span className="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 text-sm font-extrabold text-emerald-900">✓ הרכב סופי</span>}
+          <button type="button" disabled={busy || isFirst} onClick={() => onMove("up")} aria-label={`העלאת ${wine.name} למעלה`} title="הזזה למעלה" className="h-10 w-10 rounded-lg border border-stone-300 text-base font-bold text-stone-700 hover:bg-stone-50 disabled:opacity-30">
+            ▲
+          </button>
+          <button type="button" disabled={busy || isLast} onClick={() => onMove("down")} aria-label={`הורדת ${wine.name} למטה`} title="הזזה למטה" className="h-10 w-10 rounded-lg border border-stone-300 text-base font-bold text-stone-700 hover:bg-stone-50 disabled:opacity-30">
+            ▼
+          </button>
+        </div>
+      </div>
+
+      {!isOpen ? null : (
+        <>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-2xl font-extrabold text-stone-900 break-words">{wine.name}</h3>
-          <p className="mt-2 text-xs font-bold text-stone-500">תיאור לתווית האחורית</p>
+          <p className="mt-3 text-xs font-bold text-stone-500">תיאור לתווית האחורית</p>
           {wine.description ? (
             <p className="whitespace-pre-line text-base text-stone-700">{wine.description}</p>
           ) : (
@@ -87,12 +135,9 @@ function WineTank({
             </button>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {wine.finalized && <span className="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 text-sm font-extrabold text-emerald-900">✓ הרכב סופי</span>}
-          <button type="button" onClick={onEdit} className={smallButton}>
-            עריכה
-          </button>
-        </div>
+        <button type="button" onClick={onEdit} className={`${smallButton} mt-3`}>
+          עריכה
+        </button>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-[6.5rem_1fr]">
@@ -137,19 +182,26 @@ function WineTank({
           </div>
 
           {wine.draws.length > 0 && (
-            <ul className="flex flex-wrap gap-2" aria-label="החביות ביין">
+            <ul className="grid grid-cols-3 gap-2" aria-label="החביות ביין">
               {wine.draws.map((draw) => (
-                <li key={draw.fillId} className="flex items-center gap-1.5 rounded-full bg-stone-100 ps-3 pe-1 py-1 text-sm font-bold text-stone-800">
-                  {draw.lab.tests === 0 && <NoLabMark />}
-                  <button type="button" onClick={() => onInfo(draw.fillId)} className="rounded-full px-0.5 text-start hover:underline" title="פרטי החבית ובדיקות המעבדה שלה">
-                    חבית <bdi>{draw.number}</bdi> · {draw.type} · <bdi>{draw.liters}</bdi> ל׳
+                <li key={draw.fillId} className="flex min-w-0 items-center justify-between gap-1 rounded-lg bg-stone-100 py-1 ps-2 pe-0.5">
+                  <button type="button" onClick={() => onInfo(draw.fillId)} className="flex min-w-0 items-center gap-1.5 text-start hover:underline" title="פרטי החבית ובדיקות המעבדה שלה">
+                    {draw.lab.tests === 0 && <NoLabMark />}
+                    <span className="min-w-0 leading-tight">
+                      <span className="block truncate text-sm font-extrabold text-stone-900">
+                        חבית <bdi>{draw.number}</bdi>
+                      </span>
+                      <span className="block text-xs font-bold text-stone-600">
+                        <bdi>{draw.liters}</bdi> ל׳
+                      </span>
+                    </span>
                   </button>
                   <button
                     type="button"
                     disabled={busy}
                     aria-label={`הוצאת חבית ${draw.number} מהיין`}
                     onClick={() => onRemove(draw.fillId)}
-                    className="h-7 w-7 rounded-full text-lg leading-none text-stone-500 hover:bg-stone-200 hover:text-stone-900 disabled:opacity-50"
+                    className="h-7 w-7 shrink-0 rounded-full text-lg leading-none text-stone-500 hover:bg-stone-200 hover:text-stone-900 disabled:opacity-50"
                   >
                     ×
                   </button>
@@ -179,6 +231,8 @@ function WineTank({
           הרכב סופי
         </label>
       </div>
+        </>
+      )}
     </section>
   )
 }
@@ -190,6 +244,16 @@ export function BlendingBoard({ year, wines, pile, isAdmin }: { year: number; wi
   const [overWine, setOverWine] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
+  // Only one wine is open at a time; a wine just created opens by itself.
+  const [openId, setOpenId] = useState<string | null>(wines[0]?.id ?? null)
+  const [knownIds, setKnownIds] = useState(() => wines.map((wine) => wine.id).join())
+  const currentIds = wines.map((wine) => wine.id).join()
+  if (currentIds !== knownIds) {
+    const before = new Set(knownIds.split(","))
+    const fresh = wines.find((wine) => !before.has(wine.id))
+    setKnownIds(currentIds)
+    if (fresh) setOpenId(fresh.id)
+  }
 
   const colors = colorsByVariety([...pile.map((barrel) => barrel.variety), ...wines.flatMap((wine) => wine.draws.flatMap((draw) => draw.parts.map((part) => part.variety)))])
 
@@ -233,10 +297,15 @@ export function BlendingBoard({ year, wines, pile, isAdmin }: { year: number; wi
           {wines.length === 0 ? (
             <p className="rounded-3xl border-2 border-dashed border-stone-300 bg-white p-10 text-center text-lg font-bold text-stone-500">עדיין אין יינות בבלנדינג {year}. יוצרים יין, ואחר כך גוררים אליו חביות.</p>
           ) : (
-            wines.map((wine) => (
+            wines.map((wine, index) => (
               <WineTank
                 key={wine.id}
                 wine={wine}
+                isOpen={openId === wine.id}
+                isFirst={index === 0}
+                isLast={index === wines.length - 1}
+                onToggle={() => setOpenId((current) => (current === wine.id ? null : wine.id))}
+                onMove={(direction) => void run(() => moveBlendWine({ id: wine.id, direction }))}
                 colors={colors}
                 busy={busy}
                 isOver={overWine === wine.id}

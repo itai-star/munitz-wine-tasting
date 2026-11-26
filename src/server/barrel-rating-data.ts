@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma"
-import { RATING_KEYS, decisionOf, summarizeRatings } from "@/lib/barrel-rating"
+import { RATING_KEYS, decisionOf, pointsOf, summarizeRatings, totalOf } from "@/lib/barrel-rating"
 import { LAB_MEASURES, labOf } from "@/lib/blending"
 import type { BarrelLab, LabMeasureKey } from "@/lib/blending"
-import type { ActiveTasting, BarrelTastingView, Rater, RatingKey, RatingLevels, RatingNote } from "@/lib/barrel-rating"
+import type { ActiveTasting, BarrelTastingView, Rater, RatingKey, RatingLevels, RaterForm } from "@/lib/barrel-rating"
 import type { SessionUser } from "@/lib/permissions"
 
 export type MyRating = { levels: RatingLevels; paramNotes: Partial<Record<RatingKey, string>>; notes: string | null }
@@ -53,7 +53,7 @@ export async function loadTastingViews(year: number, viewer: SessionUser): Promi
     const rows = byFill.get(fillId) ?? []
     const ratedByMe = rows.some((row) => row.userId === viewer.id)
     const visible = isAdmin || ratedByMe
-    if (!visible) return { visible, ratedByMe, summary: null, raters: [], notes: [], pending: [] }
+    if (!visible) return { visible, ratedByMe, summary: null, raters: [], forms: [], pending: [] }
     return {
       visible,
       ratedByMe,
@@ -62,16 +62,17 @@ export async function loadTastingViews(year: number, viewer: SessionUser): Promi
         decisionOfFill.get(fillId),
       ),
       raters: rows.map((row) => ({ userId: row.user.id, username: row.user.username })).sort((x, y) => x.username.localeCompare(y.username, "he")),
-      notes: rows
-        .map((row): RatingNote => {
-          const paramNotes = paramNotesOf(row.paramNotes)
+      forms: rows
+        .map((row): RaterForm => {
+          const levels = levelsOf(row)
           return {
             rater: { userId: row.user.id, username: row.user.username },
+            total: totalOf(levels),
+            points: Object.fromEntries(RATING_KEYS.map((key) => [key, pointsOf(key, levels[key])])) as RaterForm["points"],
             general: row.notes && row.notes.trim() !== "" ? row.notes : null,
-            params: RATING_KEYS.flatMap((key) => (paramNotes[key] ? [{ key, note: paramNotes[key] as string }] : [])),
+            notes: paramNotesOf(row.paramNotes),
           }
         })
-        .filter((note) => note.general !== null || note.params.length > 0)
         .sort((x, y) => x.rater.username.localeCompare(y.rater.username, "he")),
       pending: tasters.filter((taster) => !rows.some((row) => row.userId === taster.userId)),
     }

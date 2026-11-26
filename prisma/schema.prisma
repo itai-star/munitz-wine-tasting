@@ -723,6 +723,8 @@ model BlendWine {
   name        String
   description String?
   finalized   Boolean  @default(false)
+  // The place of the wine on the blending screen, from the top.
+  position    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

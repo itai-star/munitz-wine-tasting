@@ -41,7 +41,9 @@ export async function createBlendWine(input: z.input<typeof CreateWineSchema>): 
   if (!parsed.success) return err({ code: "VALIDATION", message: parsed.error.errors[0].message })
 
   try {
-    const wine = await prisma.blendWine.create({ data: parsed.data })
+    // A new wine goes to the bottom of the year's wines.
+    const last = await prisma.blendWine.aggregate({ where: { year: parsed.data.year }, _max: { position: true } })
+    const wine = await prisma.blendWine.create({ data: { ...parsed.data, position: (last._max.position ?? -1) + 1 } })
     revalidatePath(PAGE)
     return ok({ id: wine.id })
   } catch {
@@ -154,5 +156,32 @@ export async function setBarrelNotes(input: z.input<typeof NotesSchema>): Promis
     return ok(undefined)
   } catch {
     return err({ code: "SERVER_ERROR", message: "שגיאה בשמירת ההערה" })
+  }
+}
+
+const MoveWineSchema = z.object({ id: z.string().min(1), direction: z.enum(["up", "down"]) })
+
+// Moves a wine one place up or down among the wines of its year. The places are numbered again from the top, so equal or missing
+// numbers are put right on the way.
+export async function moveBlendWine(input: z.input<typeof MoveWineSchema>): Promise<Result<void>> {
+  await requirePermission("BARRELS")
+  const parsed = MoveWineSchema.safeParse(input)
+  if (!parsed.success) return err({ code: "VALIDATION", message: "הבחירה אינה תקינה" })
+
+  const { id, direction } = parsed.data
+  try {
+    const wine = await prisma.blendWine.findUnique({ where: { id }, select: { year: true } })
+    if (!wine) return err({ code: "NOT_FOUND", message: "היין לא נמצא" })
+    const wines = await prisma.blendWine.findMany({ where: { year: wine.year }, orderBy: [{ position: "asc" }, { createdAt: "asc" }], select: { id: true } })
+    const ids = wines.map((entry) => entry.id)
+    const from = ids.indexOf(id)
+    const to = direction === "up" ? from - 1 : from + 1
+    if (to < 0 || to >= ids.length) return ok(undefined)
+    ;[ids[from], ids[to]] = [ids[to], ids[from]]
+    await prisma.$transaction(ids.map((wineId, position) => prisma.blendWine.update({ where: { id: wineId }, data: { position } })))
+    revalidatePath(PAGE)
+    return ok(undefined)
+  } catch {
+    return err({ code: "SERVER_ERROR", message: "שגיאה בהזזת המיכל" })
   }
 }
